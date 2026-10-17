@@ -1,11 +1,18 @@
 // bbport online module: shadPS4's memory manager as BBSC asks it (is this address mapped, with
 // which protection), answered from the runtime's own map (runtime_memory_vma_info). Each thread
 // remembers the last few mappings for a moment: BBSC checks every read it makes, and the map is
-// behind a lock the game's own mappings take.
+// behind a lock the game's own mappings take. Host-owned image and stack mappings are queried
+// from Linux separately: they are not in the direct/flexible memory table.
 #pragma once
 #include <array>
+#include <cerrno>
 #include <chrono>
+#include <cstdio>
 #include <cstdint>
+#ifdef __linux__
+#include <linux/fs.h>
+#include <sys/ioctl.h>
+#endif
 
 #include "common/singleton.h"
 #include "common/types.h"
@@ -31,8 +38,8 @@ public:
         u32 prot = 0;
         void* start = nullptr;
         void* end = nullptr;
-        return QueryProtection(address, &start, &end, &prot) == 0 &&
-               address + size <= reinterpret_cast<u64>(end);
+        return size != 0 && QueryProtection(address, &start, &end, &prot) == 0 &&
+               size <= reinterpret_cast<u64>(end) - address;
     }
     /// 0 and the mapping's range and protection (MemoryProt bits), or -1 when unmapped.
     int QueryProtection(u64 address, void** start, void** end, u32* prot) {
@@ -56,6 +63,47 @@ public:
         int p = 0, type = -1;
         uintptr_t mapping_end = 0;
         if (!runtime_memory_vma_info(address, &p, &type, &mapping_end)) {
+#ifndef _WIN32
+            // The loader maps the image and stacks itself. Do not cache their host permissions:
+            // mprotect/munmap bypass the runtime's mapping table (and GPU traps use it too).
+            if (FILE* maps = std::fopen("/proc/self/maps", "r")) {
+#ifdef PROCMAP_QUERY
+                // Linux 6.11+: query one VMA instead of scanning maps on every BBSC read.
+                struct procmap_query query{};
+                query.size = sizeof(query);
+                query.query_addr = address;
+                if (ioctl(fileno(maps), PROCMAP_QUERY, &query) == 0) {
+                    *start = reinterpret_cast<void*>(query.vma_start);
+                    *end = reinterpret_cast<void*>(query.vma_end);
+                    *prot = u32(query.vma_flags) &
+                            (u32(MemoryProt::CpuReadWrite) | u32(MemoryProt::CpuExec));
+                    std::fclose(maps);
+                    return 0;
+                }
+                if (errno == ENOENT) {
+                    std::fclose(maps);
+                    return -1;
+                }
+#endif
+                char line[512];
+                while (std::fgets(line, sizeof(line), maps)) {
+                    unsigned long long first = 0, last = 0;
+                    char perms[5] = {};
+                    if (std::sscanf(line, "%llx-%llx %4s", &first, &last, perms) != 3 ||
+                        address < first || address >= last) {
+                        continue;
+                    }
+                    *start = reinterpret_cast<void*>(first);
+                    *end = reinterpret_cast<void*>(last);
+                    *prot = (perms[0] == 'r' ? u32(MemoryProt::CpuRead) : 0) |
+                            (perms[1] == 'w' ? u32(MemoryProt::CpuWrite) : 0) |
+                            (perms[2] == 'x' ? u32(MemoryProt::CpuExec) : 0);
+                    std::fclose(maps);
+                    return 0;
+                }
+                std::fclose(maps);
+            }
+#endif
             return -1;
         }
         // The runtime's map gives the end of the mapping, not its start: the address itself

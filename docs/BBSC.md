@@ -35,7 +35,7 @@ in BBSC: most features are on by default, `=0` turns one off.
 
 | Part | Files |
 |---|---|
-| Game code (hooks, byte patches, session policy, world sync) | `gpu/bbnet/shadps4/core/bloodborne_re.cpp`, `bbsc_*.{h,cpp}`, `bbsc_messages.inc` (BBSC's, unchanged) |
+| Game code (hooks, byte patches, session policy, world sync) | `gpu/bbnet/shadps4/core/bloodborne_re.cpp`, `bbsc_*.{h,cpp}`, `bbsc_messages.inc` (BBSC's; memory access validates range and protection with one query) |
 | Network (signaling packets, relay fallback, room replay, placement header) | BBSC's changes merged into `gpu/bbnet/shadps4/core/libraries/network` and `np/` (three-way merge against shadp2p 6e97b40, the base of both); the relay as in BBSC's BBport build of 2026-10-14 (below) |
 | NP lookup (`sceNpLookupNpId`, a third and later player) | `gpu/bbnet/shadps4/core/libraries/np/np_utility.{h,cpp}` (BBSC's), registered in `bbnet_register` |
 | Hooks in the game's code (any game) | `gpu/shim/bbport_guest_code_hooks.{h,cpp}`: shadPS4's `Core::InstallGuestCodeHook` interface, the port's trampolines |
@@ -68,6 +68,20 @@ Differences from BBSC's own builds:
   published source yet; they come in when BBSC publishes it.
 
 ## Checks
+
+`ninja -C out/gpu bbsc-memory-test && out/gpu/bbsc-memory-test` checks the native loader's image
+mapping through BBSC's memory interface, including permission changes, mapping boundaries,
+unmapping and overflowing sizes. The image and guest stacks are host-owned allocations, outside
+the runtime's direct/flexible memory table: BBSC queries their Linux mappings when that table
+does not cover an address. Without this fallback, reads of the image's global player/inventory
+pointers return zero and the kit check cannot reach the inventory.
+
+On Linux 6.11 and newer (when built with matching or newer Linux headers), host mappings use
+`PROCMAP_QUERY` to query the current VMA without parsing the full maps file. Scanning it for
+every BBSC read caused a CPU bottleneck after loading a character: the main thread spent about
+3.1 s per 5 s in 84,000 queries, reducing a 75 FPS scene to 38 FPS on an RX 9060 XT. Permissions
+are still queried each time, including after `mprotect` and `munmap`. Older kernels keep the text
+fallback; the memory test also exercises that path by simulating an unsupported ioctl.
 
 `out/dev/verify/verify.sh NAME BB_ONLINE=1 BB_BBSC=1`: loads the save offline-capable, 14 self-tests
 pass, no faults (2026-10-14). Real co-op needs two players on a BBSC server.

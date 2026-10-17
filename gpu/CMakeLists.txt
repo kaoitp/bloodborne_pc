@@ -238,6 +238,15 @@ if (WIN32)
 endif()
 
 # Explicit test targets; neither launches the game nor needs a Vulkan device.
+if (NOT WIN32)
+    add_executable(bbsc-memory-test EXCLUDE_FROM_ALL ../tests/test_bbsc_memory.cpp
+        ../src/runtime_memory.c)
+    target_include_directories(bbsc-memory-test PRIVATE bbnet/include . ../src)
+    target_compile_options(bbsc-memory-test PRIVATE -UNDEBUG -Wall -Wextra -Werror
+        -ffunction-sections -fdata-sections)
+    target_link_options(bbsc-memory-test PRIVATE -Wl,--gc-sections)
+    target_link_libraries(bbsc-memory-test PRIVATE pthread)
+endif()
 add_executable(motion-history-test EXCLUDE_FROM_ALL ../tests/test_motion_history.cpp)
 target_compile_options(motion-history-test PRIVATE -UNDEBUG -Wall -Wextra -Werror)
 target_include_directories(motion-history-test PRIVATE ..)

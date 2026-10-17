@@ -969,7 +969,7 @@ bool HasMemoryAccess(u64 address, size_t size, MemoryProt required) {
     }
 
     auto* memory = Memory::Instance();
-    if (memory == nullptr || !memory->IsValidMapping(address, size)) {
+    if (memory == nullptr) {
         return false;
     }
 
@@ -977,6 +977,7 @@ bool HasMemoryAccess(u64 address, size_t size, MemoryProt required) {
     void* mapping_end{};
     u32 protection{};
     const u32 required_bits = static_cast<u32>(required);
+    // One query also checks the range; native image lookups read /proc/self/maps.
     return memory->QueryProtection(address, &mapping_start, &mapping_end, &protection) == 0 &&
            (protection & required_bits) == required_bits &&
            address >= reinterpret_cast<u64>(mapping_start) &&
