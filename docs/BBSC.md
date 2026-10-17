@@ -10,6 +10,9 @@ Launcher, Online page: "Play online" and "Seamless co-op (BBSC)". Every player n
 same server: a shadNet server with BBSC's game server next to it. Without the switch nothing of
 BBSC is installed and the online module behaves as before.
 
+For a private Linux server, [the container package](../packaging/bbsc/README.md) provides shadNet,
+the BBSC game server and UDP relay, persistent data volumes, and account creation commands.
+
 The launcher's defaults are BBSC's public servers, Seamless Hunt (0.6): shadNet
 `play.seamlesshunt.com:31313`, WebAPI `http://play.seamlesshunt.com:31315`, game server
 `http://play.seamlesshunt.com` (plain http: BBSC's game server listens on 20443 without TLS). The

@@ -1,0 +1,46 @@
+name: bbsc
+services:
+  shadnet:
+    init: true
+    image: localhost/bbsc-shadnet:0.6-pre1
+    build:
+      context: ../..
+      dockerfile: packaging/bbsc/Dockerfile
+      target: shadnet
+    network_mode: host
+    environment:
+      BBSC_SERVER_IP: ${BBSC_SERVER_IP:-127.0.0.1}
+    volumes:
+      - shadnet-data:/data:Z
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python3, /opt/bbsc-container/server.py, health-shadnet]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+  gameserver:
+    init: true
+    image: localhost/bbsc-gameserver:0.6-pre1
+    build:
+      context: ../..
+      dockerfile: packaging/bbsc/Dockerfile
+      target: gameserver
+    network_mode: host
+    environment:
+      BBSC_SERVER_IP: ${BBSC_SERVER_IP:-127.0.0.1}
+      BBSC_SHADNET_IP: ${BBSC_SHADNET_IP:-}
+    volumes:
+      - game-data:/data:Z
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python3, /opt/bbsc-container/server.py, health-gameserver]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  shadnet-data:
+  game-data:

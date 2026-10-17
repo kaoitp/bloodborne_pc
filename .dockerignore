@@ -1,0 +1,17 @@
+**
+!packaging/
+packaging/*
+!packaging/bbsc/
+packaging/bbsc/*
+!packaging/bbsc/Dockerfile
+!packaging/bbsc/server.py
+!packaging/bbsc/account-stdin.patch
+!scripts/
+scripts/*
+!scripts/bbsc_gameserver/
+scripts/bbsc_gameserver/*
+!scripts/bbsc_gameserver/bbsc_gameserver.py
+!scripts/bbsc_gameserver/bbhost_service.py
+!scripts/bbsc_gameserver/ss_info_template.xml
+!scripts/bbsc_gameserver/NOTICE.txt
+!scripts/bbsc_gameserver/LICENSE.NoDreamForHunter
