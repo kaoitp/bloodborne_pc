@@ -32,14 +32,14 @@ Owner: Codex. Documentation-only; no dependency on old worktrees.
 
 - [x] Create `seamless` directly from exact BBport 1.7.2; preserve `windows`.
 - [x] Transfer the current three-goal plan, outcomes, handoffs and fresh progress tracker; verify links/content/whitespace and unchanged runtime.
-- [ ] Commit and publish only this checkpoint to `origin/seamless`; verify remote SHA.
+- [x] Commit and publish only this checkpoint to `origin/seamless`; verify remote SHA. Initial checkpoint `6fc134256ab2b5e4c85a45b0a50f53b4e4157697` was pushed and matched HEAD/origin/seamless; windows stayed unchanged. Follow-up documentation records this outcome.
 
 ## R01 — Baseline references and ownership
 
 Owner: Codex. Dependency: F01.
 
 - [x] Record approved release pins, scope and existing-loader requirement.
-- [ ] Publish the shared plan, entry points and Claude audit instructions as part of F01.
+- [x] Publish the shared plan, entry points and Claude audit instructions as part of F01.
 
 ## R02 — Complete reference composition
 

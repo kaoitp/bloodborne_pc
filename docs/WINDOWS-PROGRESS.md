@@ -10,9 +10,9 @@ Read [the handoff](handoff/WINDOWS-RESUME.md), [active plan](superpowers/plans/2
 
 | ID | Owner | Status | Evidence / next action |
 |---|---|---|---|
-| F01 plan/branch migration | Codex | IN_PROGRESS | seamless created at exact e5d04e2; document checks PASS; committing/publishing this checkpoint. |
-| R01 pins/ownership | Codex | WAIT_DEP | Approved pins/scope and ownership checks PASS; awaits F01 publication. |
-| R02 composition | Codex | WAIT_DEP | READY after F01/R01; obtain/check/apply pinned BBSC reference and assemble complete DLL/loader configuration from scratch here. |
+| F01 plan/branch migration | Codex | VERIFIED | Branch prepared at exact e5d04e2; documentation checks PASS; initial checkpoint 6fc1342 pushed and remote SHA verified. |
+| R01 pins/ownership | Codex | VERIFIED | Approved pins/scope/ownership and shared instructions published in F01. |
+| R02 composition | Codex | READY | Next development task: obtain/check/apply pinned BBSC reference and assemble complete DLL/loader configuration from scratch here. Not started. |
 | R03 baseline reproduction | Codex | WAIT_DEP | R02; build/load/self-hosted multiplayer checks NOT RUN in this repository. |
 | R04 demonstrated gaps | Codex | WAIT_DEP | R02/R03 and relevant CL01 findings; no custom delta scheduled without reproduction. |
 | CL01 audit | External Claude | READY | Separate clone/branch, four-document scope; [child tracker](collaboration/claude/PROGRESS.md). |
@@ -33,6 +33,6 @@ Custom managed admission/progress application remains OFF until relevant native 
 - Command: native Git `rev-parse windows-v1.7.2`, then `switch -c seamless e5d04e2ba4864ccf40de6c3cf6aa532855320b0d`; exit 0, HEAD exact e5d04e2. Remote branch existence check returned no seamless branch before publication.
 - Scope: active three-goal plan, eleven approved outcomes, Windows/evidence rules, handoffs, fresh shared/child trackers, root agent entry points and private-evidence ignore rule. No implementation imported; runtime/README/build/dependency files unchanged.
 - Previous-reference documents informed scope only. Under the user's final instruction, old worktrees/results are not a dependency or acceptance source for new development.
-- Checks: PASS, inline Python UTF-8/content validation of 10 Markdown documents, 28 local links, all 11 approved outcomes, exact seamless base, preserved windows ref, only 11 allowlisted planning/ignore paths changed, and no completed R02-onward checkboxes. Native Git `diff --check --ignore-submodules` exit 0; `check-ignore .superpowers/probe.log` confirms private-evidence exclusion. A first checker used an overly broad word match on the loader requirement; corrected to inspect R02-onward checkboxes, then all checks passed. Build, runtime tests, game launch and server changes: NOT RUN (documentation-only task).
-- Publication: pending local commit and push to origin/seamless. Source/parent for this documentation diff is e5d04e2; the actual checkpoint SHA will be reported after commit.
-- Next action: finish documentation checks/publication and stop. When development is requested, start R02 by obtaining and verifying pinned BBSC input; no recovery of old worktrees.
+- Checks: PASS, inline Python UTF-8/content validation of 10 Markdown documents, 28 local links, all 11 approved outcomes, exact seamless base, preserved windows ref, only 11 allowlisted planning/ignore paths changed, and no completed R02-onward checkboxes. Native Git `diff --check --ignore-submodules` and staged `diff --cached --check` exited 0; `check-ignore .superpowers/probe.log` confirms private-evidence exclusion. Build, runtime tests, game launch and server changes: NOT RUN (documentation-only task).
+- Publication: `git push -u origin seamless` exited 0. `git ls-remote origin refs/heads/seamless refs/heads/windows` and `git rev-parse HEAD origin/seamless` confirmed initial checkpoint `6fc134256ab2b5e4c85a45b0a50f53b4e4157697` locally and remotely, with windows unchanged at 3fabfa7. Parent is exact e5d04e2. This follow-up records publication and marks F01/R01 complete; it changes only plan/progress documents.
+- Next action: stop after the documentation checkpoint. When development is requested, start R02 by obtaining and verifying pinned BBSC input; no recovery of old worktrees.
