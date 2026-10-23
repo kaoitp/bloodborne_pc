@@ -34,6 +34,13 @@ Owner: Codex. Documentation-only; no dependency on old worktrees.
 - [x] Transfer the current three-goal plan, outcomes, handoffs and fresh progress tracker; verify links/content/whitespace and unchanged runtime.
 - [x] Commit and publish only this checkpoint to `origin/seamless`; verify remote SHA. Initial checkpoint `6fc134256ab2b5e4c85a45b0a50f53b4e4157697` was pushed and matched HEAD/origin/seamless; windows stayed unchanged. Follow-up documentation records this outcome.
 
+## F02 — New-session handoff
+
+Owner: Codex. Dependency: F01. Documentation-only; R02 remains unstarted.
+
+- [x] Make the handoff self-contained: repository/branch checks, current evidence boundary, first R02 actions, later private setup needs and a ready-to-paste development prompt.
+- [ ] Verify links/content/whitespace and documentation-only scope; commit/push the handoff checkpoint to origin/seamless.
+
 ## R01 — Baseline references and ownership
 
 Owner: Codex. Dependency: F01.
