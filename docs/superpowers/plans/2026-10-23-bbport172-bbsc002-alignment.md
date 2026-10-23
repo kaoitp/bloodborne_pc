@@ -83,7 +83,7 @@ Owner: Codex. Dependency: R02/R03 evidence and relevant CL01 findings.
 
 ## CL01 — External Claude Code source/reuse audit
 
-Owner: the user's external collaborator, in a separate clone; not an automatic subagent. May proceed alongside R02.
+Owner: the user's external friend using Claude Code, in a separate clone/audit branch; not an automatic subagent. READY alongside Codex R03 now that R02 is verified. [Work package](../../handoff/CLAUDE-CODE-WINDOWS.md) fixes the four writable documents, frozen audit base, slice dependencies and handback/integration checks. Codex retains runtime/build/config/native/gameplay and shared plans; no audit result is claimed by assigning it.
 
 - [ ] Map the complete release composition and existing support for each goal with pinned source citations.
 - [ ] Map required self-hosted routes and only relevant selected-peer/session/identity boundaries; distinguish source presence from runtime PASS.
