@@ -50,7 +50,7 @@ Owner: Codex. Dependency: F01.
 
 ## R02 — Complete reference composition
 
-Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native startup (2026-10-23); [evidence](../../handoff/BBSC-BASELINE.md). Gameplay remains R03.
+Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native startup (2026-10-23); [evidence](../../handoff/BBSC-BASELINE.md). Gameplay remains R03. Source/evidence checkpoint `f3734da56722f21dd2c25dcca89b85d1c93f2109` pushed to origin/seamless and remote SHA verified.
 
 - [x] Obtain the exact pinned BBSC source/reference patch. Verify source commit and patch SHA256; inspect all destinations and run `git apply --check` against this clean 1.7.2 source. A mismatch is a stop, not permission to guess offsets.
 - [x] Apply the reviewed patch; record source commit, diff and dependency/Gitlink pins. Use an additional isolated checkout only if later development needs it; do not recover or depend on old worktrees.
