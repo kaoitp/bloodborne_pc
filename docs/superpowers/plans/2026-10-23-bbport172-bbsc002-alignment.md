@@ -69,6 +69,8 @@ Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS after 20
 - [ ] Verify normal exit/disconnect/return and interrupted-session exit/reload. Preserve original saves and baseline Kit/Blank behavior.
 - [x] Record a three-goal table using EXISTING/PASS, PRESENT-NOT-TESTED, REPRODUCED-GAP or UNSUPPORTED before designing changes.
 
+R03-L01 historical source comparison is VERIFIED (documentation only, 2026-10-24): [join-fix leads](../../handoff/R03-JOIN-LEADS.md). Next discriminate claim consumption/native handshake before applying old emulator fixes to the DLL. No gameplay acceptance changed; the three R03 gameplay boxes stay open.
+
 Unknown deployed server source/version remains explicit; it does not block unrelated baseline composition. Use existing authorized test services/configuration, not production redeployment. One client can perform setup/load smoke; actual multiplayer needs a distinct second identity.
 
 ## R04 — Minimum fixes for demonstrated goal gaps

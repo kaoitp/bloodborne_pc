@@ -32,6 +32,10 @@ R03 is IN_PROGRESS. The latest [retry checkpoint](../WINDOWS-PROGRESS.md) supers
 - Next: trace the native mutual-signaling -> explicit guest-deactivate boundary and actual game-socket/session/identity/room flow; inspect relevant delivered CL01 findings before any R04 proposal. G1 cross-map/Dream/placement and invalid candidates, all G2 and co-op G3 remain open. Custom admission/application OFF, no packaging/deployment/system changes.
 - Both tests were normally exited; verify latest checkpoint cleanup/exits/original hashes and publication record before resuming. Native smoke checkbox remains complete; three gameplay checkboxes remain open.
 
+## Historical join-fix leads (R03-L01)
+
+[Historical comparison and next discriminators](R03-JOIN-LEADS.md) records pinned old fixes versus the active DLL baseline. L01 is VERIFIED for documentation only: use existing private HTTP capture to establish claim consumption and the first native handshake failure before proposing a patch. Selected-host/single-load and return-origin differences are downstream leads. R03/G1/G2/G3 remain open; no runtime changes or new native run. The user waived usage stopping for this investigation only.
+
 ## Execution order and completion checks
 
 1. **Preflight.** Read current tracker and inspect origin/branch/worktree/dirty state and R02 ancestry using the Windows resume commands. Check usage. Verify source delta, dependency Gitlinks and artifact/manifest/notice hashes; reverse apply-check the canonical patch on this already-patched source. Preserve documented FSR-Vulkan build patches. Do not reapply R02 or replace source outputs with packaged executables. Record the exact tested source/artifact/config state and any missing input.
