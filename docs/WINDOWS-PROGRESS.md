@@ -1,6 +1,6 @@
 # BBSC progress: new fork / seamless
 
-Updated: 2026-10-23 (Asia/Bangkok).
+Updated: 2026-10-24 (Asia/Bangkok).
 
 ## Current state
 
@@ -14,7 +14,7 @@ Read [the handoff](handoff/WINDOWS-RESUME.md), [active plan](superpowers/plans/2
 | F02 new-session handoff | Codex | VERIFIED | Self-contained startup/R02 prompt and documentation checks PASS; cb9fcab pushed and remote SHA verified. |
 | R01 pins/ownership | Codex | VERIFIED | Approved pins/scope/ownership and shared instructions published in F01. |
 | R02 composition | Codex | VERIFIED | Exact pinned patch applied; complete release DLL/loader/notices assembled privately; fresh source build and copied-profile native module/image/hooks/override startup PASS. [Detailed evidence](handoff/BBSC-BASELINE.md). Gameplay gates remain open. |
-| R03 baseline reproduction | Codex | WAIT_GAME | Source build PASS; narrow native startup PASS. Two distinct accounts/copied profiles, actual service routing/relay or P2P fallback, join/progress/save/return gameplay remain NOT RUN. |
+| R03 baseline reproduction | Codex | WAIT_GAME | [New-session handoff](handoff/R03-RESUME.md) ready: local private input pointer and R02 artifacts available; distinct account/second-profile setup and actual service/peer/G1/G2/G3 acceptance remain required. Preparation ran no gameplay. |
 | R04 demonstrated gaps | Codex | WAIT_DEP | R02/R03 and relevant CL01 findings; no custom delta scheduled without reproduction. |
 | CL01 audit | External Claude | READY | [Ready work package](handoff/CLAUDE-CODE-WINDOWS.md): A gameplay/source reuse, B split-service/identity/fallback, C acceptance matrix after A/B; four owned docs, frozen base in separate clone. [Child tracker](collaboration/claude/PROGRESS.md); no audit result delivered. |
 
@@ -78,3 +78,12 @@ Custom managed admission/progress application remains OFF until relevant native 
 - Tested source: HEAD 4866002514de55c60e6f5e5475d797eed4131f1d plus exactly four documentation files. Inline Python PASS: UTF-8, 23 local links, explicit ownership/pins/dependencies/frozen-base/handback, external READY/NOT RUN, 3 CL01 checkboxes still open, no private endpoints and no runtime/Gitlink delta. Native Git whitespace check with cr-at-eol exited 0. Initial helper used implicit Windows cp1252 and failed on Thai text; rerun uses explicit UTF-8. A subsequent ownership assertion exposed an omitted self-tracker filename, which was made explicit before the passing check.
 - No native/gameplay test or external Claude execution for this documentation-only task. Existing dirty FSR-Vulkan build patches preserved. No subagents, messages to others, packaging or server activity. Initial usage 55%/54% remaining, above the stop threshold.
 - Publication: handoff checkpoint `afeffc3d2acdbbf32d7cf7f759038b5ab2178a08` committed; `git push origin seamless` exited 0. `git rev-parse HEAD origin/seamless` and `git ls-remote origin refs/heads/seamless` matched that full SHA. This documentation-only follow-up records verified publication. Final pre-publication usage check: 51%/54% remaining. Next: the user can have the friend clone the published handoff and start CL01; Codex retains R03 and shared/runtime ownership.
+
+## F03: R03 new-session preparation (2026-10-24)
+
+- Status: VERIFIED for handoff preparation; publication pending. User will start R03 in a new session and requested a complete handoff. Dependencies: R02 VERIFIED and published; R03 remains WAIT_GAME. Acceptance: current checkout/artifact inventory, ignored private input pointer, ordered R03 preflight/acceptance/blocker steps, ready prompt and synchronized plan/tracker.
+- Scope: documentation and ignored local input metadata only; no gameplay, service changes, runtime changes, Claude-owned document edits or subagents. Starting HEAD 04c6e7b4b9a042c872e6ed815dacce6c7a7a0d8e; existing FSR-Vulkan build patches preserved. Usage initially 62%/94% remaining.
+
+- Result: replaced stale R02-start instructions with current Windows routing and a new R03 session handoff. Existing primary seamless checkout is authoritative; detached app worktree stays untouched. R02 runtime remains exact f3734da. Saved already-supplied paths/separate service addresses to ignored .superpowers/r03-resume.json with no credentials; new session asks only for missing distinct account/second-profile setup. Private inputs are local, not clone-restored.
+- Checks: inline Python PASS for four UTF-8 documents and 30 local links; explicit R03 order/private boundaries, five R02 completed/five R03 open checkboxes, unchanged runtime and Claude documents, ignored input JSON, six existing input paths and three matching main artifact SHA256s. Native Git whitespace check with cr-at-eol and canonical patch reverse apply-check both exited 0. No build/game launch, service/port recheck, account or server change was performed. Last connectivity remains dated 2026-10-23; TCP 20444 is unverified today and existing P2P fallback remains untested.
+- Next: open C:/Projects/bloodborne_pc in a new session, use the prompt in docs/handoff/WINDOWS-RESUME.md, read docs/handoff/R03-RESUME.md and private metadata, then run independent preflight/routing while resolving missing two-client inputs. No R04 work before reproduced gaps. Publication commit/push verification follows this checkpoint.

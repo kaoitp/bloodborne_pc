@@ -1,6 +1,6 @@
 # BBport 1.7.2 + BBSC 0.0.2 development plan
 
-Updated: 2026-10-23. Migrated to the new fork's `seamless` branch. This is the authoritative implementation plan; [progress](../../WINDOWS-PROGRESS.md) records evidence, and [the product specification](../specs/2026-10-18-bbsc-anywhere-coop-design.md) defines required outcomes.
+Updated: 2026-10-24. Migrated to the new fork's `seamless` branch. This is the authoritative implementation plan; [progress](../../WINDOWS-PROGRESS.md) records evidence, and [the product specification](../specs/2026-10-18-bbsc-anywhere-coop-design.md) defines required outcomes.
 
 ## Scope contract
 
@@ -24,7 +24,7 @@ Unscheduled: wholesale legacy module migration, THD/bbhost/public-server/cross-e
 | [CLSAMG22 BBSC v0.0.2](https://github.com/CLSAMG22/BBSC/releases/tag/v0.0.2) | `4f11faf88b6ba658ebde6fe5fbefdadedba4fa41` |
 | [Reference BBport patch](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/bbport/bbport-1.7.2-bbsc.patch) | SHA256 `e34c79b388605998b430ec4eed556fc2cb8c8928f1d3e9f26bf5d2df29732aa3`; 15 destination files in the prior reference inspection; recheck before applying here. |
 
-The pins are carried forward from the approved plan. The local BBport tag was rechecked when creating `seamless`. BBSC source/artifacts have not yet been obtained or tested in this new checkout. A moving upstream branch is not a replacement pin.
+The pins are carried forward from the approved plan. The local BBport tag was rechecked when creating `seamless`; R02 subsequently verified/applied the pinned patch and assembled/tested the complete native composition here. See the R02 evidence for exact hashes and limitations. A moving upstream branch is not a replacement pin.
 
 ## F01 — Plan and branch migration
 
@@ -60,7 +60,7 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
-Owner: Codex. Dependency: R02 composition. Build-only work may follow the source/patch checks before gameplay is ready.
+Owner: Codex. Dependency: R02 composition VERIFIED. Status: WAIT_GAME for two-client acceptance; [2026-10-24 session instructions](../../handoff/R03-RESUME.md) define independent preflight, private inputs, remaining account/profile dependencies, split-service routing and ordered G1/G2/G3 checks. This preparation does not start gameplay.
 
 - [x] Initialize only required pinned dependencies and build using the baseline's `bash build.sh`; record actual waited exit and source/diff state. Exit 0; hashes/dependency inventory in R02 evidence.
 - [ ] Run relevant baseline/patch/native load checks and startup smoke. Record honest skips; no blanket port of old tests or unrelated graphics qualification.
