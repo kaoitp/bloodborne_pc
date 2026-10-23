@@ -11,7 +11,7 @@ Read [the handoff](handoff/WINDOWS-RESUME.md), [active plan](superpowers/plans/2
 | ID | Owner | Status | Evidence / next action |
 |---|---|---|---|
 | F01 plan/branch migration | Codex | VERIFIED | Branch prepared at exact e5d04e2; documentation checks PASS; initial checkpoint 6fc1342 pushed and remote SHA verified. |
-| F02 new-session handoff | Codex | IN_PROGRESS | Self-contained startup/R02 prompt and documentation checks PASS; committing/publishing the handoff. |
+| F02 new-session handoff | Codex | VERIFIED | Self-contained startup/R02 prompt and documentation checks PASS; cb9fcab pushed and remote SHA verified. |
 | R01 pins/ownership | Codex | VERIFIED | Approved pins/scope/ownership and shared instructions published in F01. |
 | R02 composition | Codex | READY | Next development task: obtain/check/apply pinned BBSC reference and assemble complete DLL/loader configuration from scratch here. Not started. |
 | R03 baseline reproduction | Codex | WAIT_DEP | R02; build/load/self-hosted multiplayer checks NOT RUN in this repository. |
@@ -44,5 +44,5 @@ Custom managed admission/progress application remains OFF until relevant native 
 - Tested source: `b42c83af0bcc8b2adab29c0ae3bed546ce33b704` plus the three-file documentation diff. R02 remains READY/unstarted; source, builds, game/server state and Claude-owned documents unchanged.
 - Commands/results: inline Python UTF-8/link/content/scope checks PASS for 10 Markdown documents and 28 local links; startup/prompt/pins/evidence/constraints assertions PASS; native Git `merge-base --is-ancestor e5d04e2 HEAD` and `diff --check --ignore-submodules` exited 0. No build/runtime/gameplay tests (NOT RUN; documentation-only).
 - Review: handoff no longer requires the old session/worktrees or implies old tests qualify this checkout. It distinguishes available documentation from private inputs needed only at gameplay setup; the ready prompt explicitly authorizes development from R02 rather than another plan-only pass.
-- Publication: pending checkpoint commit/push to origin/seamless; record actual SHA/result after publication.
+- Publication: `git push origin seamless` exited 0; `git ls-remote origin refs/heads/seamless` and `git rev-parse HEAD origin/seamless` matched handoff checkpoint `cb9fcabfe0f5ab6968a3148623b71e56a614701d`. This follow-up records F02 completion; R02 is still unstarted.
 - Resume: open this project on seamless and paste the handoff's New-session prompt. Read current progress, then mark R02 IN_PROGRESS and verify the pinned BBSC source/patch before implementation. No outstanding question blocks that first source task.
