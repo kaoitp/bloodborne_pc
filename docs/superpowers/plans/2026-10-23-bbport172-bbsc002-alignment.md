@@ -60,14 +60,14 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
-Owner: Codex. Dependency: R02 composition VERIFIED. Status: WAIT_GAME for two-client acceptance; [2026-10-24 session instructions](../../handoff/R03-RESUME.md) define independent preflight, private inputs, remaining account/profile dependencies, split-service routing and ordered G1/G2/G3 checks. This preparation does not start gameplay.
+Owner: Codex. Dependency: R02 composition VERIFIED. Status: WAIT_GAME after 2026-10-24 current static/native and two-account solo smoke. Concurrent second client failed guest-memory allocation (Windows 1450); G1/G2/G3 require another client machine or resolved local resource capacity. [Progress evidence](../../WINDOWS-PROGRESS.md) and [resume instructions](../../handoff/R03-RESUME.md).
 
 - [x] Initialize only required pinned dependencies and build using the baseline's `bash build.sh`; record actual waited exit and source/diff state. Exit 0; hashes/dependency inventory in R02 evidence.
-- [ ] Run relevant baseline/patch/native load checks and startup smoke. Record honest skips; no blanket port of old tests or unrelated graphics qualification.
+- [x] Run relevant baseline/patch/native load checks and startup smoke. Record honest skips; no blanket port of old tests or unrelated graphics qualification.
 - [ ] On two distinct accounts and copied profiles, verify supported cross-map/Dream join, selected-host placement and required self-hosted service routing.
 - [ ] Verify jointly earned boss/story progress, own-progress preservation, relevant reward non-duplication and each player's save/reload.
 - [ ] Verify normal exit/disconnect/return and interrupted-session exit/reload. Preserve original saves and baseline Kit/Blank behavior.
-- [ ] Record a three-goal table using EXISTING/PASS, PRESENT-NOT-TESTED, REPRODUCED-GAP or UNSUPPORTED before designing changes.
+- [x] Record a three-goal table using EXISTING/PASS, PRESENT-NOT-TESTED, REPRODUCED-GAP or UNSUPPORTED before designing changes.
 
 Unknown deployed server source/version remains explicit; it does not block unrelated baseline composition. Use existing authorized test services/configuration, not production redeployment. One client can perform setup/load smoke; actual multiplayer needs a distinct second identity.
 

@@ -1,6 +1,6 @@
 # R03 new-session execution handoff
 
-Prepared: 2026-10-24 (Asia/Bangkok). Owner: Codex, inline. Parent: [active R03 plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md). Read [Windows resume](WINDOWS-RESUME.md), [progress](../WINDOWS-PROGRESS.md), [R02 evidence](BBSC-BASELINE.md) and [product outcomes](../superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md). This document prepares a session; it does not start R03 gameplay or pass any gate.
+Prepared: 2026-10-24 (Asia/Bangkok). Owner: Codex, inline. Parent: [active R03 plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md). Read [Windows resume](WINDOWS-RESUME.md), [progress](../WINDOWS-PROGRESS.md), [R02 evidence](BBSC-BASELINE.md) and [product outcomes](../superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md). Current session checkpoint: native smoke passed; both distinct accounts entered solo Cathedral Ward online sequentially. G1/G2/G3 remain open. See the current checkpoint below.
 
 ## Inputs available on this machine
 
@@ -19,13 +19,16 @@ Primary checkout: `C:/Projects/bloodborne_pc` on `seamless`. Private metadata po
 
 The three main artifacts and six input path-presence checks were rechecked on 2026-10-24: PASS. No rebuild, launch or current service check was performed for this preparation. Treat later changes as invalidating affected evidence and recheck/rebuild only what changed. Fresh clone/different machine needs local reconstruction from R02; ignored paths are not in Git.
 
-## Remaining user-dependent inputs
+## Current checkpoint and remaining dependency (2026-10-24)
 
-- Two **distinct existing authorized accounts** for the actual self-hosted route, with separate copied profiles and per-client ports. Account credentials and a second client's profile/machine have not been provided in this handoff. One duplicated login is not two clients; do not create accounts implicitly.
-- Inspect existing authorized private test configuration or offer user-controlled secure login; ask only for missing account/config/profile paths or the second player's availability. Never ask the user to paste a password/token into chat or put it in a tracked document.
-- Two clients may run on separate authorized machines or locally if resources and port isolation permit. Preserve original save files, active user processes and account identity. Do not assume the external Claude collaborator is the second player; CL01 is a source audit.
+R03 is WAIT_GAME after current preflight/native smoke. See [R03 progress evidence](../WINDOWS-PROGRESS.md) for exact hashes, processes, commands, original integrity and three-goal classification. Source/artifacts still match R02; do not rebuild/reapply them without a change.
 
-If these are missing, record the exact dependency and complete independent preflight/source/service checks. R03 remains WAIT_GAME for dependent gameplay until setup is ready; mark the specific authorized active work IN_PROGRESS before edits/tests. Do not stall available work or manufacture a second identity. The user's deployed server source/version remains unknown; do not repeat that question.
+- Both distinct existing authorized accounts were supplied; private ignored `.superpowers/r03-test/launch-test.ps1` contains the test launch configuration. Do not print, stage or copy that helper into documentation; do not ask again for supplied credentials. The ignored `.superpowers/r03-resume.json` now points both services at the user-authorized replacement endpoint. Earlier split-service observations below are historical.
+- Fresh profile copies exist at `.superpowers/r03-test/profile-a` and `profile-b`, P2P ports 3658/3659. User controlled Play Online/Continue/Quit Game. Both entered solo Cathedral Ward; A and sequential B exited normally with runner exit 0. Native image validation, 52 writes, 159/159 hooks, 3 redirects and exact loaded DLL path verified. Both explicitly authenticated with different userIds and registered with UDP relay (A 3658, B 3659). TCP relay :20444 is reachable and the pinned DLL connected.
+- Simultaneous B startup failed to allocate 6080 MiB guest memory (Windows 1450), runner exit 3; it succeeded after A closed. This is a local test-resource limitation, not a demonstrated join/progress gap. Required next input: another authorized test machine/client or user-resolved local guest-memory capacity. Do not change system/page-file/security settings implicitly.
+- Original profile: fresh pre/post 3,171-file Path+SHA256 comparison had zero differences. Before actual join, prepare per-character own-world recovery and pre-join progress/item snapshots; the solo-smoke copies excluded `own-world` and are not yet qualified for interruption tests. All G1/G2/G3 checks remain open. Custom admission/application remains OFF.
+- Tool-sent game keys did not move the menu; user controller input worked. Plan user-controlled gameplay unless this changes. Do not modify the unrelated input subsystem to qualify R03.
+- Native static/artifact/service evidence is in ignored `.superpowers/r03-test`; failed concurrent run is preserved separately. No release packaging, server/system changes or external Claude-owned file changes. Closing the checkpoint requires clean absence of session-owned probes, fresh original integrity check and verified publication to origin/seamless.
 
 ## Execution order and completion checks
 

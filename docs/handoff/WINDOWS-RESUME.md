@@ -1,6 +1,6 @@
 # Resume BBSC development on Windows
 
-Updated: 2026-10-24 (Asia/Bangkok). Next task: **R03 baseline reproduction**. R02 is VERIFIED for composition/native startup; G1/G2/G3 gameplay remains open.
+Updated: 2026-10-24 (Asia/Bangkok). Next task: **R03 two-client gameplay**. Current R03 native/solo smoke passed on two accounts sequentially; concurrent B failed guest-memory allocation (Windows 1450). Another client machine or resolved local capacity is required; G1/G2/G3 remain open. See the current R03 checkpoint in the tracker and resume document.
 
 ## Read before work
 
@@ -53,7 +53,7 @@ Cloning restores source/documents, not ignored binaries, profiles, credentials o
 
 The two tracked FSR-Vulkan patches applied by `build.sh` leave its submodule working tree dirty. This is recorded build state, not permission to discard or commit a Gitlink change. Verify before reuse. R02 artifacts were rehashed on 2026-10-24 and still match [the record](BBSC-BASELINE.md).
 
-Local private inputs are at `.superpowers/r03-resume.json` in the primary checkout. Read that ignored file for already-supplied game/profile paths and separate service addresses; do not copy its contents into Git. See [R03 instructions](R03-RESUME.md) for remaining account/profile dependencies and current-state checks. Last service observations are dated 2026-10-23 and must be rechecked; a discussion of port 20444 did not authorize a server redeployment or prove it was enabled.
+Local private inputs are at `.superpowers/r03-resume.json` in the primary checkout. Read that ignored file for already-supplied game/profile paths and separate service addresses; do not copy its contents into Git. See [R03 instructions](R03-RESUME.md) for supplied private account/profile configuration, the concurrent-client resource limitation and current-state checks. Last service observations are dated 2026-10-23 and must be rechecked; a discussion of port 20444 did not authorize a server redeployment or prove it was enabled.
 
 ## New-session prompt
 
