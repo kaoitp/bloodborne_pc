@@ -1,6 +1,6 @@
 # Resume BBSC development on Windows
 
-Updated: 2026-10-24 (Asia/Bangkok). Next task: **R03 two-client gameplay**. Current R03 native/solo smoke passed on two accounts sequentially; concurrent B failed guest-memory allocation (Windows 1450). Another client machine or resolved local capacity is required; G1/G2/G3 remain open. See the current R03 checkpoint in the tracker and resume document.
+Updated: 2026-10-24 (Asia/Bangkok). Next task: **R03 native join failure diagnosis**. Concurrent copied clients now load/play with automatic Windows pagefile growth and baseline scripted pad input. Same-map summon reached mutual signaling/bidirectional self-hosted relay traffic, then guest explicitly deactivated before joining. See the latest retry checkpoint; G1/G2/G3 remain open. No permanent memory fix or runtime change claimed.
 
 ## Read before work
 

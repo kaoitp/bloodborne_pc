@@ -60,7 +60,7 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
-Owner: Codex. Dependency: R02 composition VERIFIED. Status: WAIT_GAME after 2026-10-24 current static/native and two-account solo smoke. Concurrent second client failed guest-memory allocation (Windows 1450); G1/G2/G3 require another client machine or resolved local resource capacity. [Progress evidence](../../WINDOWS-PROGRESS.md) and [resume instructions](../../handoff/R03-RESUME.md).
+Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS after 2026-10-24 memory/input retry. Both clients now run/play concurrently using automatic Windows pagefile growth and the existing native pad test interface; no runtime/system setting change. Actual same-map claim/mutual signaling/relay exchange failed before guest join. Diagnose that boundary next; G1/G2/G3 remain open. [Progress evidence](../../WINDOWS-PROGRESS.md), [resume](../../handoff/R03-RESUME.md).
 
 - [x] Initialize only required pinned dependencies and build using the baseline's `bash build.sh`; record actual waited exit and source/diff state. Exit 0; hashes/dependency inventory in R02 evidence.
 - [x] Run relevant baseline/patch/native load checks and startup smoke. Record honest skips; no blanket port of old tests or unrelated graphics qualification.
