@@ -56,6 +56,7 @@
 #include "core/libraries/np/np_score/np_score.h"
 #include "core/libraries/np/np_signaling/np_signaling.h"
 #include "core/libraries/np/np_tus.h"
+#include "core/libraries/np/np_utility.h" // bbsc: sceNpLookupNpId online
 #include "core/libraries/np/np_web_api/np_web_api.h"
 #include "core/libraries/np/np_web_api2/np_web_api2.h"
 
@@ -471,6 +472,7 @@ extern "C" void bbnet_register(void) {
     Libraries::Np::NpScore::RegisterLib(sym);
     Libraries::Np::NpSignaling::RegisterLib(sym);
     Libraries::Np::NpTus::RegisterLib(sym);
+    Libraries::Np::NpUtility::RegisterLib(sym); // bbsc: was an offline stub (3rd player join)
     Libraries::Np::NpWebApi::RegisterLib(sym);
     Libraries::Np::NpWebApi2::RegisterLib(sym);
 }

@@ -48,14 +48,14 @@ F01 branch/plan preparation is complete; documentation checkpoint `b42c83af0bcc8
 | Area | Evidence in this repository |
 |---|---|
 | Branch and plan | Exact 1.7.2 ancestry and migrated scope/ownership documents verified. |
-| BBSC patch/source | NOT RUN: not obtained, applied or committed here. |
-| Gameplay DLL/load configuration | NOT RUN: not assembled or loaded here. |
-| Native build/tests | NOT RUN here; no old PASS transferred. |
+| BBSC patch/source | R02 VERIFIED: exact pinned patch checked and applied; [composition evidence](BBSC-BASELINE.md). |
+| Gameplay DLL/load configuration | R02 VERIFIED: official release DLL/loader/notices assembled; copied-profile image/hooks/HTTP override startup passed. |
+| Native build/tests | Fresh CLANG64 build exit 0; native module/startup checked here. Linux-only tests skipped; no old PASS transferred. |
 | Self-hosted multiplayer/progress/return | NOT RUN; G1/G2/G3 remain open. |
 
-## First development task
+## R02 reproduction procedure
 
-R02 is READY after this documentation checkpoint: obtain the exact BBSC 0.0.2 reference, inspect and verify its BBport 1.7.2 patch, then assemble the complete baseline with its existing gameplay DLL and loader. All patch/build/load/gameplay checks must be recorded against this repository's source and artifacts. Do not assume the transport patch alone supplies the gameplay mod.
+R02 composition/native startup is now VERIFIED; read [the R02 record](BBSC-BASELINE.md) and current tracker. Next is R03 two-client baseline reproduction. The procedure below records the initial R02 setup; do not reapply the patch to an already-patched checkpoint. Ignored binaries/profiles are local evidence and are not restored by cloning. On an existing checkpoint use reverse apply-check and the recorded source/artifact hashes.
 
 When the user starts development with the prompt below:
 
@@ -65,7 +65,7 @@ When the user starts development with the prompt below:
 4. Follow the exact baseline's build instructions and use only needed pinned dependencies. Build-only work may proceed after source/patch checks; actual game/load tests require complete verified composition and a fresh copied-profile setup.
 5. Record actual checks at each checkpoint, synchronize checkboxes and commit/push to origin/seamless. R03 handles baseline reproduction; R04 starts only from demonstrated goal gaps. R02 does not need to wait for the external Claude audit.
 
-The preparation sessions were documentation-only. Starting development in a new session is a separate next action; no implementation, build or game launch was performed for this handoff.
+The F01/F02 preparation sessions were documentation-only. The later R02 checkpoint records source application, a new build and copied-profile native startup; no multiplayer/gameplay acceptance is implied.
 
 ## Inputs for later testing
 
@@ -87,4 +87,4 @@ Codex owns runtime/build/shared plans and works without subagents. Claude's sepa
 
 Paste this to start development, rather than another plan-only session:
 
-> เริ่มพัฒนาตามแผนใน repo นี้บน branch seamless อ่าน AGENTS.md, docs/handoff/WINDOWS-RESUME.md, แผนที่ลิงก์ไว้ และ docs/WINDOWS-PROGRESS.md ก่อน จากนั้นเริ่ม R02 โดยตรวจ BBSC 0.0.2 ที่ commit ตรึงไว้และ patch สำหรับ BBport 1.7.2 แล้วประกอบ baseline ด้วย DLL/loader เดิม ทำงานเองตามลำดับ ไม่ใช้ subagents ไม่ใช้ worktree หรือผลทดสอบจาก repo เก่า รักษาขอบเขตสามเป้าหมายและระบบอื่นตามเดิม ตรวจ usage เป็นระยะ ถ้าเหลือต่ำกว่า 10% ในหน้าต่างใดให้หยุดงานใหม่ บันทึกและ commit checkpoint อัปเดต tracker/checkboxes ตามหลักฐานจริงและ push ไป origin/seamless จุดที่ต้องถามให้ข้ามงานที่ขึ้นอยู่กับคำตอบไปก่อนแล้วสรุปคำถามท้ายรอบ โดยทำงานอิสระส่วนอื่นต่อได้ ไม่ทำ packaging หรือ redeploy server และใช้เฉพาะโปรไฟล์สำเนาเมื่อต้องทดสอบเกม
+> ดำเนินงานต่อ R03 ใน repo นี้บน branch seamless อ่าน AGENTS.md, docs/handoff/WINDOWS-RESUME.md, docs/handoff/BBSC-BASELINE.md, แผนที่ลิงก์ไว้ และ docs/WINDOWS-PROGRESS.md ก่อน ตรวจ source/artifact hashes และสถานะจริง ไม่ทำ R02 ซ้ำเมื่อ checkpoint ยังตรงกัน จากนั้นตรวจเส้นทาง self-hosted แยก ShadNet/game server และ relay/P2P fallback ด้วยบัญชีเดิมสองบัญชีที่ต่างกันและโปรไฟล์สำเนาแยกกัน ก่อนทดสอบ join/progress/return ทำเองไม่ใช้ subagents ไม่ใช้ผลจาก repo เก่า ตรวจ usage เป็นระยะ ถ้าเหลือต่ำกว่า 10% ให้หยุดงานใหม่ บันทึกและ commit checkpoint อัปเดต tracker/checkboxes ตามหลักฐานจริงและ push origin/seamless เก็บคำถามที่บล็อกงานไว้ท้ายรอบและทำงานอิสระต่อ ไม่ทำ packaging หรือ redeploy server ไม่เปิด custom admission/application และไม่สร้างหรือทำซ้ำบัญชีโดยปริยาย
