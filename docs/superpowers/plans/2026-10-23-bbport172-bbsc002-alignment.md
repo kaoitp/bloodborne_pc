@@ -75,6 +75,8 @@ Unknown deployed server source/version remains explicit; it does not block unrel
 
 R03-A01: IN_PROGRESS; [quota checkpoint](../../handoff/R03-ACCEPTANCE.md) records negative join control, older-host-progress gap, post-placement guest crash and partial routing. No broad gameplay box completed. The user requests the four remaining acceptance groups and waives exhaustive map coverage. Use representative same-map/Dream coverage plus invalid-candidate, shared-progress/save-reload, disconnect/interrupted-return and required self-hosted route evidence. Record any remaining case honestly; no implicit gameplay PASS from source inspection.
 
+R03-A02 closure run: IN_PROGRESS. Resume A01 crashed guest recovery, symbolicate the actual null read, establish an existing-toolchain DLL build if possible, then correct and natively verify only demonstrated gaps. User authorizes game tests and retains quota stopping.
+
 ## R04 — Minimum fixes for demonstrated goal gaps
 
 Owner: Codex. Dependency: R02/R03 evidence and relevant CL01 findings.
@@ -117,3 +119,16 @@ CL02-REV01: REVIEW COMPLETE / CHANGES REQUESTED (2026-10-24). Reviewed handback 
 G1: supported cross-map/Dream join with correct peer/password and placement. G2: jointly earned progress/rewards survive save/reload without importing older host progress, undoing own progress or duplicating relevant rewards. G3: departure/disconnect/interrupted-session reload preserve own world and safe return. All use complete pinned clients and the self-hosted route.
 
 Keep fixture, native, baseline gameplay and custom-change gameplay evidence separate. Old repository results do not pass these checkboxes. Custom managed admission/progress application stays OFF until its relevant native gates pass. No claim of completion while required checks are open.
+
+### A02 bounded checkpoint
+
+- [x] Reproduce shader null-table read against the real header, fix it narrowly and rebuild/replay native join.
+- [x] Build pinned-source local DLL with notices; test profile path producer/consumer and native per-slot journal.
+- [x] Observe copied interrupted return to original point and final-DLL invalid-point lamp fallback.
+- [x] Observe initial wrong-character journal isolation, malformed-file rejection and completion-rename retry.
+- [ ] Finish final-source normal/host-loss return, pending-title ownership, initial-write failure and independent world/save integrity.
+- [ ] Correct verified-event progress/rewards and prove save/reload; complete remaining candidate/routing evidence.
+
+Full evidence/versions/failed attempts/limitations: [A02 record](../../handoff/R03-A02-RECOVERY.md). R03 remains IN_PROGRESS and its three broad gameplay boxes stay open.
+
+A02 final native gate FAILED: pending recovery crossed characters after title; prototype is OFF by default behind explicit experimental opt-in. The checkboxes above describe bounded observations, not full recovery acceptance. Fix actual character/lifecycle ownership before enabling it; retain all three R03 gameplay boxes open. Stop new work at the usage checkpoint and publish.

@@ -1,5 +1,9 @@
 # Resume BBSC development on Windows
 
+A02 final gate FAILED: pending recovery crossed from EiEi to Kaori after Quit Game/title. New durable-origin recovery is now experimental and OFF unless SHADPS4_BBSC_EXPERIMENTAL_HOME_RECOVERY=1; do not enable on user profiles. R03 remains IN_PROGRESS. See the blocking final gate in [A02 evidence](R03-A02-RECOVERY.md).
+
+Latest A02: [native crash/profile/origin recovery checkpoint](R03-A02-RECOVERY.md). C01 null-table regression and copied native join passed; per-profile journal and original-point/invalid-point-lamp recovery now have bounded native evidence. G2 older-host import remains unchanged; full world/save integrity, host loss and remaining candidate/routing cases keep R03 IN_PROGRESS. Use the final local V5 DLL recipe and exact artifact hashes in that record; do not reuse older official artifact hashes as the tested A02 composition.
+
 Latest A01 quota checkpoint: [four remaining acceptance groups](R03-ACCEPTANCE.md). User accepts representative maps. Wrong-word control behaved correctly, but progress inherits older host flags and a later guest crashed after placement. Recovery and full service independence remain unverified. Stop threshold reached at 9%/70%; resume from preserved crashed copies and the DLL progress/toolchain boundary, not an all-map sweep.
 
 Updated: 2026-10-24 (Asia/Bangkok). Next task: **remaining R03 G1/G2/G3 acceptance**. Same-map and Cathedral Ward -> Hunter's Dream joins now have actual native evidence. [R04-J01](R04-JOIN-RELOAD.md) disables a demonstrated extra cross-map reload through the existing launch flag; adjacent blue guest placement and normal return to Cathedral Ward passed. The earlier pre-claim deactivation cause remains unconfirmed. R03 is still IN_PROGRESS; do not repeat R02 or claim all-map/progress/recovery acceptance.

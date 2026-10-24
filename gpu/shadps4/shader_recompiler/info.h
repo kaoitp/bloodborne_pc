@@ -216,6 +216,9 @@ struct Info : InfoPersistent {
             std::memcpy(&base, &ud[ptr_index], sizeof(base));
             base = reinterpret_cast<const u32*>(VAddr(base) & 0xFFFFFFFFFFFFULL);
         }
+        if (base == nullptr) {
+            return T{};
+        }
         std::memcpy(&data, base + dword_offset, sizeof(T));
         return data;
     }

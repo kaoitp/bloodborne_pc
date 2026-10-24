@@ -1,5 +1,7 @@
 # R03-A01: remaining acceptance checkpoint
 
+A02 final gate FAILED: pending recovery crossed from EiEi to Kaori after Quit Game/title. New durable-origin recovery is now experimental and OFF unless SHADPS4_BBSC_EXPERIMENTAL_HOME_RECOVERY=1; do not enable on user profiles. R03 remains IN_PROGRESS. See the blocking final gate in [A02 evidence](R03-A02-RECOVERY.md).
+
 2026-10-24, Asia/Bangkok. IN_PROGRESS; stopped new work at usage 9%/70% remaining under AGENTS. User waived exhaustive map verification, not progress/recovery correctness. Source base `bd24679c7655a97bd4d9fba2b11ee079e6033751`. No runtime change in this checkpoint; J01 remains in place.
 
 | Requested group | Actual result | Still required |
@@ -38,3 +40,7 @@ The pinned DLL build recipe requires MSVC 2022 Community vcvars64 and clang-cl; 
 Startup native socket records include established connections to configured self-hosted ShadNet :31313 and DLL relay :20444. GPU streams contain actual HTTP override/redirect activity for game API :20443 and summon WebAPI :31315; the existing P2P relay :3478 is configured but port presence alone is not UDP peer proof. The mod also reports optional Discord presence, whose pinned existing opt-out is SHADPS4_BBSC_DISCORD=0; no dependency conclusion from that presence connection. Addresses/accounts/raw identifiers remain private; no remote service/configuration/firewall change.
 
 Resume: inspect the saved guest crash and recovery without overwriting evidence; establish the pinned DLL build prerequisite for P01; fix/retest progress at its collection seam; finish stale/failed join and controlled disconnect/reload cases and route correlation. Representative maps suffice per user. Keep broad R03 checkboxes open, custom managed admission/application OFF, preserve FSR-Vulkan dirt. No code tests rerun for this documentation-only checkpoint; document/link/whitespace checks recorded in the tracker. Stop new investigation after the quota threshold; commit and publish this checkpoint.
+
+## A02 superseding evidence
+
+[Native crash/profile/origin recovery checkpoint](R03-A02-RECOVERY.md) supersedes A01's build/recovery-unavailable state. The reproduced null-table crash has focused RED/GREEN and native replay; local pinned-source DLL building, profile storage and bounded original-point/recorded-lamp recovery now work. Wrong-slot and malformed-file rejection and completion-rename retry have bounded observations. G2 older-host import is unchanged. Full G3 independent world/save integrity, initial write failure, host loss, pending-title ownership, final-source normal return and remaining candidate/routing cases remain open. Three broad gameplay boxes stay open; no R03 closure.

@@ -370,6 +370,8 @@ def main():
         # GPU caches (shaders, pipelines) beside the saves; read before main(), so set here.
         user_dir = Path(env.get('BB_USER_DIR', data / 'user')).resolve()
         user_dir.mkdir(parents=True, exist_ok=True)
+        if env.get('BBSC_EMULATOR'):
+            env['BB_USER_DIR'] = str(user_dir)
         env.setdefault('BB_GPU_USER_DIR', str(user_dir))
         if env.get('BB_ONLINE') == '1' and env.get('BB_BRIDGE') == '1':
             bridge = start_bridge(env, user_dir)

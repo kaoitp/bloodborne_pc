@@ -59,6 +59,10 @@ class BbscLaunchTests(unittest.TestCase):
                                        'SHADPS4_BBSC_WARP_JOIN': ''})
         self.assertEqual(env['SHADPS4_BBSC_WARP_JOIN'], '0')
 
+    def test_dll_receives_the_resolved_save_profile(self):
+        env = self.launch_environment({'BBSC_EMULATOR': 'test-emulator.exe'})
+        self.assertEqual(env.get('BB_USER_DIR'), str(Path(env['BB_DATA_DIR']) / 'user'))
+
     def test_stock_launch_does_not_change_bbsc_flags(self):
         env = self.launch_environment({})
         self.assertNotIn('SHADPS4_BBSC_WARP_JOIN', env)
