@@ -73,6 +73,8 @@ R03-L01 historical source comparison is VERIFIED (documentation only, 2026-10-24
 
 Unknown deployed server source/version remains explicit; it does not block unrelated baseline composition. Use existing authorized test services/configuration, not production redeployment. One client can perform setup/load smoke; actual multiplayer needs a distinct second identity.
 
+R03-A01: IN_PROGRESS; [quota checkpoint](../../handoff/R03-ACCEPTANCE.md) records negative join control, older-host-progress gap, post-placement guest crash and partial routing. No broad gameplay box completed. The user requests the four remaining acceptance groups and waives exhaustive map coverage. Use representative same-map/Dream coverage plus invalid-candidate, shared-progress/save-reload, disconnect/interrupted-return and required self-hosted route evidence. Record any remaining case honestly; no implicit gameplay PASS from source inspection.
+
 ## R04 — Minimum fixes for demonstrated goal gaps
 
 Owner: Codex. Dependency: R02/R03 evidence and relevant CL01 findings.

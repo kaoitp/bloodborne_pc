@@ -1,5 +1,7 @@
 # R03 new-session execution handoff
 
+Latest A01 quota checkpoint: [four remaining acceptance groups](R03-ACCEPTANCE.md). User accepts representative maps. Wrong-word control behaved correctly, but progress inherits older host flags and a later guest crashed after placement. Recovery and full service independence remain unverified. Stop threshold reached at 9%/70%; resume from preserved crashed copies and the DLL progress/toolchain boundary, not an all-map sweep.
+
 Prepared: 2026-10-24 (Asia/Bangkok). Owner: Codex, inline. Parent: [active R03 plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md). Read [Windows resume](WINDOWS-RESUME.md), [progress](../WINDOWS-PROGRESS.md), [R02 evidence](BBSC-BASELINE.md) and [product outcomes](../superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md). Latest checkpoint: [R04-J01](R04-JOIN-RELOAD.md) verified same-map and Cathedral Ward -> Dream joining, adjacent guest placement and normal own-world return after disabling the extra reload. Full G1/G2/G3 remain open; earlier failed attempts below are historical.
 
 ## Inputs available on this machine

@@ -1,0 +1,40 @@
+# R03-A01: remaining acceptance checkpoint
+
+2026-10-24, Asia/Bangkok. IN_PROGRESS; stopped new work at usage 9%/70% remaining under AGENTS. User waived exhaustive map verification, not progress/recovery correctness. Source base `bd24679c7655a97bd4d9fba2b11ee079e6033751`. No runtime change in this checkpoint; J01 remains in place.
+
+| Requested group | Actual result | Still required |
+|---|---|---|
+| Invalid join | Bounded wrong-word cross-map case observed: both nonempty words differed, accounts differed, host Dream / guest Cathedral Ward; repeated requests, no JoinSession_White/state 6/warp during mismatch. Restoring the host word allowed join. | Stale/failed selected candidate and independent world-state comparison; no blanket negative-case PASS |
+| Jointly earned progress | REPRODUCED-GAP in prior native evidence, corroborated by pinned source: no boss/event earned together during the Dream visit, but guest return log reports 7 newly set entries labelled boss flags. | Correct eligibility/baseline capture and verified rewards, then actual event/rejoin/save-reload proof; do not claim seven independently identified defeated bosses |
+| Disconnect/interrupted recovery | Actual guest process crashed after successful join/placement in this run. Copied saves and logs preserved. Host Quit Game and closed normally. | Recover/reload that guest copy first; then controlled host loss/guest interruption and original-world/reward integrity checks |
+| Required self-hosted routing | Configured game API/summon endpoints and active ShadNet/TCP relay routes observed; same native join succeeded through this configuration. | Complete peer/progress route correlation and verify optional public presence does not participate in the required flow; no blanket no-public-dependency PASS |
+
+## Native sequence and private evidence
+
+Fresh original manifest and both copied savedata trees were captured before launch. Same pinned artifacts as [J01](R04-JOIN-RELOAD.md), rehashed successfully: probe `a948f6948d934f024f6089d976edf97bd915f0e46381cdeaad45d9595b1a27ca`, DLL `1df7d39e31c5d1acf034b5fd990b669e5e82944be477f26b0a46621a91610fdf`, loader `c7fbaa406d972324645153bb8cc8bdad17fcd7db2f05026d67e3ba68f34750c1`; run.py `59143bfbf7bea4d86b4e1b3667eeec2bb94bf42480dd3a5e44c965b56e0c7928`. No artifact replacement/build.
+
+Host PID 9056/HWND 263192, guest PID 18740/HWND 1312610, distinct existing authorized accounts and isolated profile-a/b. Baseline native pad-file interface used 110 ms pulses with cleared intervals. The existing game matching-word editor accepted BackSpace and keypad KP_0; ordinary digit input followed the Thai layout and an attempted edit was cancelled before restoring via keypad. No input subsystem change.
+
+Mismatch search began at 15:27:59; request-body comparison showed nonempty unequal SummonWord, distinct UserId, different AreaId. Captured repeated host searches/guest sign requests and no native join or warp before restoration around 15:32. This is a bounded observation; absence of join alone does not prove every save field unchanged.
+
+After restoring the word, host rang the guest sign 15:32:26; guest state 4 -> 6 at 15:32:34, Dream loaded 15:32:44, two hunters reported, adjacent placement 15:32:47. No extra full-reload request observed. Then guest exited unexpectedly before a planned controlled interruption or visual playable-state capture. Stderr records a null read at `bb-probe.exe+0x1bae22`, thread 10496, stack `0x1af1a14a0`. Earlier renderer/SRT warnings do not establish causality. No clean exit code or crash root cause is claimed. This differs from the historical pre-join deactivation: this process reached native guest placement first.
+
+Private `.superpowers/r03-gates` retains before/after copied saves, guest own-world files, fresh original manifests/integrity result, mismatching request summary, timestamps, stdout/stderr, socket records and cleanup.json. Raw hook/HTTP captures remain ignored. Logs: `bbsc-mod-20261024-152059-9056.log`, `bbsc-timeline-20261024-152100-9056.txt`, `bbsc-mod-20261024-152224-18740.log`, `bbsc-timeline-20261024-152225-18740.txt`. Helpers contain credentials; never print/stage them. Do not restore over the crashed guest copy until its recovery case has been inspected/backed up.
+
+Host returned to the title menu then CloseMainWindow returned true and process exit was observed; guest had already terminated. Final save copies retained after process exit. Original profile: 3,171 paths/hashes before and after, zero differences.
+
+## Progress gap and next correction boundary
+
+Earlier actual J01 guest log `bbsc-mod-20261024-121121-6596.log` at 12:21:33.817 reports 7 new entries of 16 host progress flags, zero new world bits, saves backed up first false; the visit involved no boss kill or shared story event. At 12:21:50.533 the merge remained present. This evidence had previously been explicitly excluded from G2 PASS, but the acceptance comparison now identifies the older-host-import gap.
+
+Pinned BBSC `4f11faf88b6ba658ebde6fe5fbefdadedba4fa41`, `emulator/src/core/bloodborne_re.cpp`: `TickBbscProgressBroadcast` sends all active listed host progress flags; `TickBbscSharedProgress` accumulates kind-1 group snapshots; `MergeBbscSharedProgress` (10821 onward) sets every collected missing boss entry and ORs whole collected world groups. It has no playable-join baseline subtraction for this outcome. Source comments intentionally describe inheriting all host progress, unlike the current product requirement to share only events earned together. Dream display isolation is not shared-event eligibility.
+
+Goal/dependency for a future P01 correction: preserve own progress/quest choices and share only eligible events; demonstrated gap above; existing default cannot qualify that requirement; responsible producer/consumer is DLL progress collection/merge, not matchmaking or the three-line J01 launcher fix. Acceptance must include pre-existing host-only progress excluded, actual jointly earned event retained, verified item non-duplication, both save/reloads and affected crash/write-failure recovery. Disabling progress entirely would not satisfy the goal. No speculative patch or new framework introduced here.
+
+The pinned DLL build recipe requires MSVC 2022 Community vcvars64 and clang-cl; neither command nor the recipe's installation directory was found in this session. The prior CLANG64 probe build is not a DLL build. No toolchain install, source migration or unqualified replacement DLL was attempted. Also investigate backup=false: pinned BackupBbscSaves searches cwd/user and APPDATA plus existing BBSC_SAVE_DIR override; DLL GetUserPath uses its own module directory. Do not assume copied profile recovery journals and mod shared-progress storage have the same root.
+
+## Service evidence and resume order
+
+Startup native socket records include established connections to configured self-hosted ShadNet :31313 and DLL relay :20444. GPU streams contain actual HTTP override/redirect activity for game API :20443 and summon WebAPI :31315; the existing P2P relay :3478 is configured but port presence alone is not UDP peer proof. The mod also reports optional Discord presence, whose pinned existing opt-out is SHADPS4_BBSC_DISCORD=0; no dependency conclusion from that presence connection. Addresses/accounts/raw identifiers remain private; no remote service/configuration/firewall change.
+
+Resume: inspect the saved guest crash and recovery without overwriting evidence; establish the pinned DLL build prerequisite for P01; fix/retest progress at its collection seam; finish stale/failed join and controlled disconnect/reload cases and route correlation. Representative maps suffice per user. Keep broad R03 checkboxes open, custom managed admission/application OFF, preserve FSR-Vulkan dirt. No code tests rerun for this documentation-only checkpoint; document/link/whitespace checks recorded in the tracker. Stop new investigation after the quota threshold; commit and publish this checkpoint.

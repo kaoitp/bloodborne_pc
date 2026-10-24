@@ -1,5 +1,7 @@
 # Resume BBSC development on Windows
 
+Latest A01 quota checkpoint: [four remaining acceptance groups](R03-ACCEPTANCE.md). User accepts representative maps. Wrong-word control behaved correctly, but progress inherits older host flags and a later guest crashed after placement. Recovery and full service independence remain unverified. Stop threshold reached at 9%/70%; resume from preserved crashed copies and the DLL progress/toolchain boundary, not an all-map sweep.
+
 Updated: 2026-10-24 (Asia/Bangkok). Next task: **remaining R03 G1/G2/G3 acceptance**. Same-map and Cathedral Ward -> Hunter's Dream joins now have actual native evidence. [R04-J01](R04-JOIN-RELOAD.md) disables a demonstrated extra cross-map reload through the existing launch flag; adjacent blue guest placement and normal return to Cathedral Ward passed. The earlier pre-claim deactivation cause remains unconfirmed. R03 is still IN_PROGRESS; do not repeat R02 or claim all-map/progress/recovery acceptance.
 
 ## Read before work
