@@ -132,3 +132,5 @@ Keep fixture, native, baseline gameplay and custom-change gameplay evidence sepa
 Full evidence/versions/failed attempts/limitations: [A02 record](../../handoff/R03-A02-RECOVERY.md). R03 remains IN_PROGRESS and its three broad gameplay boxes stay open.
 
 A02 final native gate FAILED: pending recovery crossed characters after title; prototype is OFF by default behind explicit experimental opt-in. The checkboxes above describe bounded observations, not full recovery acceptance. Fix actual character/lifecycle ownership before enabling it; retain all three R03 gameplay boxes open. Stop new work at the usage checkpoint and publish.
+
+A02 checkpoint published as cb336ffa2d5b27142e69fb0fd179eb0f45ee6b3a; origin/remote SHA verified, only existing FSR-Vulkan dirt remains. R03 stays IN_PROGRESS; native recovery ownership FAILED and new origin recovery remains experimental/OFF.
