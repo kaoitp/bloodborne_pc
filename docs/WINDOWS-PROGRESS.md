@@ -189,3 +189,5 @@ Custom managed admission/progress application remains OFF until relevant native 
 - Latest usage: 29%/73% remaining before publication. Next: remaining supported/locked-map and invalid-candidate G1 cases, independently snapshotted eligible shared progress/rewards/save-reload G2, then disconnect/interrupted G3. Check lighting on other maps. Three R03 gameplay boxes remain open; do not mark R03 complete.
 
 - Final document checks: strict UTF-8, all 46 relative links, R03 checkbox count (3 checked/3 open), added-text private-value pattern scan and diff whitespace PASS. Final focused rerun: 4 tests PASS; py_compile PASS; verified test PIDs no longer active.
+
+- J01 publication: af235b31abf7fc4fbb168f88b5fc9eb82d3a8afd committed the 8-file bounded implementation/evidence checkpoint; git push origin seamless exited 0. HEAD, origin/seamless and remote refs/heads/seamless matched. Only the pre-existing FSR-Vulkan submodule dirt remained. This follow-up records publication; no further native work or acceptance expansion.
