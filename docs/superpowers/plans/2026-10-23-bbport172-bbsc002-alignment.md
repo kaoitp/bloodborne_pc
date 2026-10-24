@@ -60,7 +60,7 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
-Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS after 2026-10-24 memory/input retry. Both clients now run/play concurrently using automatic Windows pagefile growth and the existing native pad test interface; no runtime/system setting change. Actual same-map claim/mutual signaling/relay exchange failed before guest join. Diagnose that boundary next; G1/G2/G3 remain open. [Progress evidence](../../WINDOWS-PROGRESS.md), [resume](../../handoff/R03-RESUME.md).
+Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS. Native same-map and Cathedral Ward -> Dream join/adjacent placement succeeded. [R04-J01](../../handoff/R04-JOIN-RELOAD.md) verified the existing-flag fix for a second-load guest-role/return gap. The earlier pre-claim failure remains unexplained; full G1/G2/G3 remain open. [Progress evidence](../../WINDOWS-PROGRESS.md), [resume](../../handoff/R03-RESUME.md).
 
 - [x] Initialize only required pinned dependencies and build using the baseline's `bash build.sh`; record actual waited exit and source/diff state. Exit 0; hashes/dependency inventory in R02 evidence.
 - [x] Run relevant baseline/patch/native load checks and startup smoke. Record honest skips; no blanket port of old tests or unrelated graphics qualification.
@@ -69,7 +69,7 @@ Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS after 20
 - [ ] Verify normal exit/disconnect/return and interrupted-session exit/reload. Preserve original saves and baseline Kit/Blank behavior.
 - [x] Record a three-goal table using EXISTING/PASS, PRESENT-NOT-TESTED, REPRODUCED-GAP or UNSUPPORTED before designing changes.
 
-R03-L01 historical source comparison is VERIFIED (documentation only, 2026-10-24): [join-fix leads](../../handoff/R03-JOIN-LEADS.md). Next discriminate claim consumption/native handshake before applying old emulator fixes to the DLL. No gameplay acceptance changed; the three R03 gameplay boxes stay open.
+R03-L01 historical source comparison is VERIFIED (documentation only, 2026-10-24): [join-fix leads](../../handoff/R03-JOIN-LEADS.md). R03-L02 reproduced successful baseline joining but not the earlier pre-claim failure; R04-J01 tests one downstream lead. The three broad R03 gameplay boxes stay open.
 
 Unknown deployed server source/version remains explicit; it does not block unrelated baseline composition. Use existing authorized test services/configuration, not production redeployment. One client can perform setup/load smoke; actual multiplayer needs a distinct second identity.
 
@@ -82,6 +82,13 @@ Owner: Codex. Dependency: R02/R03 evidence and relevant CL01 findings.
 - [ ] Where progress changes are necessary, reuse the event/save path. Verify eligibility, own-progress preservation, no duplicate relevant rewards and save/reload. Changes to persistence/recovery also require affected wrong-character/write-failure/crash/retry cases.
 - [ ] Where self-hosted configuration changes are necessary, reuse existing components/settings; verify routing and peer exchange without a required public service.
 - [ ] Run focused regression/native/gameplay checks for the actual delta, repeat the three-goal end-to-end scenario and review every changed path for scope.
+
+R04-J01 is VERIFIED for its bounded case: [five-part justification, native RED/GREEN and checks](../../handoff/R04-JOIN-RELOAD.md). Three added lines in `run.py` default the existing extra-reload switch off for DLL launches; no DLL rebuild or server change.
+
+- [x] Reproduce second cross-map reload and broken guest return on the pinned composition.
+- [x] Regression: DLL default, explicit overrides, empty override and stock launch (4 tests PASS).
+- [x] Actual fixed Cathedral Ward -> Dream guest placement and normal origin return; original profile unchanged.
+- [x] Inline review and honest full-suite results recorded (154 tests, 1 failure, 8 errors, 48 skips); broader gates remain open.
 
 ## CL01 — External Claude Code source/reuse audit
 

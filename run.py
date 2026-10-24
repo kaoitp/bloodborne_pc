@@ -259,6 +259,9 @@ def main():
     # As run.sh: relative paths (BB_GAME_DIR, BB_DATA_DIR, fsr4_shaders/) are from the port.
     os.chdir(PORT)
     env = os.environ
+    # A second cross-map reload recreates the co-op guest as a Beckoner.
+    if env.get('BBSC_EMULATOR') and not env.get('SHADPS4_BBSC_WARP_JOIN'):
+        env['SHADPS4_BBSC_WARP_JOIN'] = '0'
     data = Path(env.get('BB_DATA_DIR', PORT))
     out = data / 'out'
     out.mkdir(parents=True, exist_ok=True)

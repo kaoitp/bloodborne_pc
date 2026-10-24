@@ -1,6 +1,6 @@
 # Resume BBSC development on Windows
 
-Updated: 2026-10-24 (Asia/Bangkok). Next task: **R03 native join failure diagnosis**. Concurrent copied clients now load/play with automatic Windows pagefile growth and baseline scripted pad input. Same-map summon reached mutual signaling/bidirectional self-hosted relay traffic, then guest explicitly deactivated before joining. See the latest retry checkpoint; G1/G2/G3 remain open. No permanent memory fix or runtime change claimed.
+Updated: 2026-10-24 (Asia/Bangkok). Next task: **remaining R03 G1/G2/G3 acceptance**. Same-map and Cathedral Ward -> Hunter's Dream joins now have actual native evidence. [R04-J01](R04-JOIN-RELOAD.md) disables a demonstrated extra cross-map reload through the existing launch flag; adjacent blue guest placement and normal return to Cathedral Ward passed. The earlier pre-claim deactivation cause remains unconfirmed. R03 is still IN_PROGRESS; do not repeat R02 or claim all-map/progress/recovery acceptance.
 
 ## Read before work
 
@@ -49,11 +49,11 @@ Cloning restores source/documents, not ignored binaries, profiles, credentials o
 | Source build | CLANG64 build exit 0, fresh artifacts hashed; Linux-only tests skipped |
 | Copied-profile native startup | Correct DLL, image validation, 52 patch writes, 159/159 hooks and 3 HTTP redirects observed |
 | Original saves/profile | All 3,171 original file hashes/path set unchanged after R02 diagnostics |
-| Two-client routing/join/progress/return | NOT RUN; G1/G2/G3 open |
+| Two-client routing/join/progress/return | R02 did not test multiplayer; later same-map/Dream join and normal return verified in [R04-J01](R04-JOIN-RELOAD.md). Full G1/G2/G3 open |
 
 The two tracked FSR-Vulkan patches applied by `build.sh` leave its submodule working tree dirty. This is recorded build state, not permission to discard or commit a Gitlink change. Verify before reuse. R02 artifacts were rehashed on 2026-10-24 and still match [the record](BBSC-BASELINE.md).
 
-Local private inputs are at `.superpowers/r03-resume.json` in the primary checkout. Read that ignored file for already-supplied game/profile paths and separate service addresses; do not copy its contents into Git. See [R03 instructions](R03-RESUME.md) for supplied private account/profile configuration, the concurrent-client resource limitation and current-state checks. Last service observations are dated 2026-10-23 and must be rechecked; a discussion of port 20444 did not authorize a server redeployment or prove it was enabled.
+Local private inputs are at `.superpowers/r03-resume.json` in the primary checkout. Read that ignored file for already-supplied game/profile paths and separate service addresses; do not copy its contents into Git. See [R03 instructions](R03-RESUME.md) for supplied private account/profile configuration, the concurrent-client resource limitation and current-state checks. Service observations are dated: the DLL TCP service connected during the 2026-10-24 J01 session. Recheck before reuse; this does not authorize server redeployment or prove every required route is self-hosted.
 
 ## New-session prompt
 

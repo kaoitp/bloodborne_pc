@@ -1,6 +1,6 @@
 # R03 new-session execution handoff
 
-Prepared: 2026-10-24 (Asia/Bangkok). Owner: Codex, inline. Parent: [active R03 plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md). Read [Windows resume](WINDOWS-RESUME.md), [progress](../WINDOWS-PROGRESS.md), [R02 evidence](BBSC-BASELINE.md) and [product outcomes](../superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md). Current session checkpoint: native smoke passed; both distinct accounts entered solo Cathedral Ward online sequentially. G1/G2/G3 remain open. See the current checkpoint below.
+Prepared: 2026-10-24 (Asia/Bangkok). Owner: Codex, inline. Parent: [active R03 plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md). Read [Windows resume](WINDOWS-RESUME.md), [progress](../WINDOWS-PROGRESS.md), [R02 evidence](BBSC-BASELINE.md) and [product outcomes](../superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md). Latest checkpoint: [R04-J01](R04-JOIN-RELOAD.md) verified same-map and Cathedral Ward -> Dream joining, adjacent guest placement and normal own-world return after disabling the extra reload. Full G1/G2/G3 remain open; earlier failed attempts below are historical.
 
 ## Inputs available on this machine
 
@@ -18,6 +18,14 @@ Primary checkout: `C:/Projects/bloodborne_pc` on `seamless`. Private metadata po
 | Toolchain | Existing `C:/msys64` CLANG64; compiler/package inventory and build recipe in R02 record |
 
 The three main artifacts and six input path-presence checks were rechecked on 2026-10-24: PASS. No rebuild, launch or current service check was performed for this preparation. Treat later changes as invalidating affected evidence and recheck/rebuild only what changed. Fresh clone/different machine needs local reconstruction from R02; ignored paths are not in Git.
+
+## Latest checkpoint: R03-L02 / R04-J01
+
+Read [the bounded fix and RED/GREEN evidence](R04-JOIN-RELOAD.md) first. Baseline same-map and cross-map joining succeeded with distinct accounts even when copied CharaId matched; the earlier pre-claim failure was not reproduced. Cross-map second reload then broke guest departure. `run.py` now defaults existing `SHADPS4_BBSC_WARP_JOIN=0` for DLL launches, preserving explicit overrides. The fixed guest joined Dream, warped beside the host and returned to its Cathedral Ward origin. Direct emulator invocation bypasses this launcher default; explicit `1` restores the previous extra-reload behavior.
+
+Both clients Quit Game and were normally closed; 3,171 original profile paths/hashes remain unchanged. All-map G1, all G2 and interrupted/disconnect G3 remain open. Resume with independent copied-world/progress snapshots, other supported routes and invalid-candidate checks; preserve baseline validation and keep managed application OFF. The native pad interface worked reliably with 100-120 ms pulses followed by clearing and 320-450 ms separation; longer pulses can repeat menu movement. Observe before confirmation/item use.
+
+The following retry section records earlier observations; its failure hypothesis and next-step wording are superseded where the latest evidence differs.
 
 ## Current checkpoint and remaining work (2026-10-24 retry)
 
