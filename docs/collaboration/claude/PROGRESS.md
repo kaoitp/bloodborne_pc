@@ -104,3 +104,38 @@ Also recorded:
 - **Codex evidence cited (not Claude tests):** R03/R04 records at `bd24679` (`docs/WINDOWS-PROGRESS.md`, `docs/handoff/R04-JOIN-RELOAD.md`), linked by immutable URL because those files are not in the frozen base.
 - **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests. No case status changed to PASS.
 - **Checks:** see the correction commit message.
+
+## CL02-P01: progress contract (2026-10-24)
+
+Status: **VERIFIED for the source/documents** (set IN_PROGRESS before any CL02 deliverable edit; VERIFIED after the checks below). This is not a runtime PASS; G2 stays with Codex. Work package: `docs/handoff/CLAUDE-CODE-WINDOWS.md` § CL02-P01 at `seamless` `b1391b0`.
+
+| Slice | Status | Owned output |
+|---|---|---|
+| CL02-A | VERIFIED | `BBSC-002-MAP.md` § CL02: progress flags, the 19 boss-event reward rows, eligible vs unclassified, smallest seam |
+| CL02-B | VERIFIED | `IDENTITY-PROTOCOL.md` § CL02: progress ownership, snapshot ordering, recovery and legacy pending data |
+| CL02-C | VERIFIED (cases NOT RUN) | `ACCEPTANCE-CASES.md` § CL02: focused P01 G2 matrix, all NOT RUN |
+| CL02 handback | VERIFIED | this file: pins, checks, unknowns, ranked P01 recommendations, full commit SHA |
+
+- Comparison base: accepted CL01 head `108bf28f069d7017712fd71e24fb7fd6b2bbde36`; branch `claude/p01-progress-contract` in the same separate clone (clean before branching). CL01 audit base `04c6e7b` and pins K/B/N unchanged.
+- Codex evidence read (public Git objects, no rebase): `6cff29d75c9f8dedf887bf6b52fefc8a02b9cc5d` `docs/handoff/R03-ACCEPTANCE.md`, `docs/handoff/R04-JOIN-RELOAD.md`, `docs/superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md`.
+- Source pins for new claims: B `4f11faf88b6ba658ebde6fe5fbefdadedba4fa41` (`emulator/src/core/bloodborne_re.cpp`, `bbsc_persistence.h`, `emulator/mod/bbsc_relay.cpp`, `bbsc_channel.cpp`), read from the existing ignored reference clone. K and N are unchanged.
+- Deliverables: [BBSC-002-MAP.md § CL02-A](BBSC-002-MAP.md#cl02-a-progress-and-reward-contract-for-p01-2026-10-24) (A-17..A-31, the 19 reward rows), [IDENTITY-PROTOCOL.md § CL02-B](IDENTITY-PROTOCOL.md#cl02-b-progress-ownership-ordering-and-recovery-p01-2026-10-24) (B-15..B-25, Q7..Q10), [ACCEPTANCE-CASES.md § CL02-C](ACCEPTANCE-CASES.md#cl02-c-focused-p01-progress-matrix-2026-10-24) (G2 rows reused, plus G2-11..G2-14, all NOT RUN). CL01 sections, IDs and evidence dates are unchanged.
+- Not run by Claude: builds, the game, servers, accounts, private saves or logs. Codex evidence (the 7 entries, the 15:32 timeline, backup false) is quoted from `6cff29d`; Claude did not reproduce it.
+
+### CL02 ranked P01 recommendations (source only; nothing implemented)
+
+1. **Filter at collection, not at merge** (A-18, A-21). Put a per-session first-seen baseline in `OnBbscProgressPacket` and in the kind-1 loop of `TickBbscSharedProgress`. Take it from the first observation at or after the playable start (B-16), take it again on every state-6 entry (B-20), and admit only 0→1 transitions. The merge, the pending file and crash recovery then carry eligible entries without change.
+2. **Restrict what can be admitted to the existing finite list** (A-23). Leave A-24 (9466-9471, unclassified) and kind-1 groups (A-26) out until they are classified. A first-seen delta over whole kind-1 groups is expected to fail G2-06(b).
+3. **Decide the night flags** (A-25, G2-14). As written they import a host's later night at merge time without a joint event.
+4. **Close the cross-run reward duplicate where an existing flag allows it** (A-29). Before giving a first lot for a taken-flag-0 row, check the goods row's existing get flag. That covers rows 3, 8, 10, 15 and 18; the other 7 flag-0 rows have no existing record (unknown).
+5. **Legacy pending data** (B-23). A filtered build writes a new file magic, so baseline `BBSP` files are not re-imported. The conditional cases G2-13, G2-08, G2-09 and G2-10 apply only to the delta actually proposed.
+
+### CL02 unknowns
+
+- Which A-23 flag belongs to which of the 19 events, and whether 9450-9465 are counters.
+- Whether any kind-1 bit is an NPC quest phase.
+- Names and progression roles of the unnamed reward goods.
+- First-arrival timing per flag and block, and whether state 6 holds through death (Q7, Q8).
+- Which of the 7 A01 entries are A-23, A-24 or A-25 members (Q9).
+
+**Next (Codex):** review this contract, answer Q7-Q10 from existing logs or snapshots where possible, then decide R04-P01. Claude does not implement it.

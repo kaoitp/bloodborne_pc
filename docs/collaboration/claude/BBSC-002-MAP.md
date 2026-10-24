@@ -90,3 +90,88 @@ Columns: required outcome → actual source behavior → citation (commit, path,
 - Kind-1 group contents versus NPC quest phases (A-10).
 - Where a crashed guest loads (A-13).
 - Kept-death and spectate state transitions during eligibility (A-08).
+
+## CL02-A: progress and reward contract for P01 (2026-10-24)
+
+CL02 section, added on top of the accepted CL01 head `108bf28`. Pins **B** and **K** are unchanged. Every citation below is **B** `emulator/src/core/bloodborne_re.cpp` unless another file is named. This is source/document work only. Codex evidence is cited at `6cff29d` and labelled **Codex 2026-10-24**. It is not a Claude test.
+
+**Codex 2026-10-24 evidence this section explains** ([R03-ACCEPTANCE.md at 6cff29d](https://github.com/kaoitp/bloodborne_pc/blob/6cff29d75c9f8dedf887bf6b52fefc8a02b9cc5d/docs/handoff/R03-ACCEPTANCE.md)):
+- After the J01 Dream visit, with no boss or story event earned together, the guest's return log reported 7 newly set entries "of 16 host progress flags".
+- It also reported 0 new world bits, and "saves backed up first: false".
+- These are 7 log entries. Codex did not identify them as 7 defeated bosses, and Claude did not reproduce them. The post-placement crash cause and its recovery remain unknown.
+
+### Producer → consumer chain (existing, unchanged)
+
+| ID | Step | Source behavior | Citation | P01 relevance |
+|---|---|---|---|---|
+| A-17 | Host producer: boss/time flags | While the host is in session state 3, `TickBbscProgressBroadcast` sends every 5 s the flags it has on from `BbscProgressFlags` (49) and `BbscProgressFlagsMore` (8), as relay `SHAD 0x26`. It sends regardless of its own SHARED_PROGRESS switch. Each packet is the **full current set**, with no sequence number or time | [L10786-10797, L10875-10896](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10875-L10896); type `0x26` [B bbsc_relay.cpp L58](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/mod/bbsc_relay.cpp#L58) | The first packet a guest sees already contains the host's whole older history. Nothing in it separates old from new |
+| A-18 | Guest consumer: boss/time flags | Dispatch accepts the packet only `from_our_host()` ([B bbsc_relay.cpp L321-328](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/mod/bbsc_relay.cpp#L321-L328)). `OnBbscProgressPacket` then requires relay session state 6 and appends every listed flag not yet collected to `bbsc_progress_host_flags`. It also records the host's night bits | [L16753-16785](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L16753-L16785) | **The smallest seam for flags**: the only place a host flag enters the collection. No player-type, playable or baseline check here (the invader check is only in the tick, L11043-11051) |
+| A-19 | Host producer: world groups | `TickBbscWorldFlagsBroadcast` (host in state 3, own world, not loading) sends block snapshots of kinds 1/6/7/5. It sends 4 per second for 20 s after a map change or a new member, then 1 per second. It cycles through all area blocks except Chalice when WORLD_SYNC_ALL is on. Each snapshot has a host-local counter `snapshot` | [L5346-5448](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L5346-L5448); kinds [L5145](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L5145); keys [L5219-5227](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L5219-L5227) | A distant block's first snapshot can arrive seconds after the join. No snapshots are sent while the host is loading |
+| A-20 | Guest consumer: world groups | `OnBbscWorldFlagsPacket` assembles chunks. Only a **complete** snapshot replaces `bbsc_world_blocks[map]`, with `complete_ms`. Snapshots are kept until 5 s after the relay host unlocks (`ClearBbscHostWorldSnapshots`), and are also cleared when the locked host differs from the one that rang | [L16869-16921](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L16869-L16921); [L4359-4366, L4456-4458](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L4359-L4366); [L5300-5307](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L5300-L5307) | Snapshots that arrive in state 4 (before the join completes) are kept and later collected |
+| A-21 | Guest collector | `TickBbscSharedProgress`, every 1 s in state 6 (co-op guest only). It ORs kind-1 groups (indices 0..9) of **every complete block snapshot** into `bbsc_progress_groups`, except the Dream map | [L11028-11098](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L11069-L11097) | **The smallest seam for groups**: the only place a group enters the collection |
+| A-22 | Guest merge | After the guest is home and settled 4 s (or during the home load, `ApplyBbscSharedProgressAtLoad` at the respawn-point hook): the own world is restored first, the saves are backed up (a failed backup does not stop the merge), every collected flag that is off is set, and every collected group is ORed into the live table | [L10821-10863](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10821-L10863); [L11142-11168](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L11142-L11168); [L11192-11207](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L11192-L11207); call [L16026-16029](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L16026-L16029) | Consumes whatever the collector holds. If the collector holds only eligible entries, the merge needs no change |
+
+The design intent stated in the source contradicts outcome 5. The comment at [L10767-10785](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10767-L10785) says the guest's world "takes over everything the host has done, except NPC quests". The 7 entries in the Codex evidence are consistent with that behavior.
+
+### Candidate flag classification (finite, existing lists only)
+
+| ID | Existing entries | What the source establishes | What it does not | P01 class |
+|---|---|---|---|---|
+| A-23 | `BbscProgressFlags` (49): 2200..3600 (27), 5910-5914, 9180, 9450-9465 | Comment: "every flag a boss defeat event sets below 100000 (2003[02] next to a 945x counter, all event files)", generated with `tools/gamedata/emevd.py` ([L10772-10775](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10772-L10775)) | Which boss sets which flag; whether 9450-9465 are counters rather than kill flags; whether 5910-5914 / 9180 also gate rewards or cutscenes. No per-flag map exists in source; the tool was not run here | **Eligible candidates only after a verified joint event**: the list is the existing finite allow-list, but a flag is eligible only if it turned on during the guest's eligible window (IDENTITY-PROTOCOL § CL02-B) |
+| A-24 | `BbscProgressFlagsMore` 9466-9469, 9471 | Listed with the night flags. No separate comment | Meaning unknown | **Unclassified**: no source meaning, so it is not eligible merely because it changed. Codex decides after classification |
+| A-25 | 9800, 9801, 9802 (time of night) | Read as one 3-bit value that only ever grows. The comment calls them the host's night; the guest's own night is kept and restored, then "shared progress ORs the host's night in, which only ever moves it forward" ([L10792-10796](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10792-L10796); [L6017-6031](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L6017-L6031)) | Whether a night step reached during the session counts as an event earned together | **Older-history import as written**: a host ahead in time moves the guest's night forward at merge time, without any joint event. Display during the visit (host's night) is separate and stays. Product decision for Codex/user |
+| A-26 | Kind-1 groups 1AAB0..1AAB9 of every block (1,000 flags per 125-byte group) | Comment: "bosses, doors, shortcuts, lamps lit, cutscenes seen"; kinds 5/6/7 (pickups, NPC and object states) are excluded ([L10776-10779](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10776-L10779)). The collector skips the Dream map (L11085-11087) | Which bits are bosses, doors, lamps or NPC map events; whether a quest phase lives in a kind-1 group. Global groups below 100000 (story, NPC quests) are not in world sync ([L5136-5143](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L5136-L5143)) | **Unclassified as a whole.** Changed bits are not eligible merely because they changed (CL01 A-10). The only existing finite subset with an event meaning is the 19 reward events below, and their bit positions inside the groups are not established by source |
+
+### The 19 existing boss reward rows (finite table; not a quest/item catalogue)
+
+`BbscBossRewards` {event, taken flag, first lot, repeat lot} ([L10265-10291](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10265-L10291)) and `BbscBossGoodsLots` {lot, goods, count, get flag} ([L10324-10338](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10324-L10338)). Item names appear in the source comments for 3 rows only; the other goods ids are not resolved in source.
+
+| # | Event (map) | Taken flag | First lot → goods ×n (get flag) | Repeat lot → goods (get flag) | Duplicate guard in source |
+|---|---|---|---|---|---|
+| 1 | 12101800 (m21_00) | 6642 | 15000 → 4113 ×1 (0) | 15005 → 1400 ×1 (0) | taken flag picks the repeat lot |
+| 2 | 12201800 (m22_00) | 0 | 21002950 → 7150 ×4 (0) | — | run memory only |
+| 3 | 12301800 (m23_00) | 0 | 80000000 → 6109 ×1 (5000) | — | run memory only; get flag 5000 set on give, **not checked before give** |
+| 4 | 12301700 (m23_00) | 6644 | 50800000 → 4118 ×1 (0) | 50800005 → 1400 ×1 (0) | taken flag |
+| 5 | 12401800 (m24_00) | 0 | 50000001 → 4001 ×1 (0) | — | run memory only |
+| 6 | 12411700 (m24_01, Cleric Beast: Saw Hunter Badge) | 6645 | 50000010 → 4114 ×1 (0) | 0 (nothing) | taken flag → nothing |
+| 7 | 12411800 (m24_01) | 0 | 31000 → 4000 ×1 (0) | — | run memory only |
+| 8 | 12421800 (m24_02) | 0 | 80000300 → 6539 ×1 (5009) | — | run memory only; get flag not checked |
+| 9 | 12421700 (m24_02) | 6332 | 25700000 → native award (not in goods table) | 25700005 → 1500 ×1 (0) | taken flag |
+| 10 | 12601800 (m26_00, Mergo's Wet Nurse: One Third of Umbilical Cord) | 0 | 55100000 → 4323 ×1 (50000305) | — | run memory only; get flag not checked |
+| 11 | 12601850 (m26_00, Micolash: Mensis Cage) | 0 | 21000 → native award | — | run memory only |
+| 12 | 12701800 (m27_00) | 6321 | 2700990 → native award | 2700995 → 1500 ×1 (52700955) | taken flag |
+| 13 | 12801800 (m28_00) | 0 | 50700000 → 7131 ×3 (0) | — | run memory only |
+| 14 | 13201800 (m32_00) | 0 | 51001900 → 1591 ×1 (0) | — | run memory only |
+| 15 | 13301800 (m33_00) | 0 | 80000200 → 6429 ×1 (5006) | — | run memory only; get flag not checked |
+| 16 | 13401800 (m34_00) | 6674 | 3401800 → native award | 3401802 → 1500 ×1 (0) | taken flag |
+| 17 | 13401850 (m34_00) | 6673 | 3401850 → native award | 3401852 → 1500 ×1 (0) | taken flag |
+| 18 | 13501850 (m35_00) | 0 | 3501850 → 4020 ×1 (53501850) | — | run memory only; get flag not checked |
+| 19 | 13601800 (m36_00) | 0 | 3601800 → native award | — | run memory only |
+
+How a reward is given ([L10299-10316](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10299-L10316), [L10416-10483](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10416-L10483), hook [L11228-11239](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L11228-L11239)):
+- The guest's copy of the event reaches its player-type wait while `BbscGuestInHostWorld` (state 6, host's world, character type > 0; [L10085-10095](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10085-L10095)). The reward is then queued (needs GUEST_ITEMS, default on, [B bbsc_persistence.h L23](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bbsc_persistence.h#L23)).
+- It is given on the next tick, but only if the guest is in the boss's area. Either way the event is added to `bbsc_boss_reward_given`.
+- The guest's own event flags are not set by this path: the boss event's story-flag part stays host-only (comment L10253-10256). Boss progress reaches the guest only through A-17/A-18.
+
+| ID | Reward contract point | Source status | P01 note |
+|---|---|---|---|
+| A-27 | Eligible joint kill: only the guest's own copy of the event, in the boss's area, while a co-op guest in the host's world | PRESENT-NOT-TESTED. The source does **not** check the playable start: a copy that reaches the wait during the join load can still queue (state 6 already holds) | The reward event is the only existing source signal that the guest took part in a specific boss fight. Its link to a progress flag (A-23) is not in source |
+| A-28 | No re-grant within one run | `bbsc_boss_reward_given` is memory only, per process ([L10296](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10296)) | Holds across rejoin within a run; lost on restart |
+| A-29 | No duplicate across runs | Rows with a taken flag (7 rows) switch to the repeat lot or nothing. **The 12 rows with taken flag 0 give the first lot again** in a later run. For 5 of them the goods row carries a get flag that `GiveBbscBossGoods` sets ([L10343-10372](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L10343-L10372)) but `TickBbscBossRewards` never reads before giving | **candidate gap (source only)** against outcome 8. Smallest existing check: before a first lot with event taken flag 0, skip when that lot's existing goods get flag (non-zero) is already set. This covers rows 3, 8, 10, 15, 18 only. Rows 2, 5, 7, 11, 13, 14, 19 have no existing flag: source cannot establish deduplication or "consumed" for them |
+| A-30 | Consumed reward not re-granted | Only an event taken flag or a goods get flag records "given". `BbscInventoryHas` checks carried items, which a consumed item fails | Inventory presence is not a consumption record. Use the existing flags only |
+| A-31 | Required progression item missing after merge (outcome 8, CL01 G2-07(b)) | A boss flag merged without the fight gives no lot. With a P01 filter, a flag merges only after the guest took part, and the reward path gives the lot in the same fight | Source cannot list which items are required for progression. Out of scope beyond the 19 rows |
+
+### Smallest existing P01 seam (proposal for Codex; not implemented)
+
+- **Where.** Filter at collection, not at merge: in `OnBbscProgressPacket` (flags) and in the kind-1 loop of `TickBbscSharedProgress` (groups). Then the collection, the pending file, crash recovery and the merge all carry eligible entries only, and `MergeBbscSharedProgress` stays unchanged.
+- **What.** Per session:
+  - Keep a first-seen baseline per flag, and per group key, taken from the first observation **at or after the playable start** (definition and late-packet limits in IDENTITY-PROTOCOL § CL02-B).
+  - Admit only 0→1 transitions observed after that baseline, and only for entries in A-23.
+  - Leave A-24, A-25 and A-26 out until they are classified. For the kind-1 groups this means either collecting nothing, or only bits Codex verifies for the 19 events. The source does not supply bit positions.
+- **Rewards.** Keep the existing reward path. Add the get-flag check from A-29 for the 5 rows that have a get flag.
+- **What source cannot establish:**
+  - which A-23 flag belongs to which of the 19 events;
+  - whether any kind-1 bit is an NPC phase;
+  - names or progression roles of the unnamed goods;
+  - whether the 7 Codex entries are A-23, A-24 or A-25 members. The log line counts all 57 listed flags as "boss flags".
+- **No new storage, auth or protocol framework.** The baseline lives in the collector's memory. The pending-file header already has a magic number that can mark filtered data (IDENTITY-PROTOCOL B-18).

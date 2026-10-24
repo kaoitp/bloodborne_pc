@@ -97,3 +97,44 @@ Persistence-failure cases G2-09 and G2-10 are conditional on an actual R04 persi
 6. The rest.
 
 Only observed failures feed R04, under the plan's five-part change rule.
+
+## CL02-C: focused P01 progress matrix (2026-10-24)
+
+CL02 section. It reuses the G2 IDs above and adds G2-11..G2-14. **Execution status of every row: NOT RUN.** Claims: A-17..A-31 ([BBSC-002-MAP.md § CL02-A](BBSC-002-MAP.md#cl02-a-progress-and-reward-contract-for-p01-2026-10-24)) and B-15..B-25 ([IDENTITY-PROTOCOL.md § CL02-B](IDENTITY-PROTOCOL.md#cl02-b-progress-ownership-ordering-and-recovery-p01-2026-10-24)).
+
+**P01 run rules (in addition to the Common setup):**
+- **Configuration.** Every run names its configuration. **J01** is the launch, with or without the P01 delta (source commit named). A **BASE** run is a reference only.
+  - Codex already has one BASE-equivalent observation: J01 launch, no progress delta, 7 entries merged without a joint event (Codex 2026-10-24, A01).
+- **Snapshots.** For both copied saves, take before/after snapshots of:
+  - the 57 listed flags (A-23..A-25);
+  - the kind-1 groups of the areas visited;
+  - the inventory goods of the 19 reward rows (A-29), plus their taken flags and get flags.
+  - The tool is Codex's choice. A snapshot is taken with the game at the title screen or closed, never while loading.
+- **Logs.** Capture `shared progress (…): merged into our own world - <n> boss flag(s) newly set (of <m> …), <b> world flag(s) …; saves backed up first: …` and every `BBSC boss drop: event …` line. These counts are cross-checks; the snapshots decide.
+- **Cleanup.** After every row: both players save and quit, then restore both copied saves from the before-copy. Remove that row's `shared-progress/pending-*` and `own-world/own-*` files from both DLL folders, after copying them into the row's private evidence.
+
+| ID | Precondition | Production boundary | Action / observation | Required assertions | Blocker / status |
+|---|---|---|---|---|---|
+| G2-01 (P01) | H has killed at least two listed bosses that G has not, and is later in the night (A-23, A-25). G has neither | A-17 → A-18 baseline → A-22 | G joins and waits until playable. Nobody fights. G departs, saves and reloads. H saves and reloads | G's listed flags and kind-1 groups after reload equal G's before-snapshot. The night follows the A-25 decision. H unchanged | NOT RUN. Needs the A-25 decision (G2-14) |
+| G2-03 (P01) | H stands at a boss fog with the boss alive in both worlds | B-16 playable start; A-18 | G joins. H kills the boss **before** G is playable (during G's join load; Codex marks the playable time from the B-16 predicate) | That boss's listed flags are not admitted for G. No reward line for G (A-27) | NOT RUN. Timing needs a scripted host action |
+| G2-02 (P01) | Neither player has boss X (one of the 19 rows with a taken flag, e.g. row 6) | A-27 reward; A-18 admission | G joins and is playable. They kill X together. G departs, saves and reloads. H reloads | G's save has X's listed flags only (no other H history). G got X's lot once (one `item lot … given` line). H's save has its own normal kill | NOT RUN |
+| G2-04 (P01) | Like G2-02, with two more bosses Y and Z alive for both | B-18 death/loading; B-19 departure | (a) G dies (kept death) and H kills Y while G is dead. (b) H travels through a lamp, G follows, and they kill Z. (c) G leaves, then H kills a third boss W | (a) and (b) admitted, and kept after both reloads. (c) not admitted. If state 6 does not hold through (a) (Q8), record that as a REPRODUCED-GAP, not a pass | NOT RUN |
+| G2-05 (P01) | G is ahead: boss V and a lamp that H lacks | A-22 merge + B-22 own world | G joins, plays, departs, reloads | G keeps V and its lamp. No listed flag of G goes 1→0 | NOT RUN |
+| G2-06 (P01) | (a) H and G made different choices for one NPC quest before joining. (b) An NPC step H can take during the session that G has done differently | A-26 (kind-1 unclassified), kinds 6/7 excluded | G joins. In (b), H takes the conflicting step while G is playable. G departs and reloads | G's NPC state unchanged in (a) and (b), checked on the NPC in game and in the per-flag before/after diff of that NPC's flags. A P01 delta that still collects unclassified kind-1 bits is expected to fail (b) | NOT RUN. Codex picks the NPC; needs per-flag inspection |
+| G2-07 (P01) | G already took boss X's lot in its own world | A-28, A-29 | (a) Row with a taken flag: a joint kill of X in H's world. (b) Row with taken flag 0 and a goods get flag (rows 3, 8, 10, 15, 18): a joint kill in a **new game run** | (a) Repeat lot or nothing, never the first lot again. (b) Baseline: the first lot is given again, a source-predicted REPRODUCED-GAP if observed. With the A-29 check: nothing given | NOT RUN |
+| G2-11 | Like G2-02, but the session breaks before the kill completes. Variant: G restarts its game between attempts | B-20 rejoin; A-28 run memory | (a) G leaves and rejoins the same H in the same run; they kill X. (b) The same after G restarts its game | X's lot given once in total over (a) and once over (b). The rejoin takes a new baseline, so H's history from the first session is not admitted (B-20, rule 4) | NOT RUN |
+| G2-12 | G earned boss X's reward earlier, then consumed or used it (Codex picks a consumable row or a key used on a door) | A-30 | Joint kill of X again in another H world | Not re-granted. The inventory check alone does not count (A-30). Record which existing flag blocked it | NOT RUN. Needs a row with a consumable reward |
+| G2-08 (P01, conditional on the P01 delta) | After G2-02's kill | B-21 pending file | Kill G's process 5 s and 15 s after the kill. Restart and load the same character | More than 10 s: X merges at the next home load and nothing else does. Less than 10 s: may be lost; report it. Own-world groups restored before the merge | NOT RUN |
+| G2-13 | Conditional on a P01 delta that changes the file magic. G's DLL folder holds a baseline `pending-*.bin` (`BBSP`) for the test character, with H's history in it | B-23 | Start the P01 build, load the character at home, then join and depart once | The legacy file is not merged, either at home or at the first state-6 tick. It stays on disk, or is renamed as Codex decides. Its content is unchanged. G's flags equal the before-snapshot plus eligible events only | NOT RUN |
+| G2-09 (P01, conditional) | G has characters in slots 0 and 1. In one run it saves slot 0, then loads slot 1 and joins before slot 1 is written | B-24 | Kill during the session. Restart and load slot 0, then slot 1 | Slot 0 gets nothing from slot 1's session. Slot 1's eligible entries arrive only on slot 1. A cross-slot write is a REPRODUCED-GAP | NOT RUN |
+| G2-10 (P01, conditional) | Make the DLL's `save-backups/` unwritable before G's trip home | B-25 | Depart after an eligible kill | Record the merge behavior. A delta that changes persistence must not merge without a backup unless it shows a warning. Originals intact | NOT RUN |
+| G2-14 | H is later in the night than G; no joint event | A-25 | G joins, plays, departs, reloads | Record G's night after reload (baseline: moved to H's). This row records the decision Codex/user take on A-25. It is not a fix by itself | NOT RUN. Product decision |
+
+**Suggested P01 order:**
+1. G2-14 (decision), then G2-01 and G2-03: the import gap.
+2. G2-02 and G2-04: eligible joint kills.
+3. G2-06 (NPC conflicts).
+4. G2-07, G2-11, G2-12: rewards.
+5. The conditional rows, only for the delta actually proposed.
+
+Each row ends with both players' save/reload checked (outcome 5/6/8 evidence = SAVE).
