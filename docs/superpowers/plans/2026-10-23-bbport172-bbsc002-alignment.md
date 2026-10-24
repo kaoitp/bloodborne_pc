@@ -92,6 +92,8 @@ R04-J01 is VERIFIED for its bounded case: [five-part justification, native RED/G
 
 ## CL01 — External Claude Code source/reuse audit
 
+CL01-REV01: REVIEW COMPLETE / CHANGES REQUESTED (2026-10-24). Reviewed PR #1 at `eb493a40cfc2f2ad0e28f485e4208040b27d897f` against frozen base `04c6e7b4b9a042c872e6ed815dacce6c7a7a0d8e`, the four-path allowlist, pinned source and current `bd24679`. Structural checks passed; four inline corrections are required: conditional relay-necessity inference, baseline versus J01 launch identity, UDP peer-transfer proof and verified-event filtering beyond first-seen deltas. [Review 5637531403](https://github.com/kaoitp/bloodborne_pc/pull/1#pullrequestreview-5637531403) posted successfully. CL01 acceptance checkboxes remain open; next is external correction within the same four paths, then re-review before a new assignment. No runtime changes or gameplay acceptance.
+
 Owner: the user's external friend using Claude Code, in a separate clone/audit branch; not an automatic subagent. READY alongside Codex R03 now that R02 is verified. [Work package](../../handoff/CLAUDE-CODE-WINDOWS.md) fixes the four writable documents, frozen audit base, slice dependencies and handback/integration checks. Codex retains runtime/build/config/native/gameplay and shared plans; no audit result is claimed by assigning it.
 
 - [ ] Map the complete release composition and existing support for each goal with pinned source citations.
