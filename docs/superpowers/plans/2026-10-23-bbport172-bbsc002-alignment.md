@@ -94,11 +94,13 @@ R04-J01 is VERIFIED for its bounded case: [five-part justification, native RED/G
 
 ## CL01 — External Claude Code source/reuse audit
 
+CL01-INT01: VERIFIED / INTEGRATED (2026-10-24). User requests the reviewed PR's closure, waiving usage-based stopping. Approved unchanged head `108bf28f069d7017712fd71e24fb7fd6b2bbde36` merged into `seamless` as `7a0a0153cbf36de0b88ab4aeba1e9bb0cdb9d96e`, preserving both audit commits. GitHub confirms PR #1 merged/closed; four threads resolved, no listed commit statuses or PR workflow runs. Fresh 90-citation/27-file, link/coverage/format/scope checks pass; local checkout fast-forwarded. Merge delta is exactly the four accepted audit documents, with identical blobs and no runtime changes. G1/G2/G3 remain open; CL02-P01 remains the separate assigned follow-up.
+
 CL01-REV02: ACCEPTED for source/document scope (2026-10-24). PR #1 correction head `108bf28f069d7017712fd71e24fb7fd6b2bbde36` addresses all four REV01 comments; no new blocking finding. Fresh checks: 90 citation URLs/27 pinned source files, 12 local links/anchors, 29 cases, 11 outcome rows, UTF-8/LF/no-BOM, four-file scope and whitespace PASS. Current R03-A01 independently records the older-host-progress gap; CL01's frozen source findings remain attributed separately. User waives usage-based stopping for this review. Audit accepted, PR merge not performed; G1/G2/G3 remain open.
 
 CL01-REV01: REVIEW COMPLETE / CHANGES REQUESTED (2026-10-24). Reviewed PR #1 at `eb493a40cfc2f2ad0e28f485e4208040b27d897f` against frozen base `04c6e7b4b9a042c872e6ed815dacce6c7a7a0d8e`, the four-path allowlist, pinned source and current `bd24679`. Structural checks passed; four inline corrections are required: conditional relay-necessity inference, baseline versus J01 launch identity, UDP peer-transfer proof and verified-event filtering beyond first-seen deltas. [Review 5637531403](https://github.com/kaoitp/bloodborne_pc/pull/1#pullrequestreview-5637531403) posted successfully. CL01 acceptance checkboxes remain open; next is external correction within the same four paths, then re-review before a new assignment. No runtime changes or gameplay acceptance.
 
-Owner: the user's external friend using Claude Code, in a separate clone/audit branch; not an automatic subagent. CL01 source/document handback ACCEPTED at the head above; repository integration remains separate. [Work package](../../handoff/CLAUDE-CODE-WINDOWS.md) fixes the four writable documents, frozen audit base, slice dependencies and handback/integration checks. Codex retains runtime/build/config/native/gameplay and shared plans.
+Owner: the user's external friend using Claude Code, in a separate clone/audit branch; not an automatic subagent. CL01 source/document handback ACCEPTED and integrated by CL01-INT01 above. [Work package](../../handoff/CLAUDE-CODE-WINDOWS.md) fixes the four writable documents, frozen audit base, slice dependencies and handback/integration checks. Codex retains runtime/build/config/native/gameplay and shared plans.
 
 - [x] Map the complete release composition and existing support for each goal with pinned source citations.
 - [x] Map required self-hosted routes and only relevant selected-peer/session/identity boundaries; distinguish source presence from runtime PASS.
@@ -106,7 +108,7 @@ Owner: the user's external friend using Claude Code, in a separate clone/audit b
 
 CL02-P01: READY for external source/document work under the [follow-up package](../../handoff/CLAUDE-CODE-WINDOWS.md#cl02-p01-progress-contract-follow-up). From accepted CL01 head on a new branch, map existing progress/reward tables, eligibility/late-packet/recovery boundaries and focused P01 checks in the same four documents. No runtime/build/native/service work is delegated; R04 implementation and gameplay proof remain Codex-owned.
 
-[PR approval and CL02 assignment](https://github.com/kaoitp/bloodborne_pc/pull/1#pullrequestreview-5637592348) posted successfully; four REV01 threads resolved. PR #1 remains open for a separate integration decision.
+[PR approval and CL02 assignment](https://github.com/kaoitp/bloodborne_pc/pull/1#pullrequestreview-5637592348) posted successfully; four REV01 threads resolved. [PR #1](https://github.com/kaoitp/bloodborne_pc/pull/1) is now merged/closed by CL01-INT01.
 
 ## Completion and evidence
 

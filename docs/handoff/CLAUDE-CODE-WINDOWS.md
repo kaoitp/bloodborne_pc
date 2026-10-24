@@ -1,6 +1,6 @@
 # Claude Code work package: CL01
 
-Updated: 2026-10-24 (Asia/Bangkok). CL01 source/document handback at `108bf28f069d7017712fd71e24fb7fd6b2bbde36` is ACCEPTED after CL01-REV02; this does not pass gameplay gates. The original CL01 package below remains its historical scope. The [CL02-P01 follow-up](#cl02-p01-progress-contract-follow-up) at the end is READY for the external owner. Parent: R03/R04 in the [active plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md).
+Updated: 2026-10-24 (Asia/Bangkok). CL01 source/document handback at `108bf28f069d7017712fd71e24fb7fd6b2bbde36` is ACCEPTED after CL01-REV02 and merged by PR #1 at `7a0a0153cbf36de0b88ab4aeba1e9bb0cdb9d96e`; this does not pass gameplay gates. The original CL01 package below remains its historical scope. The [CL02-P01 follow-up](#cl02-p01-progress-contract-follow-up) at the end is READY for the external owner. Parent: R03/R04 in the [active plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md).
 
 ## Assignment and ownership
 
