@@ -107,7 +107,7 @@ Also recorded:
 
 ## CL02-P01: progress contract (2026-10-24)
 
-Status: **VERIFIED for the source/documents** (set IN_PROGRESS before any CL02 deliverable edit; VERIFIED after the checks below). This is not a runtime PASS; G2 stays with Codex. Work package: `docs/handoff/CLAUDE-CODE-WINDOWS.md` § CL02-P01 at `seamless` `b1391b0`.
+Status: **VERIFIED for the source/documents, corrected for review CL02-REV01** (see the checkpoint below; set IN_PROGRESS before any CL02 deliverable edit; VERIFIED after the checks). This is not a runtime PASS; G2 stays with Codex. Work package: `docs/handoff/CLAUDE-CODE-WINDOWS.md` § CL02-P01 at `seamless` `b1391b0`.
 
 | Slice | Status | Owned output |
 |---|---|---|
@@ -124,11 +124,12 @@ Status: **VERIFIED for the source/documents** (set IN_PROGRESS before any CL02 d
 
 ### CL02 ranked P01 recommendations (source only; nothing implemented)
 
-1. **Filter at collection, not at merge** (A-18, A-21). Put a per-session first-seen baseline in `OnBbscProgressPacket` and in the kind-1 loop of `TickBbscSharedProgress`. Take it from the first observation at or after the playable start (B-16), take it again on every state-6 entry (B-20), and admit only 0→1 transitions. The merge, the pending file and crash recovery then carry eligible entries without change.
+1. **Filter at collection, not at merge** (A-18, A-21). A first-seen baseline in `OnBbscProgressPacket` and in the kind-1 loop of `TickBbscSharedProgress`, admitting only 0→1 transitions, is a candidate against the bulk import of older history (G2-01). It is **not implementation-ready for outcome 9**: constraints C1-C4 (delayed pre-playable baseline, swallowed first event, reorder, epoch boundary) are open, and the existing signals cannot close them (B-26..B-28). The reset point must be a genuine new party or host epoch, not every state-6 entry. The merge, the pending file and crash recovery need no change for whatever the filter admits.
 2. **Restrict what can be admitted to the existing finite list** (A-23). Leave A-24 (9466-9471, unclassified) and kind-1 groups (A-26) out until they are classified. A first-seen delta over whole kind-1 groups is expected to fail G2-06(b).
 3. **Decide the night flags** (A-25, G2-14). As written they import a host's later night at merge time without a joint event.
-4. **Close the cross-run reward duplicate where an existing flag allows it** (A-29). Before giving a first lot for a taken-flag-0 row, check the goods row's existing get flag. That covers rows 3, 8, 10, 15 and 18; the other 7 flag-0 rows have no existing record (unknown).
-5. **Legacy pending data** (B-23). A filtered build writes a new file magic, so baseline `BBSP` files are not re-imported. The conditional cases G2-13, G2-08, G2-09 and G2-10 apply only to the delta actually proposed.
+4. **Rewards use the same eligibility contract** (A-27, A-32). The existing enqueue is state-6 only and the award tick is ungated, so a pre-playable reward is possible. Queue ownership through join, death/loading and departure, and a confirmed award before "given", are required behavior; none is implemented.
+5. **Close the cross-run reward duplicate where an existing flag allows it** (A-29), as a separate concern from item 4. Before giving a first lot for a taken-flag-0 row, check the goods row's existing get flag. That covers rows 3, 8, 10, 15 and 18; the other 7 flag-0 rows have no existing record (unknown).
+6. **Legacy pending data** (B-23). A filtered build writes a new file magic, so baseline `BBSP` files are not re-imported. The conditional cases G2-13, G2-08, G2-09 and G2-10 apply only to the delta actually proposed.
 
 ### CL02 unknowns
 
@@ -137,5 +138,20 @@ Status: **VERIFIED for the source/documents** (set IN_PROGRESS before any CL02 d
 - Names and progression roles of the unnamed reward goods.
 - First-arrival timing per flag and block, and whether state 6 holds through death (Q7, Q8).
 - Which of the 7 A01 entries are A-23, A-24 or A-25 members (Q9).
+- Whether delayed or reordered snapshots occur in practice, and whether the lock holds through same-party transitions (Q11).
+- Whether the existing reward path queues before playable or loses a queued event (Q12).
+- How C1-C4 can be closed with existing signals at all. Source says they cannot as written (B-26..B-28).
 
 **Next (Codex):** review this contract, answer Q7-Q10 from existing logs or snapshots where possible, then decide R04-P01. Claude does not implement it.
+
+## Checkpoint 2026-10-24: CL02-REV01 corrections
+
+- **Review.** kaoitp CL02-REV01 (changes requested, PR #1 comment 6382726381) on handback `b48d2b36c6e41cb66cfc474287fc5eaf6bec6863`, base `108bf28f069d7017712fd71e24fb7fd6b2bbde36`. Same branch `claude/p01-progress-contract`, one correction commit on top; no rebase. CL01 sections, pins K/B/N and all stable IDs unchanged.
+- **Corrections, each re-checked against pinned B `4f11faf`:**
+  1. **Snapshot counter is not an ordering guarantee.** `OnBbscWorldFlagsPacket` resets the single assembly buffer on any different map or ID (L16893) and a completed snapshot replaces the block (L16912); there is no high-water check. B-17's guarantee is revised; new B-26 records the N+1-then-N counterexample; any freshness check is an unimplemented candidate (with its restart/`u32` counterexamples). Case G2-17.
+  2. **First receipt after playable is not event time.** New B-27 (no host time in either packet; `complete_ms` is local, L16906) and B-28 (the lock as the only epoch-like signal, 5 s unlock). The former "rules" are now open constraints C1-C4; the every-state-6 reset is replaced by a reset only at a genuine new party/host epoch, with eligibility kept through same-party death and loading. Cases G2-15, G2-16, G2-18; G2-11 revised.
+  3. **Rewards need the eligibility contract.** A-27 now cites the `BbscGuestInHostWorld`-only enqueue gate and the ungated `TickBbscBossRewards` (L16051); G2-03's "no reward line" is predicted to fail on the existing path. New A-32: queue ownership and award confirmation (silent drop at L10426-10428, "given" before the award, unchecked native award). A-31 qualified. The A-29 get-flag check is kept as a separate concern. Case G2-19.
+- **Also fixed:** the seam's pending-file reference now points at B-23 (was B-18).
+- **Line note.** In the pinned file `complete_ms` is set at L16906 and the reset test is L16893; the review's L16909 / L16895-16918 refer to the same code.
+- **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests, private data. All new cases are NOT RUN. Source-only suggestions stay candidates until Codex's reproduction and native gates pass.
+- **Checks:** see the correction commit message.
