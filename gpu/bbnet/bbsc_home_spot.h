@@ -11,6 +11,11 @@ namespace Core::Bbsc {
 inline bool HomeRecoveryEnabled(const char* value) {
     return value && value[0] == '1' && value[1] == '\0';
 }
+inline bool AcceptHomeRecoveryLoad(bool requested, bool& loaded) {
+    if (!requested || loaded) return false;
+    loaded = true;
+    return true;
+}
 inline constexpr std::uint32_t HomeSpotKey = 0xffff484d;
 struct HomeSpot {
     std::uint32_t map{};

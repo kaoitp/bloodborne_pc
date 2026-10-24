@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..697bf05 100644
+index 6c278c3..e6be1fd 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -51,7 +51,12 @@ index 6c278c3..697bf05 100644
  #include "core/bloodborne_re.h"
  
  #include <algorithm>
-@@ -3294,6 +3295,8 @@ void KeepBbscOwnWorldGroup(u32 key, const u8* live); // see "Own world journal"
+@@ -3290,10 +3291,12 @@ bool BbscHostWorldFlagsReady(u32 packed_map);
+ bool ApplyBbscHostWorldFlags(u32 packed_map, std::string_view why);
+ void LogBbscHostWorldFlagsDiff(u32 packed_map, std::string_view why);
+ void ApplyBbscGuestLootView(u32 packed_map, std::string_view why); // see "Guest loot view"
+-void KeepBbscOwnWorldGroup(u32 key, const u8* live); // see "Own world journal"
++const u8* KeepBbscOwnWorldGroup(u32 key, const u8* live); // see "Own world journal"
  void KeepBbscOwnTimeBits();                           // see "Time of night in the host's world"
  void ApplyBbscHostTime(std::string_view why);
  void KeepBbscHomeSpot();                              // see "Back home where we were"
@@ -83,10 +88,32 @@ index 6c278c3..697bf05 100644
      const u64 result = reinterpret_cast<StageTransition>(image_base + StageTransitionOffset)();
      LOG_INFO(Debug,
               "BBSC {} warp: full reload requested into map {:#x} at ({:.2f}, {:.2f}, {:.2f}), "
-@@ -5890,6 +5894,15 @@ const std::string& BbscProcessUserId() {
+@@ -5737,9 +5741,9 @@ void ApplyBbscHostDreamState(std::string_view why) {
+             continue;
+         }
+         auto* live = reinterpret_cast<u8*>(storage);
+-        KeepBbscOwnWorldGroup(BbscDreamStateKeys[i], live);
++        const u8* own = KeepBbscOwnWorldGroup(BbscDreamStateKeys[i], live);
+         if ((bbsc_dream_own.held & (u64{1} << i)) == 0) {
+-            std::memcpy(bbsc_dream_own.own[i].data(), live, BbscWorldGroupBytes);
++            std::memcpy(bbsc_dream_own.own[i].data(), own, BbscWorldGroupBytes);
+             bbsc_dream_own.held |= u64{1} << i;
+         }
+         for (size_t b = 0; b < BbscWorldGroupBytes; ++b) {
+@@ -5852,7 +5856,7 @@ struct BbscSaveSlot {
+     std::string user;
+     int slot = -1;
+ };
+-const auto bbsc_run_started = std::filesystem::file_time_type::clock::now();
++auto bbsc_slot_load_started = std::filesystem::file_time_type::clock::now();
+ 
+ #ifdef _WIN32
+ extern "C" __declspec(dllimport) wchar_t* __stdcall GetCommandLineW();
+@@ -5890,7 +5894,16 @@ const std::string& BbscProcessUserId() {
      return id;
  }
  
+-// The character being played: the save slot file the game wrote last, during this run.
 +bool BbscHasConfiguredUserDir() {
 +#ifdef BBSC_MOD
 +    const char* path = std::getenv("BB_USER_DIR");
@@ -96,9 +123,10 @@ index 6c278c3..697bf05 100644
 +#endif
 +}
 +
- // The character being played: the save slot file the game wrote last, during this run.
++// The character being played: the save slot written after the latest character/map load.
  std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked();
  // Runs inside game hooks (the join load): a filesystem error must never become an exception there.
+ std::optional<BbscSaveSlot> BbscActiveSaveSlot() {
 @@ -5907,9 +5920,11 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
      std::error_code ec;
      // As shadPS4 picks its user folder: <working folder>\user when it exists (portable install),
@@ -113,6 +141,15 @@ index 6c278c3..697bf05 100644
          !fs::is_directory(bases.front() / "savedata", ec)) {
          bases.clear();
          if (const char* appdata = std::getenv("APPDATA")) {
+@@ -5919,7 +5934,7 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
+     ec.clear();
+ #endif
+     std::optional<BbscSaveSlot> best;
+-    fs::file_time_type best_time = bbsc_run_started;
++    fs::file_time_type best_time = bbsc_slot_load_started;
+     // BBSC_SAVE_DIR (2026-10-12): the folder holding userdata0000.. on hosts that keep saves
+     // elsewhere (bbhost: <data>\saves\SPRJ0005); its slots count as user "save".
+     if (const char* save_dir = std::getenv("BBSC_SAVE_DIR"); save_dir != nullptr && save_dir[0]) {
 @@ -5995,6 +6010,8 @@ constexpr s64 BbscOwnWorldRecoverMs = 15'000;
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_own_world; // game thread only
  std::optional<BbscSaveSlot> bbsc_own_world_slot;
@@ -122,7 +159,37 @@ index 6c278c3..697bf05 100644
  
  std::filesystem::path BbscOwnWorldPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() / "own-world" /
-@@ -6137,6 +6154,7 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6008,12 +6025,14 @@ bool BbscIsMapFlagGroup(u32 key) {
+     return (kind == 1 || kind == 5 || kind == 6 || kind == 7) && area >= 21 && area <= 99;
+ }
+ 
+-void KeepBbscOwnWorldGroup(u32 key, const u8* live) {
+-    if (key == 0 || live == nullptr || bbsc_own_world.contains(key)) {
+-        return;
++const u8* KeepBbscOwnWorldGroup(u32 key, const u8* live) {
++    if (key == 0 || live == nullptr) return live;
++    auto [entry, inserted] = bbsc_own_world.try_emplace(key);
++    if (inserted) {
++        std::memcpy(entry->second.data(), live, BbscWorldGroupBytes);
++        bbsc_own_world_dirty = true;
+     }
+-    std::memcpy(bbsc_own_world[key].data(), live, BbscWorldGroupBytes);
+-    bbsc_own_world_dirty = true;
++    return entry->second.data();
+ }
+ 
+ // ---- Time of night in the host's world (2026-10-19) ---------------------------------------------
+@@ -6112,7 +6131,8 @@ void CaptureBbscOwnWorldBeforeJoin() {
+         stack.pop_back();
+         ++visited;
+         const u32 key = ReadValue<u32>(node, 0x20);
+-        if (BbscIsMapFlagGroup(key)) {
++        if (BbscIsMapFlagGroup(key) ||
++            std::ranges::find(BbscDreamStateKeys, key) != BbscDreamStateKeys.end()) {
+             keys.push_back(key);
+         }
+         node = ReadValue<u64>(node, 0x10);
+@@ -6137,6 +6157,7 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
@@ -130,7 +197,7 @@ index 6c278c3..697bf05 100644
      WriteBbscOwnWorldFile();
  }
  
-@@ -6200,13 +6218,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
+@@ -6200,13 +6221,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
      }
@@ -155,7 +222,7 @@ index 6c278c3..697bf05 100644
      }
      bbsc_own_world_slot = slot;
      return !bbsc_own_world.empty();
-@@ -6233,7 +6259,7 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
+@@ -6233,7 +6262,7 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
      size_t bits = 0;
      size_t missing = 0;
      for (const auto& [key, own] : bbsc_own_world) {
@@ -164,7 +231,7 @@ index 6c278c3..697bf05 100644
              continue; // our own night: put back below, after every real group
          }
          const u64 storage = BbscFlagGroupStorage(key);
-@@ -6284,7 +6310,7 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
+@@ -6284,7 +6313,7 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
      }
      bbsc_own_world.clear();
      bbsc_own_world_dirty = false;
@@ -173,7 +240,7 @@ index 6c278c3..697bf05 100644
          std::error_code ec;
          const auto path = BbscOwnWorldPath(*bbsc_own_world_slot);
          std::filesystem::rename(path, std::filesystem::path(path).concat(".restored"), ec);
-@@ -6340,12 +6366,14 @@ void TickBbscHostTime() {
+@@ -6340,12 +6369,14 @@ void TickBbscHostTime() {
  
  // A file an earlier run left (the game crashed or was closed while a guest): put back now.
  bool RecoverBbscOwnWorldFile(const BbscSaveSlot& slot) {
@@ -189,7 +256,7 @@ index 6c278c3..697bf05 100644
      if (RestoreBbscOwnWorld("after a crash") != 0) {
          BbscAnnounce(u"Your own world was put back\n(the game had closed while you were a guest).\n"
                       u"Rest at a lamp or reload to see it.",
-@@ -8925,6 +8953,7 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
+@@ -8925,6 +8956,7 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
               "map={:#x}",
               caller > image_base ? caller - image_base : caller, GetSessionState(),
               RemotePlayerCount(), GetCurrentPackedMap());
@@ -197,7 +264,7 @@ index 6c278c3..697bf05 100644
      SuspendBbscPersistence("quit to title");
  }
  
-@@ -8958,6 +8987,7 @@ struct BbscHomeSpot {
+@@ -8958,6 +8990,7 @@ struct BbscHomeSpot {
      std::array<float, 4> rotation{};
      bool valid = false;
      bool left = false; // we have been in another world since it was kept
@@ -205,7 +272,7 @@ index 6c278c3..697bf05 100644
  };
  BbscHomeSpot bbsc_home_spot; // game thread
  
-@@ -8972,14 +9002,113 @@ void KeepBbscHomeSpot() {
+@@ -8972,14 +9005,115 @@ void KeepBbscHomeSpot() {
          return;
      }
      bbsc_home_spot = {map, {here->position[0], here->position[1], here->position[2], 1.0f},
@@ -248,6 +315,8 @@ index 6c278c3..697bf05 100644
 +
 +void SuspendBbscHomeRecovery() {
 +    if (!bbsc_home_recovery_slot) return;
++    LOG_INFO(Debug, "BBSC home recovery: another load canceled pending return; journal retained for user {} slot {}",
++             bbsc_home_recovery_slot->user, bbsc_home_recovery_slot->slot);
 +    bbsc_home_recovery_slot.reset();
 +    bbsc_home_spot.valid = false; // the journal stays on disk for its original character
 +    bbsc_own_world.clear();
@@ -320,7 +389,18 @@ index 6c278c3..697bf05 100644
      if (!bbsc_home_spot.valid) {
          return;
      }
-@@ -9021,6 +9150,7 @@ bool BbscOwnWorldNonGuest(u64 global) {
+@@ -9005,6 +9139,10 @@ bool PutBbscHomeSpot(u64 global) {
+         !WriteValue(global, 0x1510, bbsc_home_spot.rotation)) {
+         return false;
+     }
++    if (Bbsc::SupportedHomeMap(BbscLampPointMap(bbsc_home_spot.lamp)) &&
++        !WriteValue<s32>(global, 0x1528, bbsc_home_spot.lamp)) {
++        return false;
++    }
+     LOG_INFO(Debug, "BBSC return home: the trip home goes to our own spot {:#x} ({:.2f}, {:.2f}, "
+                     "{:.2f}), not {:#x} (the last warp's)",
+              bbsc_home_spot.map, bbsc_home_spot.position[0], bbsc_home_spot.position[1],
+@@ -9021,6 +9159,7 @@ bool BbscOwnWorldNonGuest(u64 global) {
  }
  
  void GuardBbscStrayForcedWarp(const GuestRegisterSnapshot& registers) {
@@ -328,7 +408,7 @@ index 6c278c3..697bf05 100644
      const u64 global = registers.rcx; // 0x01332C14: mov rcx, [0x05556678]
      if (image_base == 0 || global != GetGlobalState() || !ReadablePointer(global, 0x1598) ||
          ReadValue<u8>(global, 0x1520) == 0) {
-@@ -14398,10 +14528,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -14398,10 +14537,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -346,21 +426,18 @@ index 6c278c3..697bf05 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -16019,11 +16153,18 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
-         RestoreBbscSignTypeBeforeReloadFinish();
-     }
-     if (site.offset == 0x0178D9C0) {
-+        if (bbsc_home_recovery_slot && bbsc_home_recovery_requested) {
-+            bbsc_home_recovery_loaded = true;
-+        }
-         RestoreBbscOwnWorldAtLoad(); // only when the load is home (see "Own world journal")
-         ApplyBbscHostWorldFlagsAtLoad();
+@@ -16024,6 +16167,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
-+        if (bbsc_home_recovery_slot && bbsc_home_recovery_requested) {
-+            bbsc_home_recovery_loaded = true;
-+            if (bbsc_own_world.empty()) LoadBbscOwnWorldFile(*bbsc_home_recovery_slot);
++        bbsc_slot_load_started = std::filesystem::file_time_type::clock::now();
++        if (bbsc_home_recovery_slot) {
++            if (!Bbsc::AcceptHomeRecoveryLoad(bbsc_home_recovery_requested,
++                                              bbsc_home_recovery_loaded)) {
++                SuspendBbscHomeRecovery();
++            } else if (bbsc_own_world.empty()) {
++                LoadBbscOwnWorldFile(*bbsc_home_recovery_slot);
++            }
 +        }
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();

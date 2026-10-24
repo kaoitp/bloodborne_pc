@@ -6,6 +6,14 @@ int main() {
     assert(!Core::Bbsc::HomeRecoveryEnabled("0"));
     assert(!Core::Bbsc::HomeRecoveryEnabled("10"));
     assert(Core::Bbsc::HomeRecoveryEnabled("1"));
+    bool loaded = false;
+    assert(!Core::Bbsc::AcceptHomeRecoveryLoad(false, loaded));
+    assert(!loaded);
+    assert(Core::Bbsc::AcceptHomeRecoveryLoad(true, loaded));
+    assert(loaded);
+    assert(!Core::Bbsc::AcceptHomeRecoveryLoad(true, loaded));
+    loaded = false;
+    assert(Core::Bbsc::AcceptHomeRecoveryLoad(true, loaded));
     Core::Bbsc::HomeSpot spot{0x18000000, 2402950, {1.f, 2.f, 3.f, 1.f}, {0.f, .5f, 0.f, 0.f}};
     auto bytes = Core::Bbsc::EncodeHomeSpot(spot);
     const auto decoded = Core::Bbsc::DecodeHomeSpot(bytes);

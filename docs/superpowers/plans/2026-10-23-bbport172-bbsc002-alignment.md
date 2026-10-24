@@ -134,3 +134,17 @@ Full evidence/versions/failed attempts/limitations: [A02 record](../../handoff/R
 A02 final native gate FAILED: pending recovery crossed characters after title; prototype is OFF by default behind explicit experimental opt-in. The checkboxes above describe bounded observations, not full recovery acceptance. Fix actual character/lifecycle ownership before enabling it; retain all three R03 gameplay boxes open. Stop new work at the usage checkpoint and publish.
 
 A02 checkpoint published as cb336ffa2d5b27142e69fb0fd179eb0f45ee6b3a; origin/remote SHA verified, only existing FSR-Vulkan dirt remains. R03 stays IN_PROGRESS; native recovery ownership FAILED and new origin recovery remains experimental/OFF.
+
+A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reproduced pending-recovery ownership gap using the observed ordinary load seam and fresh per-load save ownership, then G2 event/reward and remaining G1/G3/G4 cases. Acceptance and scope are recorded in the tracker before edits; no broad checkbox change yet.
+
+
+### A03 bounded checkpoint (2026-10-25)
+
+- [x] Pending-title/other-character isolation and positive owner retry on the ownership DLL.
+- [x] Keep existing Dream keys before join; native own-state journal comparison and normal save/reload preserve the previously lost bits.
+- [x] Actual P02 host process loss returns to original point; settled world equals preceding own baseline.
+- [x] P03 actual guest interruption/restart restores original point/lamp and 1250 groups; normal return and save/reload retain original lamp.
+- [ ] Initial-write refusal: native RED; P04 Lua skip still admitted and was reverted. Keep new recovery experimental/OFF.
+- [ ] G2/group-9/reward integrity and remaining candidate/locked-map/routing cases; no broad R03 closure.
+
+[Exact versions, native evidence, rejected candidate and next seam](../../handoff/R03-A03-OWN-STATE.md). Final full suite: 157 tests, 1 failure, 8 errors, 48 skips; focused 7 PASS. Original 3171 paths/hashes unchanged. Inline Standards review bounded/no new blocker; Spec partial. Publish the checkpoint without force or private artifacts.
