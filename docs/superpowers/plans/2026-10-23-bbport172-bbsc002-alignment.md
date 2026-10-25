@@ -150,3 +150,10 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 - [ ] G2/group-9/reward integrity and remaining candidate/locked-map/routing cases; no broad R03 closure.
 
 [Exact versions, native evidence, rejected candidate and next seam](../../handoff/R03-A03-OWN-STATE.md). Final full suite: 157 tests, 1 failure, 8 errors, 48 skips; focused 7 PASS. Original 3171 paths/hashes unchanged. Inline Standards review bounded/no new blocker; Spec partial. Publish the checkpoint without force or private artifacts.
+
+
+### A04 native wait candidate
+
+- [x] Assess native wait: FAILED after delayed release/falling; fully reverted.
+- [x] A04-P02 bounded native cancellation before the enclosing join transition; actual blocked-write own-state equality, healthy retry/adjacent placement, normal return and independent save/reload.
+- [ ] Remaining G2/group-9/reward, candidate/locked-map/routing and recovery enablement gates. R03 remains IN_PROGRESS; experimental default stays OFF. [Exact attribution and limits](../../handoff/R03-A04-ADMISSION.md).

@@ -1,5 +1,7 @@
 # R03 new-session execution handoff
 
+Latest A04: [native admission cancellation checkpoint](R03-A04-ADMISSION.md). The bounded initial journal-write fault now cancels without own-state mutation, then healthy retry/adjacent placement/normal return/save-reload pass on the experimental guest build. The earlier native wait was rejected. G2/group-9/rewards and remaining candidate/routing/recovery gates keep R03 IN_PROGRESS; recovery/admission remains OFF by default.
+
 Latest A03: [ownership, own-state and lamp checkpoint](R03-A03-OWN-STATE.md). Bounded native return/interruption/ownership cases improved; initial journal-write refusal and G2/group-9/reward integrity still block R03. The Lua refusal candidate FAILED and was fully reverted. Experimental durable-origin recovery remains OFF unless explicitly opted in on copied profiles. Use A03 source/artifact attribution rather than the historical artifact table below. R03 remains IN_PROGRESS.
 
 Historical A02: [native crash/profile/origin recovery checkpoint](R03-A02-RECOVERY.md). C01 null-table regression and copied native join passed; per-profile journal and original-point/invalid-point-lamp recovery now have bounded native evidence. G2 older-host import remains unchanged; full world/save integrity, host loss and remaining candidate/routing cases keep R03 IN_PROGRESS. Use the final local V5 DLL recipe and exact artifact hashes in that record; do not reuse older official artifact hashes as the tested A02 composition.
