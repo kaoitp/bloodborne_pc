@@ -124,6 +124,12 @@ CL02-REV01: REVIEW COMPLETE / CHANGES REQUESTED (2026-10-24). Reviewed handback 
 
 [PR approval and CL02 assignment](https://github.com/kaoitp/bloodborne_pc/pull/1#pullrequestreview-5637592348) posted successfully; four REV01 threads resolved. [PR #1](https://github.com/kaoitp/bloodborne_pc/pull/1) is now merged/closed by CL01-INT01.
 
+## CL03 — Existing earned-event and party-epoch feasibility
+
+Owner: external Claude in its separate clone, same four-document allowlist. Status: READY / DISPATCH PENDING. Dependency: integrated CL02 at c5018fb and current B02/B03/C01/B04 records. User authorizes assignment via PR #2 comment. [CL03-P02 work package](../../handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility) freezes comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` on new branch `claude/p02-event-provenance`.
+
+Trace existing event/completion/member/host/epoch producers to consumers, test each candidate against C1-C4 on paper, and deliver the smallest discriminating native probes for Codex. Reuse the finite 19 reward events/57 flags; source inability to establish a binding must identify the exact missing evidence. Preserve CL01/CL02 prefixes, stable IDs and historical evidence. No runtime implementation or new protocol/storage/auth framework; external cases remain NOT RUN. New-branch handback uses a new PR; PR #2 stays closed. Codex retains runtime/native/gameplay/integration and all R03/default-OFF gates.
+
 ## Completion and evidence
 
 G1: supported cross-map/Dream join with correct peer/password and placement. G2: jointly earned progress/rewards survive save/reload without importing older host progress, undoing own progress or duplicating relevant rewards. G3: departure/disconnect/interrupted-session reload preserve own world and safe return. All use complete pinned clients and the self-hosted route.
