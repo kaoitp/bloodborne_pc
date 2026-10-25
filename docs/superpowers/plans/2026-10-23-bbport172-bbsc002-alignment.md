@@ -195,3 +195,5 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 
 - [x] B04 narrower no-peer Hunt Bell search control and unchanged-source checks recorded in [B04](../../handoff/R03-B04-HOST-CONTROL.md); no group7 change. Games closed/originals preserved.
 - [ ] Actual group7 first writer/meaning and principal G2 earned-event/admission/epoch producer remain unresolved; no source lead promoted to native acceptance.
+
+CL02-REV05 unchanged-head recheck (2026-10-25): user explicitly waives usage stopping for this PR review. Fresh metadata confirms open/unmerged PR #2 at the same accepted c4cc3c8; no commit delta, four-file/254-addition frozen-base stat and whitespace check unchanged. PR description now matches the accepted head and eligibility/deferred-owner correction; prior stale-summary note addressed. Both threads remain resolved and [approval 5641948014](https://github.com/kaoitp/bloodborne_pc/pull/2#pullrequestreview-5641948014) remains present. No new Standards/Spec blocker, duplicate review/comment, merge/integration or runtime test; source/document acceptance stands and R03/default-OFF gates remain unchanged.
