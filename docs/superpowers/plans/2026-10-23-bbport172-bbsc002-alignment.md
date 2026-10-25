@@ -166,7 +166,3 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 ### B01 personal common-event flags
 
 - [x] Preserve the 29 reproduced personal completion flags: actual fresh native Dream join/normal return/reload preserves all 1250 prejoin groups exactly. [B01 evidence and limits](../../handoff/R03-B01-PERSONAL-FLAGS.md). This does not pass G2 shared-event/reward eligibility.
-
-### B02 boss reward delivery
-
-- [ ] IN_PROGRESS: original-owner retry/confirmed direct delivery for the existing finite boss reward queue; test unavailable state, failed add, departure/other-character isolation and once-only success. Earned-event admission/old-host exclusion remain open; no broad G2 PASS.
