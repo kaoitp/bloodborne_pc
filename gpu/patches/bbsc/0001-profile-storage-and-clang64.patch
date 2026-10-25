@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..6d37218 100644
+index 6c278c3..d983874 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -241,14 +241,14 @@ index 6c278c3..6d37218 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,7 +6171,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,9 +6171,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-+    WriteBbscOwnWorldFile();
-+}
-+
+     WriteBbscOwnWorldFile();
+ }
+ 
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -257,7 +257,7 @@ index 6c278c3..6d37218 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-     WriteBbscOwnWorldFile();
++    WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -271,9 +271,11 @@ index 6c278c3..6d37218 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
- }
- 
++}
++
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
+     if (BbscIsMapFlagGroup(key)) {
+         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6259,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -688,7 +690,7 @@ index 6c278c3..6d37218 100644
  // Reliable packets waiting for a member that does not take them (see SendBacklog.Limit in
  // bbsc_patch_tables.h): [SprjSessionManager]+0x188 is a list head, each node +0x10 -> queue, +0x30
  // its packet count; +0x1B0 one more count. Logged while it grows past 100 (at most every 30 s).
-@@ -10809,16 +11021,85 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
+@@ -10809,16 +11021,95 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
  std::mutex bbsc_progress_mutex;
  std::vector<u32> bbsc_progress_host_flags;                         // guest: host's boss flags seen
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_progress_groups; // guest: kind 1, OR-ed
@@ -761,8 +763,18 @@ index 6c278c3..6d37218 100644
 +// Merged into the live flags, not yet in the game's save (R03 B10): the live table only reaches
 +// the save when the game next writes it, so the pending file stays until then. A game closed in
 +// between merges the file again the next time this character is home.
-+std::optional<BbscSaveSlot> bbsc_progress_unsaved_slot;
-+std::filesystem::file_time_type bbsc_progress_unsaved_since{};
++// Per character: another character played meanwhile recovers its own progress as usual.
++struct BbscUnsavedMerge {
++    BbscSaveSlot slot;
++    std::filesystem::file_time_type since;
++};
++std::vector<BbscUnsavedMerge> bbsc_progress_unsaved;
++
++auto FindBbscUnsavedMerge(const BbscSaveSlot& slot) {
++    return std::ranges::find_if(bbsc_progress_unsaved, [&slot](const BbscUnsavedMerge& m) {
++        return m.slot.user == slot.user && m.slot.slot == slot.slot;
++    });
++}
 +constexpr s64 BbscProgressMergeRetry = -2;
  
  // OR the collected host progress into the live flag table (own world). Returns the boss flags and
@@ -775,7 +787,7 @@ index 6c278c3..6d37218 100644
      std::vector<u32> flags;
      std::map<u32, std::array<u8, BbscWorldGroupBytes>> groups;
      {
-@@ -10827,11 +11108,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
+@@ -10827,11 +11118,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
          groups = bbsc_progress_groups;
      }
      if (flags.empty() && groups.empty()) {
@@ -803,7 +815,7 @@ index 6c278c3..6d37218 100644
      using SetEventFlag = u64 PS4_SYSV_ABI (*)(u64 unused, u32 flag, u8 value);
      const auto set = reinterpret_cast<SetEventFlag>(image_base + 0x0132E5A0);
      s64 bosses = 0;
-@@ -10906,9 +11203,10 @@ void TickBbscProgressBroadcast() {
+@@ -10906,9 +11213,10 @@ void TickBbscProgressBroadcast() {
  // newest userdata00NN (0..9) of the user's CUSA00207\SPRJ0005 folder, written during this run.
  constexpr s64 BbscProgressFileMs = 10'000;
  constexpr s64 BbscProgressRecoverMs = 15'000;
@@ -816,15 +828,19 @@ index 6c278c3..6d37218 100644
  
  std::filesystem::path BbscPendingProgressPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() /
-@@ -11050,6 +11348,7 @@ void TickBbscSharedProgress() {
-         return;
-     }
-     if (state == 6) {
-+        bbsc_progress_unsaved_slot.reset(); // a new collection owns the file now
-         // Which character this is, and what an earlier session left for it (once per session).
+@@ -11054,6 +11362,11 @@ void TickBbscSharedProgress() {
          if (!bbsc_progress_slot.has_value()) {
              bbsc_progress_slot = BbscActiveSaveSlot();
-@@ -11077,6 +11376,17 @@ void TickBbscSharedProgress() {
+             if (bbsc_progress_slot.has_value()) {
++                // This character's new collection owns its file now (its merge is still live).
++                if (const auto m = FindBbscUnsavedMerge(*bbsc_progress_slot);
++                    m != bbsc_progress_unsaved.end()) {
++                    bbsc_progress_unsaved.erase(m);
++                }
+                 LoadBbscPendingProgress(*bbsc_progress_slot);
+             }
+         }
+@@ -11077,6 +11390,17 @@ void TickBbscSharedProgress() {
              }
          }
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -842,7 +858,7 @@ index 6c278c3..6d37218 100644
          for (const BbscWorldSnapshot& snap : blocks) {
              // Not the Hunter's Dream (report 2026-10-07: "guest does not have the starter items in
              // the Hunter's Dream"): its groups hold the messengers' starter weapons, the Doll and
-@@ -11089,12 +11399,45 @@ void TickBbscSharedProgress() {
+@@ -11089,13 +11413,48 @@ void TickBbscSharedProgress() {
                  if ((snap.present & (u64{1} << i)) == 0) {
                      continue;
                  }
@@ -867,6 +883,7 @@ index 6c278c3..6d37218 100644
                  }
              }
          }
+-        return;
 +        if (admitted_bits != 0) {
 +            LOG_INFO(Debug, "BBSC shared progress: {} world flag(s) the host set during the party - "
 +                            "collected", admitted_bits);
@@ -875,22 +892,25 @@ index 6c278c3..6d37218 100644
 +        }
 +        return;
 +    }
-+    if (!bbsc_progress_was_guest && bbsc_progress_unsaved_slot.has_value()) {
++    if (!bbsc_progress_was_guest && !bbsc_progress_unsaved.empty()) {
 +        const auto slot = BbscActiveSaveSlot();
-+        if (slot && slot->user == bbsc_progress_unsaved_slot->user &&
-+            slot->slot == bbsc_progress_unsaved_slot->slot &&
-+            bbsc_active_slot_written > bbsc_progress_unsaved_since) {
-+            bbsc_progress_slot = slot;
-+            FinishBbscPendingProgress(); // in the save now
-+            bbsc_progress_slot.reset();
-+            bbsc_progress_unsaved_slot.reset();
-+            LOG_INFO(Debug, "BBSC shared progress: the game saved the merged progress - done");
-+            BBSC_TIMELINE("WORLD", "shared progress: the game saved the merged progress - done");
++        if (const auto m = slot ? FindBbscUnsavedMerge(*slot) : bbsc_progress_unsaved.end();
++            m != bbsc_progress_unsaved.end()) {
++            if (bbsc_active_slot_written > m->since) {
++                bbsc_progress_slot = slot;
++                FinishBbscPendingProgress(); // in the save now
++                bbsc_progress_slot.reset();
++                bbsc_progress_unsaved.erase(m);
++                LOG_INFO(Debug, "BBSC shared progress: the game saved the merged progress - done");
++                BBSC_TIMELINE("WORLD", "shared progress: the game saved the merged progress - done");
++            }
++            return; // this character's merge is in the live flags: nothing to recover
 +        }
-         return;
++        // Another character: its own recovery below; the other one keeps waiting.
      }
      if (!bbsc_progress_was_guest) {
-@@ -11154,17 +11497,22 @@ void TickBbscSharedProgress() {
+         // A file an earlier session left (crash, quit while a guest): merged once this character
+@@ -11154,17 +11513,30 @@ void TickBbscSharedProgress() {
      if (now - bbsc_progress_home_ms < BbscProgressSettleMs) {
          return;
      }
@@ -911,12 +931,20 @@ index 6c278c3..6d37218 100644
      }
 -    FinishBbscPendingProgress(); // merged: the file is done
 +    // Merged into the live flags: the file is done once the game has saved them (above).
-+    bbsc_progress_unsaved_slot = bbsc_progress_slot;
-+    bbsc_progress_unsaved_since = std::filesystem::file_time_type::clock::now();
++    if (bosses < 0) {
++        FinishBbscPendingProgress(); // nothing was merged
++    } else if (bbsc_progress_slot.has_value()) {
++        if (const auto m = FindBbscUnsavedMerge(*bbsc_progress_slot);
++            m != bbsc_progress_unsaved.end()) {
++            bbsc_progress_unsaved.erase(m);
++        }
++        bbsc_progress_unsaved.push_back(
++            {*bbsc_progress_slot, std::filesystem::file_time_type::clock::now()});
++    }
      bbsc_progress_slot.reset();
      if (bosses < 0) {
          LOG_INFO(Debug, "BBSC shared progress: home again, nothing from the host to merge");
-@@ -11235,6 +11583,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
+@@ -11235,6 +11607,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
      }
      const s64 event = ReadablePointer(registers->rdx, 0xC0) ? BbscEventIdOf(registers->rdx) : -1;
      if (event > 0) {
@@ -924,7 +952,7 @@ index 6c278c3..6d37218 100644
          NoteBbscBossRewardEvent(event); // a boss reward event the guest's copy never finishes
      }
      if (type != 0) {
-@@ -14398,10 +14747,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -14398,10 +14771,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -942,7 +970,7 @@ index 6c278c3..6d37218 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -15997,6 +16350,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -15997,6 +16374,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      }
  
      const auto& site = Sites[tag];
@@ -953,7 +981,7 @@ index 6c278c3..6d37218 100644
      if (site.offset == ItemUsableResultOffset) {
          ApplyBbscBellsAnywhere(registers);
      }
-@@ -16024,6 +16381,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16024,6 +16405,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
@@ -969,7 +997,7 @@ index 6c278c3..6d37218 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -16762,25 +17128,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
+@@ -16762,25 +17152,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
      s32 time_bits = 0; // the packet holds every listed flag the host has on, so absent = off
      {
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1010,7 +1038,7 @@ index 6c278c3..6d37218 100644
      }
  }
  
-@@ -16890,6 +17265,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16890,6 +17289,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
          std::scoped_lock lock{bbsc_world_mutex};
          BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
          BbscWorldSnapshot& ready = dream ? bbsc_dream_ready : bbsc_world_ready;
@@ -1031,7 +1059,7 @@ index 6c278c3..6d37218 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -17791,7 +18180,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +18204,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,

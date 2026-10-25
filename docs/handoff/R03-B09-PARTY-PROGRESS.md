@@ -23,7 +23,8 @@
 - `BbscActiveSaveSlot` records the write time of the slot it finds (`bbsc_active_slot_written`).
 - After a merge, the pending file stays as `pending-…bin` until that slot's save file is written later than the merge. Then it is finished (`.merged`).
 - Until then the recovery path does not reload it in the same process.
-- A new co-op session cancels the wait; its own collection owns the file.
+- A new co-op session cancels the wait for that character only; its own collection owns the file.
+- The wait is per character (PR #6 review): while one character waits, another character loaded in the same process still recovers its own journal and pending file. Regression in `test_bbsc_progress_backup.py`: RED on `3051ff9`, GREEN after. An empty merge is finished at once, as before.
 - If the game ends before saving, the next time the character is home it is merged again. The merge only adds bits, so a repeat is harmless.
 
 ## Fixture evidence (actual functions, controlled dependencies)

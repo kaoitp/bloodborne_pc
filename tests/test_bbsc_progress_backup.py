@@ -89,8 +89,9 @@ template<class T> T ReadValue(u64 at, size_t off) {
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() { if (!active_ready) return {}; return current; }
 void RestoreBbscOwnWorld(const char*) {}
 void RestoreBbscOwnWorldAtLoad() {}
-bool RecoverBbscOwnWorldFile(const BbscSaveSlot&) { return false; }
-bool LoadBbscPendingProgress(const BbscSaveSlot&) { return false; }
+std::vector<int> recovered, loaded; // slots whose own journal / pending file was read
+bool RecoverBbscOwnWorldFile(const BbscSaveSlot& slot) { recovered.push_back(slot.slot); return false; }
+bool LoadBbscPendingProgress(const BbscSaveSlot& slot) { loaded.push_back(slot.slot); return false; }
 void WriteBbscPendingProgress() {}
 void FinishBbscPendingProgress() { ++finishes; pending_file = false; }
 void BbscAnnounce(const char16_t*, const char*) { ++notices; }
@@ -152,6 +153,15 @@ int main() {
     assert(!bbsc_progress_was_guest && !bbsc_progress_slot);
     now_ms += 1000; TickBbscSharedProgress();
     assert(finishes == 0 && pending_file); // no save written yet
+    // Another character is loaded before the first one's save is confirmed: it recovers its own
+    // journal and pending file, and the first one keeps waiting.
+    current.slot = 2; recovered.clear(); loaded.clear();
+    now_ms += 16000; TickBbscSharedProgress();
+    assert(recovered == std::vector<int>{2} && loaded == std::vector<int>{2});
+    assert(finishes == 0 && pending_file);
+    current.slot = 1; recovered.clear(); loaded.clear();
+    now_ms += 16000; TickBbscSharedProgress();
+    assert(recovered.empty() && loaded.empty() && finishes == 0); // still live, not reloaded
     saved();
     now_ms += 1000; TickBbscSharedProgress();
     assert(finishes == 1 && !pending_file);
