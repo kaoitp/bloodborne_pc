@@ -186,3 +186,34 @@ Evidence level: **NATIVE-LOG**, both clients, copied saves, time-aligned.
 3. **G2-22**.
 
 **Stop** and report "no existing guest-side earn-time producer" if G2-20 shows a `queued` line on the negative side **and** G2-21 shows no `BlockClear2_1` on a dead or loading guest. Neither K1 nor K2 can then work, and a native producer has to be found first (Codex). **Also stop** (C4 open for every candidate) if G2-22 cannot separate (d) or (g) from a continuing party with existing fields. **Continue** to G2-17 (paired, for C3) and then G2-03/16/04/18/19 only for a candidate that G2-20..22 leave standing.
+
+## CL04-C: execution worksheet for G2-20, G2-21, G2-22, paired G2-17 (P03, 2026-10-25)
+
+CL04 section. **Every command below is proposed and NOT RUN.** Placeholders are in `<…>`. Producers and limits: B-38..B-40 ([IDENTITY-PROTOCOL.md § CL04-B](IDENTITY-PROTOCOL.md#cl04-b-observation-producers-for-the-p02-probes-p03-2026-10-25)).
+
+**Common configuration** (PowerShell, per client, separate copied profile):
+
+```
+$env:BB_USER_DIR='<copied-profile>'; $env:BBSC_MOD_HOOKS='1'
+$env:SHADPS4_BBSC_DREAM='1'; $env:SHADPS4_BBSC_GUEST_ITEMS='1'; $env:SHADPS4_BBSC_SPECTATE='1'
+$env:SHADPS4_BBSC_TIMELINE='1'; $env:SHADPS4_BBSC_SHARED_PROGRESS='<Codex policy, 0 in B02/C01>'
+python run.py
+```
+
+**Readiness controls**, all required before any negative counts:
+
+- R1. The mod log has `Bloodborne RE trace installed <n>/<n> hooks; capture=<path>` with both numbers equal, plus `BBSC Dream: …` and `BBSC boss clear keeps the co-op …`.
+- R2. The timeline header's `Switched off:` names none of DREAM, GUEST_ITEMS, SPECTATE, TIMELINE.
+- R3. Each paired run uses a **fresh guest process**: the queue and given list are per process (B-40).
+- R4. Both clients run on one PC, or a clock offset is recorded.
+
+**Collection:** `rg -n "boss drop: event|boss clear: BlockClear2_1|session state|relay: our host|no longer a guest|join teleport: guest moved|guest placed beside the host|life: told|world state \(" <mod-dir>\logs\bbsc-mod-*-<pid>.log <log-dir>\logs\bbsc-timeline-*-<pid>.txt`. For JSONL: select records with `site` = `ForceSummonSuccess` or `BBSC.LuaEvent` and keep `time_ms`/`hit`.
+
+| Probe | Paired input | Decisive fields | A negative counts only if | Status |
+|---|---|---|---|---|
+| G2-20 | Negative: pre-party kill of X, G joins into X's area, no fight, 60 s. Positive: a joint kill of X in a **separate fresh** guest process, same build and switches | `boss drop: event <X> queued for user <U> slot <S>`, its time vs. the placement line | R1-R3 hold; the timeline shows G as `guest` in X's area during the window; and the positive run produced the line | **READY** (existing logs). Not provable: whether the wait is evaluated later than 60 s |
+| G2-21 | (a) alive in the arena, (b) dead, (c) in a follow load, (d) elsewhere in H's world; negative: load into a pre-killed area | Guest `boss clear: BlockClear2_1` vs. H's line; G's `session state` at that time; JSONL `ForceSummonSuccess` `time_ms`/`hit` on both sides | Guest state was 3/6 at the kill (otherwise the hook stays silent by design) and `ForceSummonSuccess` `hit` < 64 | **READY** for (a)/(b)/(d). (c) is inconclusive if state left 6 during the load. The B-30 label question is READY only below 64 hits |
+| G2-22 (a)-(g) | As listed in CL03-C; (g) = H changes character in the same process | `session state` lines, `our host is player X` / `let go`, new placement lines, `life: told … (session state N)` | — (a positive observation is the question here) | **READY** for state, lock and placement. Host-character identity on the guest side has no field (B-40), so (g) is judged only by whether any existing guest field changes, with the operator recording H's character |
+| G2-17 paired | Older completed snapshot N delivered after N+1, then a load so that it reaches live flags, with reward/clear lines watched | `world state (<why>): … snapshot <N> is <ms> ms old` at the next load; reward/clear lines after it | — | **BLOCKED.** No existing delay/reorder control; receipt order is not logged after the first snapshot (B-39). An isolated `OnBbscWorldFlagsPacket` fixture can show replacement but **cannot** show live application or callbacks |
+
+**Stopping condition** (unchanged from CL03-C): stop at a G2-20 positive-on-negative together with a G2-21 silent dead/loading guest, or when G2-22 cannot separate (d)/(g). G2-17 stays BLOCKED until the A-37 seam exists. C3/C4 and NOT IMPLEMENTATION-READY are unchanged.

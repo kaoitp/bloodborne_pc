@@ -219,11 +219,38 @@ Status: VERIFIED for the source/document deliverable (2026-10-25); set IN_PROGRE
 
 ## CL04-P03: native-probe observability readiness (2026-10-25)
 
-Status: IN_PROGRESS. Work package: [CL04-P03 at 6decf55](https://github.com/kaoitp/bloodborne_pc/blob/6decf55635fbf03933fa04334d05d518a9757daa/docs/handoff/CLAUDE-CODE-WINDOWS.md#cl04-p03-native-probe-observability-readiness), assigned on merged PR #3. Branch `claude/p03-probe-readiness` from frozen base `7927159f53818d846590b564b4144d6c5e4a0100` (clean clone, no rebase). CL01-CL03 sections above are historical and unchanged.
+Status: VERIFIED for the source/document deliverable (2026-10-25); set IN_PROGRESS in commit `6e2f519` before the deliverable edits. Work package: [CL04-P03 at 6decf55](https://github.com/kaoitp/bloodborne_pc/blob/6decf55635fbf03933fa04334d05d518a9757daa/docs/handoff/CLAUDE-CODE-WINDOWS.md#cl04-p03-native-probe-observability-readiness), assigned on merged PR #3. Branch `claude/p03-probe-readiness` from frozen base `7927159f53818d846590b564b4144d6c5e4a0100` (clean clone, no rebase). CL01-CL03 sections above are historical and unchanged.
 
 | Slice | Status | Owned output |
 |---|---|---|
-| CL04-B (observation producers) | IN_PROGRESS | `IDENTITY-PROTOCOL.md` § CL04-B |
-| CL04-C (execution worksheet) | IN_PROGRESS | `ACCEPTANCE-CASES.md` § CL04-C |
-| CL04-A (diagnostic gaps) | IN_PROGRESS | `BBSC-002-MAP.md` § CL04-A |
-| CL04 handback | IN_PROGRESS | This section |
+| CL04-B (observation producers) | VERIFIED | `IDENTITY-PROTOCOL.md` § CL04-B |
+| CL04-C (execution worksheet) | VERIFIED | `ACCEPTANCE-CASES.md` § CL04-C |
+| CL04-A (diagnostic gaps) | VERIFIED | `BBSC-002-MAP.md` § CL04-A |
+| CL04 handback | VERIFIED | This section |
+
+### CL04 handback
+
+- **Read (read-only):**
+  - Pinned B blobs: `bloodborne_re.cpp`, `emulator/mod/bbsc_mod.cpp`, `emulator/src/core/bbsc_persistence.h`.
+  - At the frozen base: P, `run.py`, `tests/test_bbsc_reward_delivery.py`.
+- **Deliverables:**
+  - [IDENTITY-PROTOCOL.md § CL04-B](IDENTITY-PROTOCOL.md#cl04-b-observation-producers-for-the-p02-probes-p03-2026-10-25) (B-38..B-40)
+  - [ACCEPTANCE-CASES.md § CL04-C](ACCEPTANCE-CASES.md#cl04-c-execution-worksheet-for-g2-20-g2-21-g2-22-paired-g2-17-p03-2026-10-25)
+  - [BBSC-002-MAP.md § CL04-A](BBSC-002-MAP.md#cl04-a-remaining-diagnostic-gaps-per-probe-p03-2026-10-25) (A-37..A-39)
+- **Not run by Claude:** builds, the game, servers, accounts, native tests, private data. All commands are proposed only.
+
+| Probe | Readiness |
+|---|---|
+| G2-20 | READY (existing logs, controls R1-R4) |
+| G2-21 | READY for (a)/(b)/(d). (c) is inconclusive if the state leaves 6. The `ForceSummonSuccess` label needs `hit` < 64 |
+| G2-22 (a)-(g) | READY for state, lock and placement. Host character is operator input only |
+| G2-17 paired | **BLOCKED**: no delay/reorder control, silent replacements, live apply only at loads (A-37) |
+
+**Next action (Codex):**
+1. Run G2-20 with R1-R4, then G2-21 (a)/(b)/(d) and G2-22.
+2. Check `hit` counts in the JSONL before reading any absence of `ForceSummonSuccess` or `lua event`.
+3. Treat G2-17 as blocked until the A-37 seam exists.
+
+**Risk:** the trace throttle also skips `WriteLuaSessionEvent`'s `JoinSession_*` side effects after 64 Lua events in one process (B-38). Codex should check whether that affects long sessions.
+
+- **Checks:** see the handback commit message.
