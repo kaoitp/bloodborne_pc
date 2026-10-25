@@ -1,5 +1,7 @@
 # Resume BBSC development on Windows
 
+Latest B01: [personal common-event preservation checkpoint](R03-B01-PERSONAL-FLAGS.md). The demonstrated 29 completion-bit leak is corrected: actual Dream join/normal return/save-reload preserved all 1250 prejoin flag groups. Original 3171 files unchanged; both test clients normally closed. G2 earned-event/reward and remaining candidate/routing/recovery gates keep R03 IN_PROGRESS; experimental recovery remains OFF by default.
+
 Latest A04: [native admission cancellation checkpoint](R03-A04-ADMISSION.md). The bounded initial journal-write fault now cancels without own-state mutation, then healthy retry/adjacent placement/normal return/save-reload pass on the experimental guest build. The earlier native wait was rejected. G2/group-9/rewards and remaining candidate/routing/recovery gates keep R03 IN_PROGRESS; recovery/admission remains OFF by default.
 
 Latest A03: [ownership, own-state and lamp checkpoint](R03-A03-OWN-STATE.md). Bounded native return/interruption/ownership cases improved; initial journal-write refusal and G2/group-9/reward integrity still block R03. The Lua refusal candidate FAILED and was fully reverted. Experimental durable-origin recovery remains OFF unless explicitly opted in on copied profiles. Use A03 source/artifact attribution rather than the historical artifact table below. R03 remains IN_PROGRESS.

@@ -157,3 +157,8 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 - [x] Assess native wait: FAILED after delayed release/falling; fully reverted.
 - [x] A04-P02 bounded native cancellation before the enclosing join transition; actual blocked-write own-state equality, healthy retry/adjacent placement, normal return and independent save/reload.
 - [ ] Remaining G2/group-9/reward, candidate/locked-map/routing and recovery enablement gates. R03 remains IN_PROGRESS; experimental default stays OFF. [Exact attribution and limits](../../handoff/R03-A04-ADMISSION.md).
+
+
+### B01 personal common-event flags
+
+- [x] Preserve the 29 reproduced personal completion flags: actual fresh native Dream join/normal return/reload preserves all 1250 prejoin groups exactly. [B01 evidence and limits](../../handoff/R03-B01-PERSONAL-FLAGS.md). This does not pass G2 shared-event/reward eligibility.
