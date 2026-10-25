@@ -216,3 +216,14 @@ Status: VERIFIED for the source/document deliverable (2026-10-25); set IN_PROGRE
   2. **C4 is an independent blocker.** A host id plus a placement marker does not show a new party. The CL03-A decision now says M1/M3 are necessary, not sufficient. G2-22 adds (g), a host character change in the same process, and requires (d)-(g) to be separable from a continuing party. A new stopping condition applies if they are not. Verdicts: A-33 blocked on M1, M3, C3 and C4; A-34 and A-35 also carry C4.
 - **Not run by Claude:** builds, the game, servers, accounts, native tests, private data. All CL03 cases stay NOT RUN.
 - **Checks:** see the correction commit message.
+
+## CL04-P03: native-probe observability readiness (2026-10-25)
+
+Status: IN_PROGRESS. Work package: [CL04-P03 at 6decf55](https://github.com/kaoitp/bloodborne_pc/blob/6decf55635fbf03933fa04334d05d518a9757daa/docs/handoff/CLAUDE-CODE-WINDOWS.md#cl04-p03-native-probe-observability-readiness), assigned on merged PR #3. Branch `claude/p03-probe-readiness` from frozen base `7927159f53818d846590b564b4144d6c5e4a0100` (clean clone, no rebase). CL01-CL03 sections above are historical and unchanged.
+
+| Slice | Status | Owned output |
+|---|---|---|
+| CL04-B (observation producers) | IN_PROGRESS | `IDENTITY-PROTOCOL.md` § CL04-B |
+| CL04-C (execution worksheet) | IN_PROGRESS | `ACCEPTANCE-CASES.md` § CL04-C |
+| CL04-A (diagnostic gaps) | IN_PROGRESS | `BBSC-002-MAP.md` § CL04-A |
+| CL04 handback | IN_PROGRESS | This section |
