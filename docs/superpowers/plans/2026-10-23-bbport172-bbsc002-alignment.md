@@ -224,4 +224,9 @@ CL04-REV01: IN_PROGRESS (2026-10-25). Review PR #4 against the CL04 package and 
 CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as446183d and confirmed closed. Fresh243-citation/34-file,31-link,41-case,11-outcome,prefix/scope/format/whitespace checks pass; merge blobs match reviewed documents. No blocking Standards/Spec finding. G2-17,C3/C4,R03 and default-OFF gates unchanged; no native test or runtime delta. Existing B05 work preserved.
 
 - [x] B05 bounded G2-20/G2-21 negative native observation and exact1250group normal return. [Evidence/limits](../../handoff/R03-B05-EVENT-PROBES.md).
-- [ ] Positive joint kill, dead/loading producer sensitivity, C3/C4 and remaining R03 gates; G2-22(g) graphics-blocked, positive fresh-host setup ongoing.
+- [ ] Positive joint kill, dead/loading producer sensitivity, C3/C4 and remaining R03 gates; G2-22(g) graphics-blocked, no actual positive kill; fresh copied tests normally closed.
+
+### B06 completed snapshot ordering
+
+- [x] Actual receiver RED/GREEN for older completed/partial input; duplicate/map/Dream/wrap/reset/invalid input checks, DLLbuild and normal candidate guest native join/adjacent placement/return. [B06 evidence](../../handoff/R03-B06-WORLD-ORDERING.md).
+- [ ] C3/G2-17 native reordered-input/callback proof; classify six reload bits and independent candidate reload. Actual joint earning/first-playable/party epoch/history exclusion/C4 and remaining R03 gates remain OPEN.

@@ -1,5 +1,7 @@
 # R03 new-session execution handoff
 
+Latest B06: [stale snapshot receiver fix and native regression](R03-B06-WORLD-ORDERING.md). Actual-function RED/GREEN and candidate guest native join/0.85m placement/normal return pass; immediate1250 groups exact. Same-process reload has six unclassified group12705 bits, so full reload integrity stays open. Actual joint earning/C3 callbacks/C4 remain unproved; both copied tests normally closed, managed applicationOFF.
+
 Latest B05: [older-host reward negative and native limits](R03-B05-EVENT-PROBES.md). Actual Amelia-old-host no-fight visit has zero reward/clear logs beyond60s; normal guest return preserves1250 groups exactly. Positive earning/C1-C4 remain open. Same-process host character-change probe hit repeated GPU PM4 errors; fresh copied positive setup is IN_PROGRESS, shared progressOFF. Quota has reset; monitor fresh usage rather than the historical B04 stop.
 
 Latest B04: [host-only search control and source leads](R03-B04-HOST-CONTROL.md). Hunt Bell alone changes three transient bits while group7 stays exact; no peer/state3, so its writer/meaning remains unresolved. No runtime change. Actual earned-event/admission/epoch provenance remains the main G2 blocker. Games normally closed, copied baseline restored, originals3171 unchanged; quota stop at9%/86% remaining; no new work until usage permits.

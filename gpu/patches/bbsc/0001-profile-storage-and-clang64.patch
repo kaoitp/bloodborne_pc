@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..cccf957 100644
+index 6c278c3..c1b188c 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -217,14 +217,14 @@ index 6c278c3..cccf957 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,7 +6162,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,9 +6162,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-+    WriteBbscOwnWorldFile();
-+}
-+
+     WriteBbscOwnWorldFile();
+ }
+ 
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -233,7 +233,7 @@ index 6c278c3..cccf957 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-     WriteBbscOwnWorldFile();
++    WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -247,9 +247,11 @@ index 6c278c3..cccf957 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
- }
- 
++}
++
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
+     if (BbscIsMapFlagGroup(key)) {
+         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6250,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -784,7 +786,28 @@ index 6c278c3..cccf957 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -17791,7 +18033,8 @@ void InstallReverseEngineeringTrace() {
+@@ -16890,6 +17132,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+         std::scoped_lock lock{bbsc_world_mutex};
+         BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
+         BbscWorldSnapshot& ready = dream ? bbsc_dream_ready : bbsc_world_ready;
++        const auto block = bbsc_world_blocks.find(packet.packed_map);
++        const auto* latest = dream ? &ready
++                                  : block != bbsc_world_blocks.end() ? &block->second : nullptr;
++        if (latest != nullptr && latest->map == packet.packed_map && latest->complete_ms != 0) {
++            // Serial arithmetic also accepts the host counter wrapping from UINT32_MAX to zero.
++            const u32 delta = packet.snapshot - latest->snapshot;
++            if (delta == 0 || delta >= 0x80000000u) {
++                return;
++            }
++        }
++        if (snap.map == packet.packed_map && packet.snapshot != snap.snapshot &&
++            packet.snapshot - snap.snapshot >= 0x80000000u) {
++            return; // A delayed chunk must not restart a newer snapshot still being assembled.
++        }
+         if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
+             snap = BbscWorldSnapshot{};
+             snap.map = packet.packed_map;
+@@ -17791,7 +18047,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,
