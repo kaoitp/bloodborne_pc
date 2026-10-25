@@ -1,5 +1,7 @@
 # Claude Code work package: CL01
 
+Active ownership update2026-10-25: [Claude now takes over all R03 implementation and validation](R03-CLAUDE-TAKEOVER.md). The owner retains the product goals/general approach and gives Claude independent choice of methods. Earlier audit-only/four-file/Codex-only process wording below is historical for this takeover; Codex quota does not apply to Claude.
+
 Updated: 2026-10-25 (Asia/Bangkok). CL01 is integrated by PR #1; CL02-P01 head `c4cc3c817b71d5ef028eb1f0e00c02804056c073` is integrated by PR #2 at `c5018fba039f5c1a8fe527a3d4b6345d896cf4aa`. Both are source/document acceptance only. The active external assignment is [CL03-P02](#cl03-p02-earned-event-and-party-epoch-source-feasibility); the earlier packages remain historical scope. Parent: R03/R04 in the [active plan](../superpowers/plans/2026-10-23-bbport172-bbsc002-alignment.md).
 
 ## Assignment and ownership

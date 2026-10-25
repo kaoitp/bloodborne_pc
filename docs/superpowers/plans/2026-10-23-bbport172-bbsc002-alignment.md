@@ -1,5 +1,7 @@
 # BBport 1.7.2 + BBSC 0.0.2 development plan
 
+Active R03 ownership2026-10-25: [Claude implementation takeover](../../handoff/R03-CLAUDE-TAKEOVER.md) supersedes historical audit-only/four-document/Codex-only workflow for Claude. Product goals and general baseline-reuse approach stay unchanged; Claude owns implementation/validation and chooses methods independently. Existing R03 acceptance checkboxes remain open until proved.
+
 Updated: 2026-10-24. Migrated to the new fork's `seamless` branch. This is the authoritative implementation plan; [progress](../../WINDOWS-PROGRESS.md) records evidence, and [the product specification](../specs/2026-10-18-bbsc-anywhere-coop-design.md) defines required outcomes.
 
 ## Scope contract

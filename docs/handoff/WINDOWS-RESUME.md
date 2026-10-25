@@ -1,5 +1,7 @@
 # Resume BBSC development on Windows
 
+Active ownership update2026-10-25: [Claude now takes over all R03 implementation and validation](R03-CLAUDE-TAKEOVER.md). The owner retains the product goals/general approach and gives Claude independent choice of methods. Earlier audit-only/four-file/Codex-only process wording below is historical for this takeover; Codex quota does not apply to Claude.
+
 Latest B06: [stale snapshot receiver fix and native regression](R03-B06-WORLD-ORDERING.md). Actual-function RED/GREEN and candidate guest native join/0.85m placement/normal return pass; immediate1250 groups exact. Same-process reload has six unclassified group12705 bits, so full reload integrity stays open. Actual joint earning/C3 callbacks/C4 remain unproved; both copied tests normally closed, managed applicationOFF.
 
 Latest B05: [older-host reward negative and native limits](R03-B05-EVENT-PROBES.md). Actual Amelia-old-host no-fight visit has zero reward/clear logs beyond60s; normal guest return preserves1250 groups exactly. Positive earning/C1-C4 remain open. Same-process host character-change probe hit repeated GPU PM4 errors; fresh copied positive setup is IN_PROGRESS, shared progressOFF. Quota has reset; monitor fresh usage rather than the historical B04 stop.
