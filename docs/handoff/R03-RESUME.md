@@ -1,5 +1,7 @@
 # R03 new-session execution handoff
 
+Latest B02: [boss reward delivery checkpoint](R03-B02-REWARD-DELIVERY.md). Owner-bound retry, confirmed direct-goods delivery, duplicate queue protection and frozen lot selection pass the actual-function fixture. Frozen same-DLL native Dream join/return preserves all 1250 groups; reward earning/failure-retry gameplay remains untested. G2 admission/history and remaining R03 gates stay open; experimental recovery remains OFF by default.
+
 Latest B01: [personal common-event preservation checkpoint](R03-B01-PERSONAL-FLAGS.md). The demonstrated 29 completion-bit leak is corrected: actual Dream join/normal return/save-reload preserved all 1250 prejoin flag groups. Original 3171 files unchanged; both test clients normally closed. G2 earned-event/reward and remaining candidate/routing/recovery gates keep R03 IN_PROGRESS; experimental recovery remains OFF by default.
 
 Latest A04: [native admission cancellation checkpoint](R03-A04-ADMISSION.md). The bounded initial journal-write fault now cancels without own-state mutation, then healthy retry/adjacent placement/normal return/save-reload pass on the experimental guest build. The earlier native wait was rejected. G2/group-9/rewards and remaining candidate/routing/recovery gates keep R03 IN_PROGRESS; recovery/admission remains OFF by default.
