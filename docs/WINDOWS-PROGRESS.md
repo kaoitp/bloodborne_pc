@@ -508,3 +508,18 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - Parting Blank home: exact origin; goods still carried. An independent offline reload shows the Gold Pendant, the 12401800 flag and the echoes. G2-20 positive PASS. G2-02 **PARTIAL**: the guest's reward and flag persist after its reload, but no host reload was run and older host history was imported in the same run (PR #5 review).
 - **G2-01 REPRODUCED-GAP natively:** shared progress imported 14 host boss flags and 272 world flags of older history; 239 bits persist. 57 merged bits are absent after reload (unclassified). [B08 evidence](handoff/R03-B08-JOINT-AMELIA.md).
 - Next: history-exclusion fix based on the kill-time reward wait, C4 boundaries, dead/loading guest earning.
+
+### B09/B10 party-earned shared progress, kept until saved — VERIFIED with limits (2026-10-25, Claude)
+
+- **Source**, in `bloodborne_re.cpp` via the tracked patch:
+  - shared progress collects only what turns on after the guest is placed in the current party, against a per-party baseline (host id + relay-lock resets);
+  - the kill-time reward event bit is collected;
+  - pending file magic `BBS2` (legacy unfiltered `BBSP` not merged);
+  - a merge is finished only after the game writes the character's save.
+- **Fixtures:** new `test_bbsc_party_progress.py` RED on the old source (host history collected), GREEN on the new one; `test_bbsc_progress_backup.py` updated, RED on pre-B10, GREEN. `test_bbsc_*` 4 OK, `test_native_bbsc` 2 OK; DLL B10 `89138993…`.
+- **Native (Amelia, shared progress ON):**
+  - The guest's baseline held the 12 flags / 160 groups B08 imported.
+  - Merge 2 boss + 19 world flags (B08: 14 + 272); only Amelia's progress.
+  - Host and guest reloads keep it. The guest closed before saving re-merged from the kept file and finished after the save.
+  - G2-01 PASS and G2-02 PASS for this scenario. [Evidence](handoff/R03-B09-PARTY-PROGRESS.md).
+- **Open:** G2-17/C3, G2-22(d)/(g), dead/loading guest at the kill, broader world/NPC progress.
