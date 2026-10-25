@@ -104,3 +104,70 @@ Also recorded:
 - **Codex evidence cited (not Claude tests):** R03/R04 records at `bd24679` (`docs/WINDOWS-PROGRESS.md`, `docs/handoff/R04-JOIN-RELOAD.md`), linked by immutable URL because those files are not in the frozen base.
 - **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests. No case status changed to PASS.
 - **Checks:** see the correction commit message.
+
+## CL02-P01: progress contract (2026-10-24)
+
+Status: **VERIFIED for the source/documents, corrected for review CL02-REV01** (see the checkpoint below; set IN_PROGRESS before any CL02 deliverable edit; VERIFIED after the checks). This is not a runtime PASS; G2 stays with Codex. Work package: `docs/handoff/CLAUDE-CODE-WINDOWS.md` § CL02-P01 at `seamless` `b1391b0`.
+
+| Slice | Status | Owned output |
+|---|---|---|
+| CL02-A | VERIFIED | `BBSC-002-MAP.md` § CL02: progress flags, the 19 boss-event reward rows, eligible vs unclassified, smallest seam |
+| CL02-B | VERIFIED | `IDENTITY-PROTOCOL.md` § CL02: progress ownership, snapshot ordering, recovery and legacy pending data |
+| CL02-C | VERIFIED (cases NOT RUN) | `ACCEPTANCE-CASES.md` § CL02: focused P01 G2 matrix, all NOT RUN |
+| CL02 handback | VERIFIED | this file: pins, checks, unknowns, ranked P01 recommendations, full commit SHA |
+
+- Comparison base: accepted CL01 head `108bf28f069d7017712fd71e24fb7fd6b2bbde36`; branch `claude/p01-progress-contract` in the same separate clone (clean before branching). CL01 audit base `04c6e7b` and pins K/B/N unchanged.
+- Codex evidence read (public Git objects, no rebase): `6cff29d75c9f8dedf887bf6b52fefc8a02b9cc5d` `docs/handoff/R03-ACCEPTANCE.md`, `docs/handoff/R04-JOIN-RELOAD.md`, `docs/superpowers/specs/2026-10-18-bbsc-anywhere-coop-design.md`.
+- Source pins for new claims: B `4f11faf88b6ba658ebde6fe5fbefdadedba4fa41` (`emulator/src/core/bloodborne_re.cpp`, `bbsc_persistence.h`, `emulator/mod/bbsc_relay.cpp`, `bbsc_channel.cpp`), read from the existing ignored reference clone. K and N are unchanged.
+- Deliverables: [BBSC-002-MAP.md § CL02-A](BBSC-002-MAP.md#cl02-a-progress-and-reward-contract-for-p01-2026-10-24) (A-17..A-31, the 19 reward rows), [IDENTITY-PROTOCOL.md § CL02-B](IDENTITY-PROTOCOL.md#cl02-b-progress-ownership-ordering-and-recovery-p01-2026-10-24) (B-15..B-25, Q7..Q10), [ACCEPTANCE-CASES.md § CL02-C](ACCEPTANCE-CASES.md#cl02-c-focused-p01-progress-matrix-2026-10-24) (G2 rows reused, plus G2-11..G2-14, all NOT RUN). CL01 sections, IDs and evidence dates are unchanged.
+- Not run by Claude: builds, the game, servers, accounts, private saves or logs. Codex evidence (the 7 entries, the 15:32 timeline, backup false) is quoted from `6cff29d`; Claude did not reproduce it.
+
+### CL02 ranked P01 recommendations (source only; nothing implemented)
+
+1. **Filter at collection, not at merge** (A-18, A-21). A first-seen baseline in `OnBbscProgressPacket` and in the kind-1 loop of `TickBbscSharedProgress`, admitting only 0→1 transitions, is a candidate against the bulk import of older history (G2-01). It is **not implementation-ready for outcome 9**: constraints C1-C4 (delayed pre-playable baseline, swallowed first event, reorder, epoch boundary) are open, and the existing signals cannot close them (B-26..B-28). The reset point must be a genuine new party or host epoch, not every state-6 entry. The merge, the pending file and crash recovery need no change for whatever the filter admits.
+2. **Restrict what can be admitted to the existing finite list** (A-23). Leave A-24 (9466-9471, unclassified) and kind-1 groups (A-26) out until they are classified. A first-seen delta over whole kind-1 groups is expected to fail G2-06(b).
+3. **Decide the night flags** (A-25, G2-14). As written they import a host's later night at merge time without a joint event.
+4. **Rewards use the same eligibility contract** (A-27, A-32). The existing enqueue is state-6 only and the award tick is ungated, so a pre-playable reward is possible. Eligibility is judged **when the event is earned**, as a window per party epoch: the first playable start opens it, it stays open through that party's death and loading, and genuine departure or a new epoch closes it (an event earned while it is not open is rejected). Delivery is a separate step with its own readiness gate: an earned, admitted reward is kept for its original owner and epoch through death, loading and departure and settled exactly once. While another character or a later party is active it is deferred, not given to them and not discarded. It is never dropped only because the guest departed. A confirmed award before "given" is also required. None is implemented; the existing award-time area test loses an earned reward when departure beats the award (A-32).
+5. **Close the cross-run reward duplicate where an existing flag allows it** (A-29), as a separate concern from item 4. Before giving a first lot for a taken-flag-0 row, check the goods row's existing get flag. That covers rows 3, 8, 10, 15 and 18; the other 7 flag-0 rows have no existing record (unknown).
+6. **Legacy pending data** (B-23). A filtered build writes a new file magic, so baseline `BBSP` files are not re-imported. The conditional cases G2-13, G2-08, G2-09 and G2-10 apply only to the delta actually proposed.
+
+### CL02 unknowns
+
+- Which A-23 flag belongs to which of the 19 events, and whether 9450-9465 are counters.
+- Whether any kind-1 bit is an NPC quest phase.
+- Names and progression roles of the unnamed reward goods.
+- First-arrival timing per flag and block, and whether state 6 holds through death (Q7, Q8).
+- Which of the 7 A01 entries are A-23, A-24 or A-25 members (Q9).
+- Whether delayed or reordered snapshots occur in practice, and whether the lock holds through same-party transitions (Q11).
+- Whether the existing reward path queues before playable or loses a queued event (Q12).
+- How C1-C4 can be closed with existing signals at all. Source says they cannot as written (B-26..B-28).
+
+**Next (Codex):** review this contract, answer Q7-Q10 from existing logs or snapshots where possible, then decide R04-P01. Claude does not implement it.
+
+## Checkpoint 2026-10-24: CL02-REV01 corrections
+
+- **Review.** kaoitp CL02-REV01 (changes requested, PR #1 comment 6382726381) on handback `b48d2b36c6e41cb66cfc474287fc5eaf6bec6863`, base `108bf28f069d7017712fd71e24fb7fd6b2bbde36`. Same branch `claude/p01-progress-contract`, one correction commit on top; no rebase. CL01 sections, pins K/B/N and all stable IDs unchanged.
+- **Corrections, each re-checked against pinned B `4f11faf`:**
+  1. **Snapshot counter is not an ordering guarantee.** `OnBbscWorldFlagsPacket` resets the single assembly buffer on any different map or ID (L16893) and a completed snapshot replaces the block (L16912); there is no high-water check. B-17's guarantee is revised; new B-26 records the N+1-then-N counterexample; any freshness check is an unimplemented candidate (with its restart/`u32` counterexamples). Case G2-17.
+  2. **First receipt after playable is not event time.** New B-27 (no host time in either packet; `complete_ms` is local, L16906) and B-28 (the lock as the only epoch-like signal, 5 s unlock). The former "rules" are now open constraints C1-C4; the every-state-6 reset is replaced by a reset only at a genuine new party/host epoch, with eligibility kept through same-party death and loading. Cases G2-15, G2-16, G2-18; G2-11 revised.
+  3. **Rewards need the eligibility contract.** A-27 now cites the `BbscGuestInHostWorld`-only enqueue gate and the ungated `TickBbscBossRewards` (L16051); G2-03's "no reward line" is predicted to fail on the existing path. New A-32: queue ownership and award confirmation (silent drop at L10426-10428, "given" before the award, unchecked native award). A-31 qualified. The A-29 get-flag check is kept as a separate concern. Case G2-19.
+- **Also fixed:** the seam's pending-file reference now points at B-23 (was B-18).
+- **Line note.** In the pinned file `complete_ms` is set at L16906 and the reset test is L16893; the review's L16909 / L16895-16918 refer to the same code.
+- **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests, private data. All new cases are NOT RUN. Source-only suggestions stay candidates until Codex's reproduction and native gates pass.
+- **Checks:** see the correction commit message.
+
+## Checkpoint 2026-10-25: CL02-REV02 correction
+
+- **Review.** kaoitp CL02-REV02 (PR #1 comment 6388357678) on `c6cb7b3d75b164bfbe2b6dc164241141918de615`: the three REV01 findings are closed; one P2 remains. Same branch `claude/p01-progress-contract`, one correction commit on top; no rebase. CL01 sections, pins K/B/N, stable IDs and the REV01 fixes unchanged. Further CL02 discussion moves to a separate PR into `seamless`, as requested.
+- **Correction ([P2] earned reward vs departure), re-checked against pinned B `4f11faf`:** A-32 no longer drops every queued reward at departure or a new epoch. It separates **eligibility when earned** (at enqueue; events earned after eligibility ended are rejected) from **delivery and confirmation** (an admitted entry stays an obligation to its original owner and epoch, confirmed before departure completes or settled exactly once afterward, never given to a later party or another character). Only unearned, stale or wrong-owner entries are discarded. New source facts: an entry is a bare event ID with no owner or epoch (L10295, L10306-10308); the area test runs at award time and marks an earned event given without the award once the guest has left the area (L10436-10441); `given` is never cleared in a run (L10296). So the existing path loses an earned reward when departure beats the award. Remaining constraints: owner matching inherits the B-24 slot gap; the queue does not survive a crash or exit (no persistence assigned). The seam (i), ranked item 4 and G2-19 are revised: (c) is split into (c1) earned before departure, deliverable once to the original owner; (c2) first earned after departure, rejected; (c3) no delivery to another character or party; (c4) no duplicate across repeated departure/reload; (d) states how a session-1 entry is settled or discarded.
+- **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests, private data. G2-19 stays NOT RUN; runtime feasibility and award confirmation stay open until Codex verifies the chosen delta.
+- **Checks:** see the correction commit message.
+
+## Checkpoint 2026-10-25: CL02-REV03 correction
+
+- **Review.** kaoitp CL02-REV03 on PR #2 (changes requested, two P2) on `2386dfc6137d502d6464a21fcc16bfec4eb2a31f`. REV01 and REV02 corrections stay as accepted. One correction commit on the same branch; no rebase. CL01 sections, pins and stable IDs unchanged.
+- **Corrections (contract wording; no new source claim):**
+  1. **Eligibility through same-party death/loading.** A-32 and seam (i) no longer require playable readiness at every enqueue. Playable readiness opens the party's eligibility window once; the window stays open through that party's death and loading and closes only at genuine departure or a new epoch (C4). Events earned in the boss's area while it is open are admitted even while the guest is dead or loading. Delivery has its own readiness gate (owner loaded, alive, not loading, item manager readable). G2-19(b) now states this, with the source prediction that the existing ungated enqueue can give (A-27).
+  2. **Inactive owner is deferred, not discarded.** The wrong-owner discard is narrowed to invalid admissions (never admitted, stale, missing or invalid owner record). A valid admitted obligation whose owner is not loaded, or which waits through a later party, is deferred under its original owner and epoch. G2-19(c3) and (d) now match: (d) settles a valid session-1 entry for its original owner when loaded and discards only invalid entries. In-process contract only; no persistence.
+- **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests, private data. G2-19 stays NOT RUN.
+- **Checks:** see the correction commit message.
