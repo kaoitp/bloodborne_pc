@@ -48,7 +48,7 @@
 |---|---|
 | G1 join, Clinic guest to Cathedral host, beside host; session kept through a wipe | PASS (native, this run) |
 | G2-20 positive: reward wait fires on a real joint kill | PASS: queued at the kill, delivered to the original owner (sd1 slot 3), confirmed after the trip home and after an independent reload |
-| G2-02: the guest keeps the joint boss (12401800) after its own save/reload | PASS |
+| G2-02: joint boss kept by both players after their own save/reload, without older host history | **PARTIAL**. Kept: the guest's reward and flag 12401800 after the guest's independent reload. Not established: no host reload was run, and older host history was imported into the guest in the same run (G2-01), which the case forbids |
 | G2-01 older host history | **REPRODUCED-GAP**, natively: shared progress ON imported 14 boss flags (e.g. 12301800) and 272 world flags into a level-10 character that never earned them; 239 of the bits persist after reload |
 | G3 return to own world/origin | PASS: exact origin |
 
