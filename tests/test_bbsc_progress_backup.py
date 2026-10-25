@@ -28,10 +28,13 @@ def run_backup_fixture(source, directory):
     code = r'''
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <bit>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -91,6 +94,15 @@ bool LoadBbscPendingProgress(const BbscSaveSlot&) { return false; }
 void WriteBbscPendingProgress() {}
 void FinishBbscPendingProgress() { ++finishes; pending_file = false; }
 void BbscAnnounce(const char16_t*, const char*) { ++notices; }
+std::atomic<u32> bbsc_host_world_resets{0};
+std::filesystem::file_time_type bbsc_active_slot_written{};
+bool bbsc_join_teleport_done = false;
+u32 BbscRelayHostForPackets() { return 0; }
+bool BbscGuestInHostWorld() { return false; }
+u32 GetCurrentPackedMap() { return 0; }
+constexpr u32 BbscMapArea(u32 map) { return (map >> 24) & 0xFF; }
+struct BbscBossReward { s64 event; u32 flag; s32 first_lot; s32 repeat_lot; };
+constexpr std::array<BbscBossReward, 1> BbscBossRewards{{{12401800, 0, 50000001, 0}}};
 '''
     if src.index('std::optional<BbscSaveSlot> bbsc_progress_slot') < src.index('std::pair<s64, size_t> MergeBbscSharedProgress'):
         code = code.replace('std::optional<BbscSaveSlot> bbsc_progress_slot;', '')
@@ -101,6 +113,9 @@ void BbscAnnounce(const char16_t*, const char*) { ++notices; }
                       'void TickBbscSharedProgress', 'void ApplyBbscSharedProgressAtLoad'):
         code += function(signature) + '\n'
     code += r'''
+void saved() {
+    bbsc_active_slot_written = std::filesystem::file_time_type::clock::now() + std::chrono::seconds(1);
+}
 void seed() {
     now_ms += 10000; current = {"sd1", 1};
     own_flags.clear(); live.fill(0); sets = finishes = backups = notices = 0;
@@ -131,14 +146,22 @@ int main() {
     assert(sets == 1 && live[0] == 0x80 && bbsc_progress_merged_at_load);
     assert(pending_file && finishes == 0 && backups == 3);
     now_ms += 1000; TickBbscSharedProgress();
-    assert(sets == 1 && finishes == 1 && !pending_file && backups == 3);
+    // Merged into the live flags; the pending file stays until the game writes the save.
+    assert(sets == 1 && finishes == 0 && pending_file && backups == 3);
     assert(bbsc_progress_host_flags.empty() && bbsc_progress_groups.empty());
     assert(!bbsc_progress_was_guest && !bbsc_progress_slot);
+    now_ms += 1000; TickBbscSharedProgress();
+    assert(finishes == 0 && pending_file); // no save written yet
+    saved();
+    now_ms += 1000; TickBbscSharedProgress();
+    assert(finishes == 1 && !pending_file);
     now_ms += 1000; TickBbscSharedProgress(); ApplyBbscSharedProgressAtLoad();
     assert(finishes == 1 && sets == 1);
     seed(); TickBbscSharedProgress(); unchanged();
     backup_ok = true; now_ms += 1000; TickBbscSharedProgress();
-    assert(sets == 1 && live[0] == 0x80 && finishes == 1 && !pending_file);
+    assert(sets == 1 && live[0] == 0x80 && finishes == 0 && pending_file);
+    saved(); now_ms += 1000; TickBbscSharedProgress();
+    assert(finishes == 1 && !pending_file);
     std::cout << "PASS no mutation/finalization after failed backup; load and settled retry; once-only merge\n";
 }
 '''

@@ -26,6 +26,7 @@ def run_ordering_fixture(source, directory):
     code = r'''
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cassert>
 #include <cstring>
 #include <iostream>

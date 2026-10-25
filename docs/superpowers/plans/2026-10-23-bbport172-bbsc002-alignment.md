@@ -233,3 +233,10 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 - [x] Actual receiver RED/GREEN for older completed/partial input; duplicate/map/Dream/wrap/reset/invalid input checks, DLLbuild and normal candidate guest native join/adjacent placement/return. [B06 evidence](../../handoff/R03-B06-WORLD-ORDERING.md).
 - [x] Classify six reload bits and independent candidate reload: early-load transients, settled reload exact. [B07](../../handoff/R03-B07-INDEPENDENT-RELOAD.md).
 - [ ] C3/G2-17 native reordered-input/callback proof. Actual joint earning/first-playable/party epoch/history exclusion/C4 and remaining R03 gates remain OPEN.
+
+### B09/B10 party-earned shared progress (Claude)
+
+- [x] Per-party baseline in the existing collector, kill-time reward event admission, `BBS2` pending magic; actual-function RED/GREEN. [B09](../../handoff/R03-B09-PARTY-PROGRESS.md).
+- [x] Merge finished only after the game saves; close-before-save re-merge proven natively.
+- [x] Native Amelia: host history excluded, joint boss kept by host and guest after their reloads.
+- [ ] G2-17/C3 live reorder, G2-22(d)/(g) boundaries, dead/loading guest earning, wider progress classes.
