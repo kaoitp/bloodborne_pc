@@ -53,7 +53,10 @@
 - The collector admits only 0→1 bits against its party baseline.
 - Host flag packets are whole-state, so a delayed older packet is a subset and admits nothing.
 - The only harmful input would be an older snapshot carrying a since-cleared bit. B06's receiver rejects older completed and partial snapshots per map (actual-function fixture), and the collector reads only that receiver's cache.
-- This is a source composition plus fixtures. **Not done:** the default-off delay/reorder injection seam (CL04 A-37), so there is no native injection proof.
+- New `tests/test_bbsc_reorder_collect.py` compiles the **actual B06 receiver together with the actual collector**. History snapshots arrive (one with a transient bit), the guest is placed, the host sets a bit, and then delayed older snapshots arrive: one with an old bit, and a stale copy of the transient one. Only the party bit is collected.
+  - **RED** with the B06 ordering guard removed: `collected() == 0x80` fails, because the old bit was collected.
+  - **GREEN** with it.
+- **Not done:** the default-off native injection seam (CL04 A-37), so there is still no native injection proof.
 
 All protected source saves are unchanged. All test processes were closed.
 
@@ -68,6 +71,6 @@ All protected source saves are unchanged. All test processes were closed.
 | G2-22 (g) host character change | PASS (native) |
 | G3 host-loss return | PASS (native, exact origin) |
 | G2-03 kill before placement | Gate added and fixture GREEN; native window not reproducible with this rig |
-| G2-17 / C3 | Source composition + fixtures; native injection not done |
+| G2-17 / C3 | Actual receiver + collector fixture RED/GREEN; native injection not done |
 | Guest **loading** (follow load) at the kill | Not tested |
 | Progress beyond bosses (doors, lamps, NPCs) | Kind-1 bits are collected only when they turn on in the party; kinds 5/6/7 (items, NPC states) are never merged, so guest NPC choices stay its own. Not exercised natively beyond the boss area |

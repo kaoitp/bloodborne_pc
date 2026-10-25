@@ -535,4 +535,5 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
   - Leave/rejoin the same host: new party, baseline includes Amelia, second merge empty.
   - Host quits and returns as EiEi in the same process: the guest is sent home to its exact origin, a new party starts, the merge is empty. No PM4 crash this time.
   - CL03 B-30: the `ForceSummonSuccess` trace is the BlockClear2 entry, firing at the kill.
+- **G2-17:** actual receiver + collector fixture, RED without the B06 guard, GREEN with it.
 - **Not native:** G2-03 (the host processes the kill after the joining guest arrives); G2-17 injection; a guest in a follow load at the kill. [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
