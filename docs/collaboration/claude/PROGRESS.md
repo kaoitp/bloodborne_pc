@@ -174,11 +174,36 @@ Status: **VERIFIED for the source/documents, corrected for review CL02-REV01** (
 
 ## CL03-P02: earned-event and party-epoch source feasibility (2026-10-25)
 
-Status: IN_PROGRESS. Work package: [CL03-P02 at 80518ab](https://github.com/kaoitp/bloodborne_pc/blob/80518ab0713b8775248a2a2c63feb025e73d1ae7/docs/handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility), assigned on merged PR #2. Branch `claude/p02-event-provenance` from frozen comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` (clean clone, no rebase). The CL01/CL02 sections above are historical and unchanged.
+Status: VERIFIED for the source/document deliverable (2026-10-25); set IN_PROGRESS in commit `e3fb202` before the deliverable edits. No gameplay gate is affected. Work package: [CL03-P02 at 80518ab](https://github.com/kaoitp/bloodborne_pc/blob/80518ab0713b8775248a2a2c63feb025e73d1ae7/docs/handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility), assigned on merged PR #2. Branch `claude/p02-event-provenance` from frozen comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` (clean clone, no rebase). The CL01/CL02 sections above are historical and unchanged.
 
 | Slice | Status | Owned output |
 |---|---|---|
-| CL03-B (signal matrix) | IN_PROGRESS | `IDENTITY-PROTOCOL.md` § CL03-B |
-| CL03-A (feasibility decision) | IN_PROGRESS | `BBSC-002-MAP.md` § CL03-A |
-| CL03-C (discriminating probes) | IN_PROGRESS | `ACCEPTANCE-CASES.md` § CL03-C |
-| CL03 handback | IN_PROGRESS | This section: base, pins, checks, ranked conclusion, next native observation |
+| CL03-B (signal matrix) | VERIFIED | `IDENTITY-PROTOCOL.md` § CL03-B |
+| CL03-A (feasibility decision) | VERIFIED | `BBSC-002-MAP.md` § CL03-A |
+| CL03-C (discriminating probes) | VERIFIED | `ACCEPTANCE-CASES.md` § CL03-C |
+| CL03 handback | VERIFIED | This section: base, pins, checks, ranked conclusion, next native observation |
+
+### CL03 handback
+
+- **Inputs.** Base `7a5eca3fcdc662afcce1de7b6d57510311b710b2`. Pinned B `4f11faf88b6ba658ebde6fe5fbefdadedba4fa41`, read as Git blobs: `emulator/src/core/bloodborne_re.cpp`, `emulator/mod/bbsc_relay.cpp`, `emulator/src/core/libraries/np/np_signaling/np_signaling_helpers.cpp`, `bbport/bbport-1.7.2-bbsc.patch`. P is `gpu/patches/bbsc/0001-profile-storage-and-clang64.patch` at the base. Retained test read: `tests/test_bbsc_reward_delivery.py` at the base; it calls `NoteBbscBossRewardEvent` directly, so it does not exercise the hook gate or the wait timing. Codex handoffs read at the base: B02, B03, C01, B04, and the CL03 package at `80518ab`.
+- **Deliverables.**
+  - [IDENTITY-PROTOCOL.md § CL03-B](IDENTITY-PROTOCOL.md#cl03-b-earned-event-and-party-epoch-signal-matrix-p02-2026-10-25): B-29..B-37 and missing evidence M1-M4.
+  - [BBSC-002-MAP.md § CL03-A](BBSC-002-MAP.md#cl03-a-earned-event-admission-feasibility-p02-2026-10-25): A-33..A-36 and the decision.
+  - [ACCEPTANCE-CASES.md § CL03-C](ACCEPTANCE-CASES.md#cl03-c-discriminating-native-probes-for-p02-2026-10-25): G2-20..G2-22, the reused cases and the stopping rule.
+- **Not run by Claude:** builds, the game, servers, accounts, native hooks or tests, private data. All CL03 cases are NOT RUN.
+
+**Ranked conclusion (source only): NOT IMPLEMENTATION-READY, a bounded impossibility with existing signals.**
+1. **No earn time on the only guest signal that carries an event ID** (B-35). The reward hook fires when the guest's copy of the event evaluates its player-type wait. The host's block flags are copied into the guest's world at the join and follow loads, before play. So a boss killed before the party may queue a reward at that load (M1).
+2. **No event ID on the only guest kill-time signal** (B-34, `BlockClear2_1`). Whether it runs on a dead, loading or elsewhere guest is unknown (M2). Pairing by area is ambiguous for 11 of the 19 rows.
+3. **No attempt or epoch anywhere.** The relay host id distinguishes host processes only (B-31). The first-placement flag `bbsc_join_teleport_done` (B-32) is the best existing "first playable" marker, but it resets on any state ≠ 6 poll and is stored nowhere.
+4. **Host flags carry no event or time** (B-36), and flag ↔ event is still unmapped (M4).
+5. **Side findings.**
+   - The `0x013849A0` label conflict (B-30).
+   - P's enqueue area test rejects an earned event during a follow load into another area (A-33).
+   - On BBport, `0x26` arrives only through the relay `from_our_host` path; the emulator build's raw receive has no sender check (B-36).
+
+**Next native observation (Codex):** G2-20 first: a pre-party kill, then G joins into that area with no fight. Does `boss drop: event … queued` appear? Then G2-21: `BlockClear2_1` on a guest that is alive, dead, loading, or elsewhere, plus the `ForceSummonSuccess` label. Then G2-22: state, lock and placement through death, follow load and rejoin. Stop if the reward wait fires at load and the clear does not run for a dead or loading guest.
+
+**Unresolved risks:** the B-30 mislabel can make existing trace logs misleading; M3 (Q8) also affects CL02's eligibility window; delivery/merge safety (B02/B03) stays separate from admission.
+
+- **Checks:** see the handback commit message.
