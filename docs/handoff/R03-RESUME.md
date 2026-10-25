@@ -1,5 +1,7 @@
 # R03 new-session execution handoff
 
+Latest C01: [fresh-character locked-map native case](R03-C01-LOCKED-MAP.md). New copied Clinic character joins Cathedral beside host, returns to exact journaled origin and reloads with all1250 groups unchanged. Required self-hosted flow observed; three public playlog403 failures do not stop it. Host flag differences remain unclassified after a clean solo control; G2 and remaining acceptance stay open. All tests normally closed, originals unchanged.
+
 Latest B03: [progress backup/owner retry checkpoint](R03-B03-PROGRESS-BACKUP.md). Actual-function backup/owner RED/GREEN passes. Native backup-failure retention and original-owner positive retry pass with an already-owned synthetic flag; native in-memory wrong-character guard remains unproven after timeout. Original 3171 files unchanged; copied tests normally closed/restored. G2 history/eligibility and remaining R03 gates stay open.
 
 Latest B02: [boss reward delivery checkpoint](R03-B02-REWARD-DELIVERY.md). Owner-bound retry, confirmed direct-goods delivery, duplicate queue protection and frozen lot selection pass the actual-function fixture. Frozen same-DLL native Dream join/return preserves all 1250 groups; reward earning/failure-retry gameplay remains untested. G2 admission/history and remaining R03 gates stay open; experimental recovery remains OFF by default.

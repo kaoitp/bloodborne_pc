@@ -182,3 +182,9 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 - [x] Reject mutation/finalization on failed backup or unavailable/mismatching active owner; actual-function RED/GREEN through both callers, pinned build and focused regressions pass. [B03 evidence](../../handoff/R03-B03-PROGRESS-BACKUP.md).
 - [x] Native copied-profile backup fault: RED prematurely finalizes; GREEN retains and original-owner retry creates real backup/finalizes; all1250 groups and original3171files preserved. Already-owned synthetic flag, not jointly-earned gameplay.
 - [ ] Native in-memory wrong-character owner guard remains unproven: both switch cases timed out before unblocking; file-key isolation and fixtures pass. Other G2/persistence gates remain open.
+
+### C01 locked-own-map acceptance
+
+- [x] Copied fresh Clinic character joins selected Cathedral host; adjacent blue placement, own lamp/all1250 groups and exact journal origin survive return/independent reload. [C01 native evidence](../../handoff/R03-C01-LOCKED-MAP.md). Shared progress and boss items OFF; no jointly-earned proof.
+- [x] Record actual self-hosted API/WebAPI/ShadNet/DLLrelay flow and three failing public playlog PUTs that do not stop observed join/return/reload. No blanket unobserved-routing claim.
+- [ ] Host flag first writer/consequence remains unresolved: co-op/reload differs, same-DLL five-minute no-peer control stays exact. Remaining G2/candidate/recovery gates remain open.
