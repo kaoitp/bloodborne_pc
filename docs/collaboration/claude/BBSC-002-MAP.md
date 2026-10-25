@@ -210,3 +210,13 @@ CL03 section. Pins and the P convention as in [IDENTITY-PROTOCOL.md § CL03-B](I
 - **C3.** A wait must not be triggered by delayed or older applied host state. G2-17 must be paired with the reward line, or source must prove it.
 
 Only after those would storing the B-31 host and a window marker on the entry, and relaxing P's enqueue area test for follow loads, be a justified small delta. K2 additionally needs M2.
+
+## CL04-A: remaining diagnostic gaps per probe (P03, 2026-10-25)
+
+CL04 section. It does not change the CL03 decision: **NOT IMPLEMENTATION-READY**, with C3/C4 open. A missing log line cannot resolve them.
+
+| ID | Probe | Existing tools suffice? | Smallest Codex-owned observation seam, if not |
+|---|---|---|---|
+| A-37 | G2-17 paired | **No.** No way to delay or reorder a completed snapshot. Replacements are not logged after the first per map. Live flags change only at loads (B-39) | (1) A log line in the existing receiver at the replacement ([L16911-16912](https://github.com/CLSAMG22/BBSC/blob/4f11faf88b6ba658ebde6fe5fbefdadedba4fa41/emulator/src/core/bloodborne_re.cpp#L16911-L16912)) with map, old and new `snapshot` counter, and `complete_ms`. (2) A test-only hold of one completed snapshot N there, released after N+1, behind a default-off switch. (3) Then a load, to reach `ApplyBbscHostWorldFlags`. Diagnostic only; no protocol or storage change |
+| A-38 | G2-21 `ForceSummonSuccess` / `lua event` | **Partly.** Records and the Lua side effects stop after 64 hits per site (B-38) | Read `hit` from JSONL first. If it is ≥ 64, a seam that exempts these two sites from the throttle is needed. Separately, Codex should decide whether the throttle skipping `JoinSession_*` side effects is itself a defect |
+| A-39 | G2-20, G2-21, G2-22 | **Yes**, with readiness controls R1-R4 (CL04-C) | None. Host character identity on the guest side stays unobservable by design (B-40); record it as operator input |
