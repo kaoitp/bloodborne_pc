@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..a67bb54 100644
+index 6c278c3..cccf957 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -217,14 +217,14 @@ index 6c278c3..a67bb54 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,9 +6162,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,7 +6162,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-     WriteBbscOwnWorldFile();
- }
- 
++    WriteBbscOwnWorldFile();
++}
++
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -233,7 +233,7 @@ index 6c278c3..a67bb54 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-+    WriteBbscOwnWorldFile();
+     WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -247,11 +247,9 @@ index 6c278c3..a67bb54 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
-+}
-+
+ }
+ 
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
-     if (BbscIsMapFlagGroup(key)) {
-         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6250,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -666,7 +664,82 @@ index 6c278c3..a67bb54 100644
  // Reliable packets waiting for a member that does not take them (see SendBacklog.Limit in
  // bbsc_patch_tables.h): [SprjSessionManager]+0x188 is a list head, each node +0x10 -> queue, +0x30
  // its packet count; +0x1B0 one more count. Logged while it grows past 100 (at most every 30 s).
-@@ -14398,10 +14601,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -10809,16 +11012,20 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
+ std::mutex bbsc_progress_mutex;
+ std::vector<u32> bbsc_progress_host_flags;                         // guest: host's boss flags seen
+ std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_progress_groups; // guest: kind 1, OR-ed
++std::optional<BbscSaveSlot> bbsc_progress_slot; // the character the collected progress is for
+ bool bbsc_progress_was_guest = false;
+ s64 bbsc_progress_left_ms = 0;  // when we stopped being a guest
+ s64 bbsc_progress_home_ms = 0;  // home and settled since
+ bool bbsc_progress_merged_at_load = false; // merged during the trip home (checked once settled)
+ bool bbsc_progress_backed_up = false;      // saves backed up for this trip home
++constexpr s64 BbscProgressMergeRetry = -2;
+ 
+ // OR the collected host progress into the live flag table (own world). Returns the boss flags and
+-// world flags it newly set, or {-1, 0} when there was nothing to merge. Keeps what it merged, so a
++// world flags it newly set, {-1, 0} when empty, or {BbscProgressMergeRetry, 0} while owner/backup is unavailable.
++// Keeps what it merged, so a
+ // second call only reports what did not stick. Game thread.
+ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
++    static bool backup_notice = false;
+     std::vector<u32> flags;
+     std::map<u32, std::array<u8, BbscWorldGroupBytes>> groups;
+     {
+@@ -10827,11 +11034,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
+         groups = bbsc_progress_groups;
+     }
+     if (flags.empty() && groups.empty()) {
++        backup_notice = false;
+         return {-1, 0};
+     }
++    const auto active = BbscActiveSaveSlot();
++    if (!bbsc_progress_slot || !active || active->user != bbsc_progress_slot->user ||
++        active->slot != bbsc_progress_slot->slot) {
++        return {BbscProgressMergeRetry, 0};
++    }
+     if (!bbsc_progress_backed_up) {
+         bbsc_progress_backed_up = BackupBbscSaves();
+     }
++    if (!bbsc_progress_backed_up) {
++        if (!backup_notice) {
++            LOG_WARNING(Debug, "BBSC shared progress: save backup failed; merge and completion deferred");
++            BbscAnnounce(u"Unable to back up your save.\nShared progress will be retried.",
++                         "shared progress backup failed");
++            backup_notice = true;
++        }
++        return {BbscProgressMergeRetry, 0};
++    }
++    backup_notice = false;
+     using SetEventFlag = u64 PS4_SYSV_ABI (*)(u64 unused, u32 flag, u8 value);
+     const auto set = reinterpret_cast<SetEventFlag>(image_base + 0x0132E5A0);
+     s64 bosses = 0;
+@@ -10908,7 +11131,6 @@ constexpr s64 BbscProgressFileMs = 10'000;
+ constexpr s64 BbscProgressRecoverMs = 15'000;
+ constexpr u32 BbscProgressFileMagic = 0x50534242; // "BBSP"
+ 
+-std::optional<BbscSaveSlot> bbsc_progress_slot; // the character the collected progress is for
+ 
+ std::filesystem::path BbscPendingProgressPath(const BbscSaveSlot& slot) {
+     return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() /
+@@ -11154,11 +11376,14 @@ void TickBbscSharedProgress() {
+     if (now - bbsc_progress_home_ms < BbscProgressSettleMs) {
+         return;
+     }
+-    bbsc_progress_was_guest = false;
+     const bool at_load = bbsc_progress_merged_at_load;
+-    bbsc_progress_merged_at_load = false;
+     RestoreBbscOwnWorld("before the shared progress merge");
+     const auto [bosses, bits] = MergeBbscSharedProgress("after the home load");
++    if (bosses == BbscProgressMergeRetry) {
++        return; // Keep this owner's pending memory/file until a backed-up merge succeeds.
++    }
++    bbsc_progress_was_guest = false;
++    bbsc_progress_merged_at_load = false;
+     {
+         std::scoped_lock lock{bbsc_progress_mutex};
+         bbsc_progress_host_flags.clear();
+@@ -14398,10 +14623,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -684,7 +757,7 @@ index 6c278c3..a67bb54 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -15997,6 +16204,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -15997,6 +16226,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      }
  
      const auto& site = Sites[tag];
@@ -695,7 +768,7 @@ index 6c278c3..a67bb54 100644
      if (site.offset == ItemUsableResultOffset) {
          ApplyBbscBellsAnywhere(registers);
      }
-@@ -16024,6 +16235,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16024,6 +16257,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
@@ -711,7 +784,7 @@ index 6c278c3..a67bb54 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -17791,7 +18011,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +18033,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,

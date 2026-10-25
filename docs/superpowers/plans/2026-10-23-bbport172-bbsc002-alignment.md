@@ -174,3 +174,9 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 - [x] B02 actual-function RED/GREEN and pinned DLL build: owner-bound retry, duplicate protection and frozen first lot. [Evidence and limits](../../handoff/R03-B02-REWARD-DELIVERY.md).
 - [x] Frozen same-DLL native join/adjacent placement/normal return; settled and reloaded all 1250 groups exactly equal prejoin. This is join regression, not reward gameplay proof.
 - [ ] B02 actual queued reward failure/retry/owner/departure and jointly-earned event gameplay. Old-host-history admission, consumed/owned rewards and crash durability remain open.
+
+### B03 progress merge backup refusal
+
+- [x] Reject mutation/finalization on failed backup or unavailable/mismatching active owner; actual-function RED/GREEN through both callers, pinned build and focused regressions pass. [B03 evidence](../../handoff/R03-B03-PROGRESS-BACKUP.md).
+- [x] Native copied-profile backup fault: RED prematurely finalizes; GREEN retains and original-owner retry creates real backup/finalizes; all1250 groups and original3171files preserved. Already-owned synthetic flag, not jointly-earned gameplay.
+- [ ] Native in-memory wrong-character owner guard remains unproven: both switch cases timed out before unblocking; file-key isolation and fixtures pass. Other G2/persistence gates remain open.
