@@ -213,3 +213,15 @@ CL03-REV01 (2026-10-25): PR #3 head `08c205c08ed75513b02a445f1456fc4e3b349c99` r
 CL03-REV02 / INT01 (2026-10-25): both PR3 corrections accepted at `59c91c65f4353dd85dd11a679b029cb23b2e7584`; merged normally as `2707f274edee104b182c59e4d8d7ff347ec831c2`, PR closed and local checkout fast-forwarded. Fresh207citation/32file,27link,41case,11outcome/prefix/scope/format checks pass; exact four-document merge blobs verified. CL03 source handback integrated; NOT IMPLEMENTATION-READY, native probes NOT RUN, R03/default-OFF gates unchanged. See tracker CL03-REV02.
 
 CL04-P03: READY / ASSIGNED via PR3 comment6396665118; package published at6decf55 under the appended handoff package. External source-only observability readiness for the existing CL03 probes; no new runtime ownership or G2 acceptance. Frozen base `7927159f53818d846590b564b4144d6c5e4a0100`, branch `claude/p03-probe-readiness`, same four-path allowlist. Codex retains native execution.
+
+### B05 scheduled native discrimination
+
+- [ ] IN_PROGRESS: G2-20 negative reward-wait probe using the existing B03 DLL, fresh copied before-state and native logs; no new admission/application rule. Host history exclusion, actual joint kill, C1-C4 and other R03 acceptance remain open.
+
+
+CL04-REV01: IN_PROGRESS (2026-10-25). Review PR #4 against the CL04 package and exact head cb11a4f; verify scoped documents, source-backed observability and unchanged C3/C4 blockers before any merge.
+
+CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as446183d and confirmed closed. Fresh243-citation/34-file,31-link,41-case,11-outcome,prefix/scope/format/whitespace checks pass; merge blobs match reviewed documents. No blocking Standards/Spec finding. G2-17,C3/C4,R03 and default-OFF gates unchanged; no native test or runtime delta. Existing B05 work preserved.
+
+- [x] B05 bounded G2-20/G2-21 negative native observation and exact1250group normal return. [Evidence/limits](../../handoff/R03-B05-EVENT-PROBES.md).
+- [ ] Positive joint kill, dead/loading producer sensitivity, C3/C4 and remaining R03 gates; G2-22(g) graphics-blocked, positive fresh-host setup ongoing.
