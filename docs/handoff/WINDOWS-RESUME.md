@@ -1,5 +1,7 @@
 # Resume BBSC development on Windows
 
+Latest B04: [host-only search control and source leads](R03-B04-HOST-CONTROL.md). Hunt Bell alone changes three transient bits while group7 stays exact; no peer/state3, so its writer/meaning remains unresolved. No runtime change. Actual earned-event/admission/epoch provenance remains the main G2 blocker. Games normally closed, copied baseline restored, originals3171 unchanged; quota stop at9%/86% remaining; no new work until usage permits.
+
 Latest C01: [fresh-character locked-map native case](R03-C01-LOCKED-MAP.md). New copied Clinic character joins Cathedral beside host, returns to exact journaled origin and reloads with all1250 groups unchanged. Required self-hosted flow observed; three public playlog403 failures do not stop it. Host flag differences remain unclassified after a clean solo control; G2 and remaining acceptance stay open. All tests normally closed, originals unchanged.
 
 Latest B03: [progress backup/owner retry checkpoint](R03-B03-PROGRESS-BACKUP.md). Actual-function backup/owner RED/GREEN passes. Native backup-failure retention and original-owner positive retry pass with an already-owned synthetic flag; native in-memory wrong-character guard remains unproven after timeout. Original 3171 files unchanged; copied tests normally closed/restored. G2 history/eligibility and remaining R03 gates stay open.

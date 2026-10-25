@@ -188,3 +188,10 @@ A03: IN_PROGRESS at source base 3ff3057, usage 100%/54%. First close the reprodu
 - [x] Copied fresh Clinic character joins selected Cathedral host; adjacent blue placement, own lamp/all1250 groups and exact journal origin survive return/independent reload. [C01 native evidence](../../handoff/R03-C01-LOCKED-MAP.md). Shared progress and boss items OFF; no jointly-earned proof.
 - [x] Record actual self-hosted API/WebAPI/ShadNet/DLLrelay flow and three failing public playlog PUTs that do not stop observed join/return/reload. No blanket unobserved-routing claim.
 - [ ] Host flag first writer/consequence remains unresolved: co-op/reload differs, same-DLL five-minute no-peer control stays exact. Remaining G2/candidate/recovery gates remain open.
+
+### B04 host first-writer diagnosis
+
+- [ ] IN_PROGRESS: trace finite C01 host-side flags to actual writer/semantics using existing native sites and exact ELF validation; no speculative restoration or earned-event admission rule.
+
+- [x] B04 narrower no-peer Hunt Bell search control and unchanged-source checks recorded in [B04](../../handoff/R03-B04-HOST-CONTROL.md); no group7 change. Games closed/originals preserved.
+- [ ] Actual group7 first writer/meaning and principal G2 earned-event/admission/epoch producer remain unresolved; no source lead promoted to native acceptance.
