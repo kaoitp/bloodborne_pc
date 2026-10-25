@@ -231,4 +231,5 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 ### B06 completed snapshot ordering
 
 - [x] Actual receiver RED/GREEN for older completed/partial input; duplicate/map/Dream/wrap/reset/invalid input checks, DLLbuild and normal candidate guest native join/adjacent placement/return. [B06 evidence](../../handoff/R03-B06-WORLD-ORDERING.md).
-- [ ] C3/G2-17 native reordered-input/callback proof; classify six reload bits and independent candidate reload. Actual joint earning/first-playable/party epoch/history exclusion/C4 and remaining R03 gates remain OPEN.
+- [x] Classify six reload bits and independent candidate reload: early-load transients, settled reload exact. [B07](../../handoff/R03-B07-INDEPENDENT-RELOAD.md).
+- [ ] C3/G2-17 native reordered-input/callback proof. Actual joint earning/first-playable/party epoch/history exclusion/C4 and remaining R03 gates remain OPEN.
