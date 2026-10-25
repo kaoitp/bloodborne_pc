@@ -523,3 +523,16 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
   - Host and guest reloads keep it. The guest closed before saving re-merged from the kept file and finished after the save.
   - G2-01 PASS and G2-02 PASS for this scenario. [Evidence](handoff/R03-B09-PARTY-PROGRESS.md).
 - **Open:** G2-17/C3, G2-22(d)/(g), dead/loading guest at the kill, broader world/NPC progress.
+
+### B11 party boundaries, dead guest, pre-placement rewards — VERIFIED with limits (2026-10-26, Claude)
+
+- **Source:**
+  - leaving the host's world (state 6 → other) starts a new shared-progress party;
+  - the reward item is queued only after the guest was placed.
+- **Fixtures:** rejoin-before-unlock and reward-before-placement scenarios, each RED on the previous source and GREEN now. `test_bbsc_*` 4 OK, `test_native_bbsc` 2 OK.
+- **Native:**
+  - A guest dead at the kill still earns and receives the reward after the respawn.
+  - Leave/rejoin the same host: new party, baseline includes Amelia, second merge empty.
+  - Host quits and returns as EiEi in the same process: the guest is sent home to its exact origin, a new party starts, the merge is empty. No PM4 crash this time.
+  - CL03 B-30: the `ForceSummonSuccess` trace is the BlockClear2 entry, firing at the kill.
+- **Not native:** G2-03 (the host processes the kill after the joining guest arrives); G2-17 injection; a guest in a follow load at the kill. [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).

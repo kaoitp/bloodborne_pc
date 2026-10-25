@@ -79,6 +79,7 @@ bool item_ready = true, event_ready = true, loaded = true, alive = true,
      add_ok = true, taken = false, slot_ready = true;
 int adds = 0, popups = 0;
 u32 here = 0x18010000;
+bool bbsc_join_teleport_done = true; // placed beside the host
 BbscSaveSlot current{"sd1", 1};
 bool EnvFlagEnabled(const char *) { return true; }
 std::optional<BbscSaveSlot> bbsc_own_world_slot;
@@ -198,6 +199,10 @@ int main() {
   NoteBbscBossRewardEvent(12411700);
   assert(bbsc_boss_reward_queue.empty());
   here = 0x18010000;
+  bbsc_join_teleport_done = false; // the boss dies during our join load: the host's kill
+  NoteBbscBossRewardEvent(12411700);
+  assert(bbsc_boss_reward_queue.empty());
+  bbsc_join_teleport_done = true;
   NoteBbscBossRewardEvent(12411700);
   NoteBbscBossRewardEvent(12411700);
   assert(bbsc_boss_reward_queue.size() == 1);

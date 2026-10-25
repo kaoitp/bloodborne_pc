@@ -169,6 +169,19 @@ int main() {
     packet({2401, 2200, 2300, 2500, 2600});
     tick();
     assert(!has(2600) && has(2300) && has(2500) && bit(12401, 800));
+    // Leaving and rejoining the same host before the relay lock is released: also a new party.
+    // What the host did while we were away is history; what we collected stays.
+    session_state = 0;
+    tick();
+    session_state = 6;
+    bbsc_join_teleport_done = false;
+    packet({2401, 2200, 2300, 2500, 2600, 2601});
+    tick();
+    bbsc_join_teleport_done = true;
+    tick();
+    packet({2401, 2200, 2300, 2500, 2600, 2601});
+    tick();
+    assert(!has(2601) && has(2300) && has(2500));
     // A different host: also a new party.
     relay_host = 0x1234;
     bbsc_join_teleport_done = false;
@@ -180,7 +193,7 @@ int main() {
     tick();
     assert(!has(2700) && has(2800));
     std::cout << "PASS party baseline, earned flags/bits, first-sight blocks, reward event, "
-                 "death/load continuity, new party and new host\n";
+                 "death/load continuity, new party, rejoin and new host\n";
 }
 '''
     fixture = directory / 'party-progress.cpp'

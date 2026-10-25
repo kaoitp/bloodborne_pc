@@ -240,3 +240,11 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 - [x] Merge finished only after the game saves; close-before-save re-merge proven natively.
 - [x] Native Amelia: host history excluded, joint boss kept by host and guest after their reloads.
 - [ ] G2-17/C3 live reorder, G2-22(d)/(g) boundaries, dead/loading guest earning, wider progress classes.
+
+### B11 party boundaries (Claude)
+
+- [x] Departure (state 6 → other) ends the party: native rejoin and host-character change, fixture for rejoin before the unlock.
+- [x] Dead guest at the kill earns and receives after the respawn (native).
+- [x] Reward item only after placement (fixture RED/GREEN); native pre-placement window not reproducible with this rig.
+- [x] CL03 B-30 label resolved natively.
+- [ ] G2-17 native injection seam; a guest in a follow load at the kill; progress classes beyond the boss area.
