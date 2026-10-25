@@ -499,3 +499,12 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - Frozen B06 DLL `faf8227f…`, isolated copy of `native/after-b-savedata` (byte-exact per file), offline, PID 38768, 160/160 hooks. U-I-AHH loaded via Load Game.
 - Early snapshot at loading 0: the same six `12705` bits plus `12415461` and `12415770-12415773` differ. All six settled snapshots (21:32:24-21:34:07) equal the prejoin baseline in all 1250 groups. Position/lamp/map exactly equal the journal origin throughout.
 - Conclusion: the B06 bits are early-load transients, and the independent reload of the protected co-op after-save is exact. [B07 evidence](handoff/R03-B07-INDEPENDENT-RELOAD.md). Protected after-b copy unchanged; process closed; no game running. R03 stays IN_PROGRESS: joint earning, party epoch, history exclusion and G2-17 remain open.
+
+### B08 first native joint boss kill (Vicar Amelia) — VERIFIED with limits (2026-10-25, Claude)
+
+- Two online copied profiles (Kaori host / U-I-AHH guest) on the owner's self-hosted server, frozen B06 DLL on both, BBSC defaults (**shared progress ON**). Amelia 12401800 OFF on both before. Debug aids, disclosed: an external position write to the arena entrance, and an external HP-0 kill after the native boss bar appeared.
+- Join with the guest placed beside the host. The session survived a wipe (host and guest died once; the guest re-placed at the lamp).
+- At the kill (22:09:47) the guest queued event 12401800 for its own sd1/slot3, put goods 4001 into its carried items and marked lot 50000001 finished. `BlockClear2_1` followed on both at 22:09:52.
+- Parting Blank home: exact origin; goods still carried. An independent offline reload shows the Gold Pendant, the 12401800 flag and the echoes. G2-20 positive / G2-02 PASS.
+- **G2-01 REPRODUCED-GAP natively:** shared progress imported 14 host boss flags and 272 world flags of older history; 239 bits persist. 57 merged bits are absent after reload (unclassified). [B08 evidence](handoff/R03-B08-JOINT-AMELIA.md).
+- Next: history-exclusion fix based on the kill-time reward wait, C4 boundaries, dead/loading guest earning.
