@@ -171,3 +171,14 @@ Status: **VERIFIED for the source/documents, corrected for review CL02-REV01** (
   2. **Inactive owner is deferred, not discarded.** The wrong-owner discard is narrowed to invalid admissions (never admitted, stale, missing or invalid owner record). A valid admitted obligation whose owner is not loaded, or which waits through a later party, is deferred under its original owner and epoch. G2-19(c3) and (d) now match: (d) settles a valid session-1 entry for its original owner when loaded and discards only invalid entries. In-process contract only; no persistence.
 - **Not run by Claude:** builds, the game, servers, accounts, native or gameplay tests, private data. G2-19 stays NOT RUN.
 - **Checks:** see the correction commit message.
+
+## CL03-P02: earned-event and party-epoch source feasibility (2026-10-25)
+
+Status: IN_PROGRESS. Work package: [CL03-P02 at 80518ab](https://github.com/kaoitp/bloodborne_pc/blob/80518ab0713b8775248a2a2c63feb025e73d1ae7/docs/handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility), assigned on merged PR #2. Branch `claude/p02-event-provenance` from frozen comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` (clean clone, no rebase). The CL01/CL02 sections above are historical and unchanged.
+
+| Slice | Status | Owned output |
+|---|---|---|
+| CL03-B (signal matrix) | IN_PROGRESS | `IDENTITY-PROTOCOL.md` § CL03-B |
+| CL03-A (feasibility decision) | IN_PROGRESS | `BBSC-002-MAP.md` § CL03-A |
+| CL03-C (discriminating probes) | IN_PROGRESS | `ACCEPTANCE-CASES.md` § CL03-C |
+| CL03 handback | IN_PROGRESS | This section: base, pins, checks, ranked conclusion, next native observation |
