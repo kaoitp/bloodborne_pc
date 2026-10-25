@@ -126,9 +126,11 @@ CL02-REV01: REVIEW COMPLETE / CHANGES REQUESTED (2026-10-24). Reviewed handback 
 
 ## CL03 — Existing earned-event and party-epoch feasibility
 
-Owner: external Claude in its separate clone, same four-document allowlist. Status: READY / DISPATCH PENDING. Dependency: integrated CL02 at c5018fb and current B02/B03/C01/B04 records. User authorizes assignment via PR #2 comment. [CL03-P02 work package](../../handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility) freezes comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` on new branch `claude/p02-event-provenance`.
+Owner: external Claude in its separate clone, same four-document allowlist. Status: READY / ASSIGNED. Dependency: integrated CL02 at c5018fb and current B02/B03/C01/B04 records. User authorizes assignment via PR #2 comment. [CL03-P02 work package](../../handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility) freezes comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` on new branch `claude/p02-event-provenance`.
 
 Trace existing event/completion/member/host/epoch producers to consumers, test each candidate against C1-C4 on paper, and deliver the smallest discriminating native probes for Codex. Reuse the finite 19 reward events/57 flags; source inability to establish a binding must identify the exact missing evidence. Preserve CL01/CL02 prefixes, stable IDs and historical evidence. No runtime implementation or new protocol/storage/auth framework; external cases remain NOT RUN. New-branch handback uses a new PR; PR #2 stays closed. Codex retains runtime/native/gameplay/integration and all R03/default-OFF gates.
+
+Package published at 80518ab0713b8775248a2a2c63feb025e73d1ae7 after three-document scope/UTF-8/53-link/whitespace and exact staged checks. [Assignment comment 6395443366](https://github.com/kaoitp/bloodborne_pc/pull/2#issuecomment-6395443366) posted successfully with immutable package/base links. Await external start/handback; no execution or gameplay PASS inferred.
 
 ## Completion and evidence
 
