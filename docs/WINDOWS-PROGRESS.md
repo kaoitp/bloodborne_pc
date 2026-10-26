@@ -572,3 +572,12 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 
 - Normal `git push origin seamless` exit0 published PR7 merge `97493d928fa4fc84eb0d0751e8494e8308042f0c` followed by PR8 merge `0251ff2fa2262c48a2ff6c623012b6c4df65795f`; GitHub readback confirms both PRs CLOSED and merged=true at these exact merge SHAs. HEAD and origin/seamless matched `0251ff2`; tracked worktree clean after the merges (submodule dirt preserved). Historical PR07-REV01 and PR8 diagnostic blockers are resolved. No force push or fork-branch rewrite.
 - This documentation follow-up records confirmed publication; it does not change runtime or broaden test claims. Full suite, DLL rebuild and native gameplay NOT RUN in integration; author evidence/limitations remain in B11/B12. Remaining R03 gates stay open. Next: continue the outstanding native/gameplay cases from B11/B12 rather than re-review these merged heads.
+
+### B13 guest invisible on the host after the host's death — FIXED, native (2026-10-26, Claude)
+
+- **Finding:** after a host death and respawn in the party, the host saw only the guest's name tag. The guest character recreated by the v8 reinsert lacked `+0x1E0` bit `0x100000`. Setting that bit live showed the body.
+- **Source:** `TickBbscRemoteShow` sets the bit once on remote member characters, for 30 s after a v8 or self-heal restart.
+- **Fixture:** `test_bbsc_remote_show.py`, RED on merged seamless, GREEN now. DLL `8dc083de…`.
+- **Native:** after a host death the fix logged `shown bit … - set`, and the host saw the guest's body.
+- **Rig:** the earlier host "crashes" were the PowerShell launcher (`Stop` + stderr redirection), not the game.
+- [B13 evidence](handoff/R03-B13-HOST-RESPAWN-SHOW.md).
