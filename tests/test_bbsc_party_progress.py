@@ -79,6 +79,7 @@ bool ReadablePointer(u64 p, size_t) { return p != 0; }
 template<class T> T ReadValue(u64 at, size_t off) { return 0; }
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() { return BbscSaveSlot{"sd1", 3}; }
 void RestoreBbscOwnWorld(const char*) {}
+bool BbscOwnWorldReadyForProgress() { return true; } // own world: test_bbsc_own_world_owner
 bool RecoverBbscOwnWorldFile(const BbscSaveSlot&) { return false; }
 bool LoadBbscPendingProgress(const BbscSaveSlot&) { return false; }
 void WriteBbscPendingProgress() {}
