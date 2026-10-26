@@ -91,7 +91,19 @@ The review found that the reward gate was never satisfied with `SHADPS4_BBSC_SPE
     - 13:24:27 `new party`;
     - 13:24:43.883 placed again by the summon load;
     - 13:24:44 eligible.
-  - **Not shown natively:** a reward after placement with spectate off. In the first party the host died to Amelia before the debug HP-0 found her, and her fight never came back without a load. After the restart the fog door could not be reached. The reward path itself is the fixture's.
+  - In those first runs the reward after placement was not reached: the host died to Amelia before the debug HP-0 found her, and her fight never came back without a load.
+- **Native reward, spectate off: PASS** (follow-up run, after PR #7 was merged).
+  - Setup: fresh copies of both protected saves, the same DLL `d5250903…`, spectate off on both clients. The guest joined first; then the host was warped once to (51.9, 35.71, 312.3) and walked to the arena trigger.
+  - Timeline:
+    - 14:29:06 the summon load ended; 14:29:17.118 the guest was placed by the summon load (no join teleport); 14:29:18 shared progress became eligible.
+    - 14:31:20 Amelia's bar was up and her HP was set to 0 (max 8051 this time).
+    - 14:31:24.461 `boss event 12401800 earned in this party`. Then `boss drop: event 12401800 queued for user sd1 slot 3`, goods 4001 x1 into the carried items, the reward notice, and `lot 50000001 finished for user sd1 slot 3`.
+    - 14:31:26 two boss flags were collected.
+  - So with spectate off, the reward was rejected before placement (fixture) and given exactly once after it (native and fixture).
+- **Rig findings (not caused by the PR #7/#8 changes, open):** in an earlier attempt the host died four times in one party (debug teleports, a pad walk off a ledge).
+  - Afterwards the host showed only the guest's name tag and HP bar, not its body. The two were about 4 m apart in the same map, and each respawn logged `v8 restarted 1 remote player insert task(s)` and `hunters: 2`.
+  - The host process exited twice at the trace point `Warp.RespawnPoint.Resolve`, with no crash line logged: once loading the save at startup, once in the reload after a teleport death.
+  - Teleports the host had survived earlier then killed it at once. A fresh start fixed this.
 
 ## Status after B11
 

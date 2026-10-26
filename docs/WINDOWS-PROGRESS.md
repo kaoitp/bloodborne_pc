@@ -572,3 +572,11 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 
 - Normal `git push origin seamless` exit0 published PR7 merge `97493d928fa4fc84eb0d0751e8494e8308042f0c` followed by PR8 merge `0251ff2fa2262c48a2ff6c623012b6c4df65795f`; GitHub readback confirms both PRs CLOSED and merged=true at these exact merge SHAs. HEAD and origin/seamless matched `0251ff2`; tracked worktree clean after the merges (submodule dirt preserved). Historical PR07-REV01 and PR8 diagnostic blockers are resolved. No force push or fork-branch rewrite.
 - This documentation follow-up records confirmed publication; it does not change runtime or broaden test claims. Full suite, DLL rebuild and native gameplay NOT RUN in integration; author evidence/limitations remain in B11/B12. Remaining R03 gates stay open. Next: continue the outstanding native/gameplay cases from B11/B12 rather than re-review these merged heads.
+
+### PR #7 follow-up: spectate-off boss reward, native — VERIFIED (2026-10-26, Claude)
+
+- With `SHADPS4_BBSC_SPECTATE=0` on both clients and fresh save copies, the guest was placed by the summon load (14:29:17). At Amelia's kill it earned event 12401800 and received the reward once (`lot 50000001 finished for user sd1 slot 3`, 14:31:24).
+- Open rig findings from an earlier attempt (not from these changes):
+  - after several host deaths and respawns in one party, the host shows the guest's name tag without its body;
+  - the host exited twice in `Warp.RespawnPoint.Resolve`.
+- Details: [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
