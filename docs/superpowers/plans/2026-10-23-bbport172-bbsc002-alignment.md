@@ -240,3 +240,9 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 - [x] Merge finished only after the game saves; close-before-save re-merge proven natively.
 - [x] Native Amelia: host history excluded, joint boss kept by host and guest after their reloads.
 - [ ] G2-17/C3 live reorder, G2-22(d)/(g) boundaries, dead/loading guest earning, wider progress classes.
+
+
+### PR #7 review (2026-10-26)
+
+- [x] Inline exact-head review `e4e0f8c`, reconstructed pinned source, five actual-function fixtures and two native-header tests PASS; whitespace clean.
+- [ ] Merge blocked: new reward placement gate depends on the independent spectate toggle. Preserve valid rewards with spectate OFF and test that production path before re-review. See tracker PR07-REV01; PR remains open, no native replay or broad R03 closure.
