@@ -1,0 +1,8 @@
+# External dependencies: index project-owned code only
+gpu/third_party/
+third_party/
+.superpowers/
+user/
+out/
+dist/
+graphify-out/

@@ -30,3 +30,6 @@ patches.json
 .claude/
 .vscode/
 /.superpowers/
+
+# Graphify generated graph, caches and machine-local interpreter paths
+/graphify-out/

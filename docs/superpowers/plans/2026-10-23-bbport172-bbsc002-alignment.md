@@ -280,3 +280,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [x] Exact d7da4f2 provenance accepted; source line-ending hashes independently match, reviewed runtime/tests unchanged; approval5650133506.
 - [x] Both tracker histories preserved and integrated fixtures/links/whitespace verified.
 - [x] Published normal merge26952d9; fresh GitHub confirms PR10 CLOSED/merged=true. Broad R03 gates remain open.
+
+### Graphify local tooling
+- [x] Local code graph and query/export/integrity verified; generated outputs ignored. See docs/GRAPHIFY.md and GRAPHIFY-INIT progress checkpoint; scoped publication authorized.
