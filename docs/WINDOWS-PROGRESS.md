@@ -585,3 +585,18 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - Verification: `git diff --check` exit0; CLANG64 Python assert check exit0: four UTF-8/no-BOM files, no conflict markers, all 16 matrix links resolve. Matrix SHA256 a411ef15f7be9bfd4d2d18bd9102313974aaf1ecd8a386244dcf198752cf8ce0. Initial WindowsApps Python alias could not execute; explicit `C:/msys64/clang64/bin/python.exe` completed the check. No runtime/test/fixture/config files changed.
 - Initial sandbox remote check failed DNS; approved network readback `git ls-remote origin refs/heads/seamless` exit0 confirmed cc4858d21c40a125a31b08ecc3294db19c9f182d, matching the input. No unpublished friend progress is inferred. Usage at task entry: 90%/98% remaining.
 - No build, native/gameplay replay, full suite, packaging, deployment or external message. Next: publish this documentation checkpoint normally, then Claude can reconcile with its unpublished work and pick the next missing discriminator. Publication is only confirmed by the actual push/readback, not by this pre-commit record.
+### PR #7 follow-up: spectate-off boss reward, native — VERIFIED (2026-10-26, Claude)
+
+- With `SHADPS4_BBSC_SPECTATE=0` on both clients and fresh save copies, the guest was placed by the summon load (14:29:17). At Amelia's kill it earned event 12401800 and received the reward once (`lot 50000001 finished for user sd1 slot 3`, 14:31:24).
+- Open rig findings from an earlier attempt (not from these changes):
+  - after several host deaths and respawns in one party, the host shows the guest's name tag without its body;
+  - two host stops during a load were the rig launcher's own failure (PowerShell `Stop` + stderr redirection), not a game crash.
+- Details: [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
+
+### PR09-INTEGRATE: IN_PROGRESS (2026-10-26, Codex)
+
+- User authorized verification and closure of PR #9. Reviewed head 8502fbe57b1507119b0790c9c8914e5ce03bac25; current seamless base 3f769c736f65eb74a8e84d944484b8053a7a7058. Documentation only; no subagents.
+- GitHub merge API reported a conflict in the progress tracker. Local merge retains both the acceptance-matrix checkpoint and the author follow-up. B11 content must remain byte-identical to the reviewed head. PR description corrected to reflect the launcher diagnosis.
+- Acceptance: preserve both parent histories and existing acceptance gaps; UTF-8/no-BOM, local links, no conflict markers, exact two-file author scope, whitespace checks, normal push and GitHub merged/closed readback. No build, full suite or native/gameplay rerun; native statements remain author evidence. Guest invisibility after repeated host respawns remains open.
+
+- Pre-commit verification PASS: CLANG64 Python assertions checked the exact B11 text after checkout newline normalization, retained seamless tracker prefix, two-file author scope, three UTF-8/no-BOM documents, 59 local link targets and no conflict markers. `git diff --check --ignore-submodules` exit0. Initial raw-byte assertion exposed checkout CRLF only; normalized comparison passes. GitHub checks/statuses empty at reviewed head. Publication/closure readback pending.
