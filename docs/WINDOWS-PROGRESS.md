@@ -572,3 +572,16 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 
 - Normal `git push origin seamless` exit0 published PR7 merge `97493d928fa4fc84eb0d0751e8494e8308042f0c` followed by PR8 merge `0251ff2fa2262c48a2ff6c623012b6c4df65795f`; GitHub readback confirms both PRs CLOSED and merged=true at these exact merge SHAs. HEAD and origin/seamless matched `0251ff2`; tracked worktree clean after the merges (submodule dirt preserved). Historical PR07-REV01 and PR8 diagnostic blockers are resolved. No force push or fork-branch rewrite.
 - This documentation follow-up records confirmed publication; it does not change runtime or broaden test claims. Full suite, DLL rebuild and native gameplay NOT RUN in integration; author evidence/limitations remain in B11/B12. Remaining R03 gates stay open. Next: continue the outstanding native/gameplay cases from B11/B12 rather than re-review these merged heads.
+
+### R03-ACCEPTANCE-MATRIX: IN_PROGRESS (2026-10-26, Codex)
+
+- Owner requested the acceptance-gap summary while Claude continues R03 implementation. Documentation only; no competing runtime work or message to the external author.
+- Inputs: local checkpoint cc4858d (PR7/8 integration published), active takeover, B03/B07/B09-B12, C01, acceptance cases and current plan. Acceptance: one linked matrix separating historical native, fixture and current integration evidence; prioritized remaining checks with prerequisites; preserve existing broad open gates; verify links, whitespace and runtime scope.
+- Current app worktree is detached at the same commit as the primary seamless checkout. Preserve both checkouts. Remote readback initially failed DNS resolution; remote progress is not yet verified in this session.
+
+### R03-ACCEPTANCE-MATRIX: VERIFIED (2026-10-26, Codex)
+
+- Added [current acceptance matrix](handoff/R03-ACCEPTANCE-MATRIX.md), linked from Windows resume and the active plan. It distinguishes recorded native runs, fixtures, integrated-source checks and missing proof; preserves historical audit wording and all broad open gates. Priority: concrete NPC/own-progress control, consumed/owned/deferred reward boundaries, initial/first-event timing, reachable lifecycle negatives, then final same-build flow. Claude retains implementation ownership and method choice.
+- Verification: `git diff --check` exit0; CLANG64 Python assert check exit0: four UTF-8/no-BOM files, no conflict markers, all 16 matrix links resolve. Matrix SHA256 a411ef15f7be9bfd4d2d18bd9102313974aaf1ecd8a386244dcf198752cf8ce0. Initial WindowsApps Python alias could not execute; explicit `C:/msys64/clang64/bin/python.exe` completed the check. No runtime/test/fixture/config files changed.
+- Initial sandbox remote check failed DNS; approved network readback `git ls-remote origin refs/heads/seamless` exit0 confirmed cc4858d21c40a125a31b08ecc3294db19c9f182d, matching the input. No unpublished friend progress is inferred. Usage at task entry: 90%/98% remaining.
+- No build, native/gameplay replay, full suite, packaging, deployment or external message. Next: publish this documentation checkpoint normally, then Claude can reconcile with its unpublished work and pick the next missing discriminator. Publication is only confirmed by the actual push/readback, not by this pre-commit record.

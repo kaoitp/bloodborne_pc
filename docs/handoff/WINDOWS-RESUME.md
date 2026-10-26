@@ -1,5 +1,7 @@
 # Resume BBSC development on Windows
 
+2026-10-26 reading guide: [current R03 acceptance matrix](R03-ACCEPTANCE-MATRIX.md) summarizes committed B09-B12 evidence, PR7/8 integration and remaining native checks. Older checkpoint limitations below are historical where later evidence supersedes them; use the matrix before repeating a test.
+
 Active ownership update2026-10-25: [Claude now takes over all R03 implementation and validation](R03-CLAUDE-TAKEOVER.md). The owner retains the product goals/general approach and gives Claude independent choice of methods. Earlier audit-only/four-file/Codex-only process wording below is historical for this takeover; Codex quota does not apply to Claude.
 
 Latest B06: [stale snapshot receiver fix and native regression](R03-B06-WORLD-ORDERING.md). Actual-function RED/GREEN and candidate guest native join/0.85m placement/normal return pass; immediate1250 groups exact. Same-process reload has six unclassified group12705 bits, so full reload integrity stays open. Actual joint earning/C3 callbacks/C4 remain unproved; both copied tests normally closed, managed applicationOFF.
