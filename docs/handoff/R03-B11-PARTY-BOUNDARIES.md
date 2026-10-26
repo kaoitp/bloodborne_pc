@@ -102,7 +102,7 @@ The review found that the reward gate was never satisfied with `SHADPS4_BBSC_SPE
   - So with spectate off, the reward was rejected before placement (fixture) and given exactly once after it (native and fixture).
 - **Rig findings (not caused by the PR #7/#8 changes, open):** in an earlier attempt the host died four times in one party (debug teleports, a pad walk off a ledge).
   - Afterwards the host showed only the guest's name tag and HP bar, not its body. The two were about 4 m apart in the same map, and each respawn logged `v8 restarted 1 remote player insert task(s)` and `hunters: 2`.
-  - The host process exited twice at the trace point `Warp.RespawnPoint.Resolve`, with no crash line logged: once loading the save at startup, once in the reload after a teleport death.
+  - The host process stopped twice during a load, with no crash line logged and no Windows error record. Both times the rig's PowerShell launcher had ended with exit 1 at the same moment. The launcher used `$ErrorActionPreference='Stop'` with `*>` redirection, and PowerShell 5.1 then turns the first stderr line into a terminating error (reproduced without the game). So these stops are rig artefacts, not a mod or game crash. The rig now launches through `cmd` and keeps one log per launch with the exit code.
   - Teleports the host had survived earlier then killed it at once. A fresh start fixed this.
 
 ## Status after B11

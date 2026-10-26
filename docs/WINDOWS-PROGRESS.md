@@ -578,5 +578,5 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - With `SHADPS4_BBSC_SPECTATE=0` on both clients and fresh save copies, the guest was placed by the summon load (14:29:17). At Amelia's kill it earned event 12401800 and received the reward once (`lot 50000001 finished for user sd1 slot 3`, 14:31:24).
 - Open rig findings from an earlier attempt (not from these changes):
   - after several host deaths and respawns in one party, the host shows the guest's name tag without its body;
-  - the host exited twice in `Warp.RespawnPoint.Resolve`.
+  - two host stops during a load were the rig launcher's own failure (PowerShell `Stop` + stderr redirection), not a game crash.
 - Details: [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
