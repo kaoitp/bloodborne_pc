@@ -541,3 +541,12 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
   - Reward and shared-progress eligibility now use `bbsc_party_placed`, which works with the spectate option off: the game's summon load places the guest.
   - Spectate-off fixture: RED with the reviewed gate restored, GREEN now.
   - Native, spectate off: the guest was placed by the summon load (twice, the second time as a new party after a rejoin); a death in the party kept it. A reward after placement with spectate off was not reached natively (Amelia could not be re-triggered).
+
+### B12 delayed older snapshot, native (G2-17) — VERIFIED with limits (2026-10-26, Claude)
+
+- **Source:** default-off test seam `SHADPS4_BBSC_TEST_HOLD_WORLD=<ms>` + trigger file `bbsc-test-hold-world` (optional hex map). It holds one world snapshot and feeds the same bytes to the actual receiver after a newer one (CL04 A-37). Receiver logic unchanged.
+- **Fixtures:** seam + actual receiver + actual collector. RED without the B06 guards, GREEN with them. `test_bbsc_*` 6 OK, `test_native_bbsc` 2 OK.
+- **Native (Amelia, shared progress ON):**
+  - The pre-kill snapshot 472 of `0x18000000` was fed again 15 s late, after 500. The cache kept 500; the held one differed by 9 bits.
+  - The merge was 2 boss + 19 world flags, the same as without a reorder.
+- **Not native:** the live apply at a load after a reorder. There is no in-party load in this rig: deaths respawn in place, and lamps are disabled in co-op. [B12 evidence](handoff/R03-B12-HELD-SNAPSHOT.md).

@@ -12,13 +12,17 @@ SOURCE = ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp
 
 def run_ordering_fixture(source, directory):
     src = source.read_text(encoding='utf-8')
-    start = src.index('void OnBbscWorldFlagsPacket(')
+    start = src.index('static void ReceiveBbscWorldFlagsPacket(')
     brace = src.index('{', start)
     depth, end = 1, brace + 1
     while depth:
         depth += (src[end] == '{') - (src[end] == '}')
         end += 1
-    receiver = src[start:end]
+    receiver = src[start:end] + '''
+void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+    ReceiveBbscWorldFlagsPacket(data, size);
+}
+'''
     constants = src[src.index('constexpr std::array<u32, 4> BbscWorldFlagKinds'):
                     src.index('static_assert(BbscDreamGroupCount <=')]
     state = src[src.index('struct BbscWorldSnapshot {'):

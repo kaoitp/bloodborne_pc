@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..a2f56f3 100644
+index 6c278c3..c4f5620 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -241,14 +241,14 @@ index 6c278c3..a2f56f3 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,7 +6171,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,9 +6171,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-+    WriteBbscOwnWorldFile();
-+}
-+
+     WriteBbscOwnWorldFile();
+ }
+ 
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -257,7 +257,7 @@ index 6c278c3..a2f56f3 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-     WriteBbscOwnWorldFile();
++    WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -271,9 +271,11 @@ index 6c278c3..a2f56f3 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
- }
- 
++}
++
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
+     if (BbscIsMapFlagGroup(key)) {
+         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6259,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -1104,6 +1106,15 @@ index 6c278c3..a2f56f3 100644
      }
  }
  
+@@ -16866,7 +17312,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
+ 
+ // Arrives on the signaling receive thread, so it does no game-memory work at all: it records the
+ // message and TickBbscFollowHost decides, on the game thread, whether to act on it.
+-void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
++static void ReceiveBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+     using Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
+     if (!BbscWorldSyncEnabled() || data == nullptr || size != sizeof(SignalingBbscWorldFlags)) {
+         return;
 @@ -16890,6 +17336,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
          std::scoped_lock lock{bbsc_world_mutex};
          BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
@@ -1125,7 +1136,145 @@ index 6c278c3..a2f56f3 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -17791,7 +18251,8 @@ void InstallReverseEngineeringTrace() {
+@@ -16920,6 +17380,137 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+     }
+ }
+ 
++// ---- Test only: a delayed older world snapshot (G2-17, CL04 A-37) ------------------------------
++// The receiver above drops a snapshot older than the newest complete one of its map, but a live run
++// never delivers one: the relay keeps the host's order. SHADPS4_BBSC_TEST_HOLD_WORLD=<ms> (default
++// off) lets a run do it. While the file bbsc-test-hold-world exists in the working directory, every
++// chunk of the next world snapshot (not the Hunter's Dream state) is held back; a packed map in hex
++// in the file (e.g. 18000000) holds the next one of that map only. Once <ms> have
++// passed and a newer snapshot of that map is complete, the same bytes go to the receiver again, as
++// a reordering network would deliver them. Deleting the file arms the next hold.
++struct BbscHeldWorldSnapshot {
++    enum class Phase { Idle, Holding, Done } phase = Phase::Idle;
++    u32 map = 0;
++    u32 snapshot = 0;
++    s64 held_ms = 0;
++    std::vector<std::vector<u8>> chunks;
++};
++
++std::mutex bbsc_test_hold_mutex;
++BbscHeldWorldSnapshot bbsc_test_hold;
++s64 bbsc_test_hold_checked_ms = 0;
++bool bbsc_test_hold_armed = false;
++u32 bbsc_test_hold_map = 0; // 0: any map
++
++s64 BbscTestHoldWorldMs() {
++    static const s64 ms = [] {
++        const char* value = std::getenv("SHADPS4_BBSC_TEST_HOLD_WORLD");
++        const s64 parsed = value != nullptr ? std::strtoll(value, nullptr, 10) : 0;
++        if (parsed > 0) {
++            LOG_WARNING(Debug,
++                        "BBSC test hold: ON ({} ms) - the trigger file is {}; for test runs only",
++                        parsed, (std::filesystem::current_path() / "bbsc-test-hold-world").string());
++        }
++        return parsed > 0 ? parsed : 0;
++    }();
++    return ms;
++}
++
++void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
++    using Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
++    const s64 hold_ms = BbscTestHoldWorldMs();
++    if (hold_ms == 0 || data == nullptr || size != sizeof(SignalingBbscWorldFlags)) {
++        ReceiveBbscWorldFlagsPacket(data, size);
++        return;
++    }
++    SignalingBbscWorldFlags packet;
++    std::memcpy(&packet, data, sizeof(packet));
++    std::vector<std::vector<u8>> release;
++    BbscHeldWorldSnapshot released;
++    {
++        std::scoped_lock lock{bbsc_test_hold_mutex};
++        const s64 now = SteadyNowMs();
++        if (now - bbsc_test_hold_checked_ms >= 250) {
++            bbsc_test_hold_checked_ms = now;
++            std::error_code ec;
++            bbsc_test_hold_armed = std::filesystem::exists("bbsc-test-hold-world", ec);
++            if (bbsc_test_hold_armed) {
++                std::ifstream trigger{"bbsc-test-hold-world"};
++                std::string map;
++                trigger >> map;
++                bbsc_test_hold_map = static_cast<u32>(std::strtoul(map.c_str(), nullptr, 16));
++            }
++            if (!bbsc_test_hold_armed && bbsc_test_hold.phase == BbscHeldWorldSnapshot::Phase::Done) {
++                bbsc_test_hold = {};
++            }
++        }
++        auto& held = bbsc_test_hold;
++        if (packet.version == 1 && held.phase == BbscHeldWorldSnapshot::Phase::Idle &&
++            bbsc_test_hold_armed &&
++            (bbsc_test_hold_map == 0 || packet.packed_map == bbsc_test_hold_map)) {
++            held.phase = BbscHeldWorldSnapshot::Phase::Holding;
++            held.map = packet.packed_map;
++            held.snapshot = packet.snapshot;
++            held.held_ms = now;
++            LOG_INFO(Debug, "BBSC test hold: holding back snapshot {} of map {:#x}",
++                     packet.snapshot, packet.packed_map);
++        }
++        if (held.phase == BbscHeldWorldSnapshot::Phase::Holding && packet.version == 1 &&
++            packet.packed_map == held.map && packet.snapshot == held.snapshot) {
++            const auto* bytes = static_cast<const u8*>(data);
++            held.chunks.emplace_back(bytes, bytes + size);
++            return;
++        }
++        if (held.phase == BbscHeldWorldSnapshot::Phase::Holding && now - held.held_ms >= hold_ms) {
++            std::scoped_lock world_lock{bbsc_world_mutex};
++            const auto block = bbsc_world_blocks.find(held.map);
++            if (block != bbsc_world_blocks.end() && block->second.complete_ms != 0 &&
++                block->second.snapshot - held.snapshot - 1 < 0x80000000u) {
++                release = std::move(held.chunks);
++                released = held;
++                held.chunks.clear();
++                held.phase = BbscHeldWorldSnapshot::Phase::Done;
++            }
++        }
++    }
++    ReceiveBbscWorldFlagsPacket(data, size);
++    if (release.empty()) {
++        return;
++    }
++    u32 newer = 0;
++    {
++        std::scoped_lock world_lock{bbsc_world_mutex};
++        newer = bbsc_world_blocks[released.map].snapshot;
++    }
++    for (const auto& chunk : release) {
++        ReceiveBbscWorldFlagsPacket(chunk.data(), static_cast<u32>(chunk.size()));
++    }
++    // What the held snapshot would have changed: bits that differ from the snapshot the cache has.
++    u32 kept = 0;
++    size_t differ = 0;
++    {
++        std::scoped_lock world_lock{bbsc_world_mutex};
++        const BbscWorldSnapshot& cache = bbsc_world_blocks[released.map];
++        kept = cache.snapshot;
++        for (const auto& bytes : release) {
++            SignalingBbscWorldFlags chunk;
++            std::memcpy(&chunk, bytes.data(), sizeof(chunk));
++            const size_t first = chunk.chunk * BbscWorldChunkGroups;
++            for (size_t i = 0; i < chunk.group_count && first + i < BbscWorldGroupCount; ++i) {
++                for (size_t b = 0; b < BbscWorldGroupBytes; ++b) {
++                    differ += std::popcount(
++                        static_cast<u8>(chunk.groups[i][b] ^ cache.groups[first + i][b]));
++                }
++            }
++        }
++    }
++    LOG_INFO(Debug,
++             "BBSC test hold: snapshot {} of map {:#x} ({} chunk(s)) fed again {} ms late, after "
++             "snapshot {}; the cache keeps snapshot {} ({} bit(s) differ from the held one){}",
++             released.snapshot, released.map, release.size(), SteadyNowMs() - released.held_ms,
++             newer, kept, differ, kept == released.snapshot ? " - THE OLDER SNAPSHOT REPLACED IT" : "");
++}
++
+ void OnBbscHostFollowPacket(std::uint32_t packed_map, float x, float y, float z, float heading,
+                             std::uint32_t sequence, std::int32_t lamp_point) {
+     if (!BbscWarpTogetherEnabled()) {
+@@ -17791,7 +18382,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,
