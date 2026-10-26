@@ -256,4 +256,5 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 
 ### PR #7 / #8 integration (2026-10-26)
 
-- [ ] IN_PROGRESS: merge reviewed heads `b66936a` then `84d3fbd` into seamless, preserve both documentation histories, verify candidate source and focused fixtures, publish without force and confirm both PRs merged.
+- [x] Merge reviewed heads `b66936a` then `84d3fbd` locally; preserve both documentation histories. Runtime/tests match the reviewed heads; PR7 7/7 and PR8 8/8 focused actual-function/native-header fixtures PASS, including ASan.
+- [ ] Publish without force and confirm remote seamless SHA and both PRs merged. Native gameplay/full R03 acceptance remains separate.

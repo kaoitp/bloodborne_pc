@@ -1,5 +1,6 @@
 """Actual receiver + actual shared-progress collector: delayed older host snapshots (CL03 C3 /
-G2-17) must not be collected as party progress. Fixture evidence, not native gameplay proof."""
+G2-17) must not be collected as party progress, both fed directly and through the default-off
+SHADPS4_BBSC_TEST_HOLD_WORLD seam (CL04 A-37). Fixture evidence, not native gameplay proof."""
 from paths import ROOT
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ SOURCE = Path(os.environ.get('BBSC_FIXTURE_SOURCE') or
               ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp')
 
 
-def run_reorder_fixture(source, directory):
+def run_reorder_fixture(source, directory, hold=False):
     src = source.read_text(encoding='utf-8')
 
     def function(signature):
@@ -28,6 +29,8 @@ def run_reorder_fixture(source, directory):
                     src.index('static_assert(BbscDreamGroupCount <=')]
     state = src[src.index('struct BbscWorldSnapshot {'):
                 src.index('// Host side: one snapshot of `count` groups')]
+    seam = src[src.index('struct BbscHeldWorldSnapshot {'):
+               src.index('void OnBbscHostFollowPacket(')]
     progress = src[src.index('constexpr std::array<u32, 49> BbscProgressFlags'):
                    src.index('// OR the collected host progress')]
     code = r'''
@@ -37,8 +40,10 @@ def run_reorder_fixture(source, directory):
 #include <bit>
 #include <cassert>
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -88,13 +93,14 @@ bool BbscGuestInHostWorld() { return true; }
 u32 GetCurrentPackedMap() { return 0x18000000; }
 struct BbscBossReward { s64 event; u32 flag; s32 first_lot; s32 repeat_lot; };
 constexpr std::array<BbscBossReward, 1> BbscBossRewards{{{12401800, 0, 50000001, 0}}};
-''' + constants + state + function('u32 BbscWorldGroupKey') + '\n' + function('void OnBbscWorldFlagsPacket') + '\n' + progress
+''' + constants + state + function('u32 BbscWorldGroupKey') + '\n' + function('static void ReceiveBbscWorldFlagsPacket') + '\n' + seam + progress
     code += 'std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view) { return {-1, 0}; }\n'
     code += function('void TickBbscSharedProgress') + '\n'
     code += r'''
 using Packet = Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
-// One complete snapshot of map 0x18000000 whose first group has `byte` in byte 0.
-void snapshot(u32 sequence, u8 byte) {
+// One complete snapshot of map 0x18000000 whose first group has `byte` in byte 0. `claimed`, when
+// set, is the group count every chunk claims (a sender's word, not the packet's room).
+void snapshot(u32 sequence, u8 byte, u8 claimed = 0) {
     for (size_t i = 0; i < BbscWorldChunkCount; ++i) {
         Packet p{};
         p.version = 1; p.packed_map = 0x18000000; p.snapshot = sequence;
@@ -102,6 +108,7 @@ void snapshot(u32 sequence, u8 byte) {
         p.group_count = std::min(BbscWorldChunkGroups, BbscWorldGroupCount - i * BbscWorldChunkGroups);
         p.present = (1u << p.group_count) - 1;
         if (i == 0) p.groups[0][0] = byte;
+        if (claimed != 0) p.group_count = claimed;
         OnBbscWorldFlagsPacket(&p, sizeof(p));
     }
 }
@@ -111,6 +118,7 @@ u8 collected() {
     const auto it = bbsc_progress_groups.find(key);
     return it == bbsc_progress_groups.end() ? 0 : it->second[0];
 }
+#ifndef HOLD
 int main() {
     // Before placement: snapshot 40 holds a transient host bit 0x01 (e.g. a fight in progress);
     // snapshot 41 has it cleared. Both are history.
@@ -135,13 +143,44 @@ int main() {
     assert(collected() == 0x80);
     std::cout << "PASS delayed older snapshots are not collected as party progress\n";
 }
+#else
+int main() {
+    // The same through the test seam: the hold must hand the actual receiver the held bytes after
+    // a newer snapshot, and the receiver must keep the newer one.
+    snapshot(40, 0x00);
+    tick();
+    bbsc_party_placed = true;
+    tick();
+    std::ofstream{"bbsc-test-hold-world"} << "18000000"; // this map only
+    tick();
+    // Held back: an old bit the host has cleared since. Its chunks claim 255 groups where a packet
+    // holds 8; the late comparison must stay inside the packet (built with ASan, review of PR #8).
+    snapshot(41, 0x40, 255);
+    tick();
+    assert(bbsc_world_blocks.at(0x18000000).snapshot == 40);
+    snapshot(42, 0x80); // the host sets a bit during the party; the hold time has passed
+    tick();
+    snapshot(43, 0x80); // its first chunk releases 41 after 42 is complete
+    tick();
+    assert(bbsc_test_hold.phase == BbscHeldWorldSnapshot::Phase::Done);
+    assert(bbsc_world_blocks.at(0x18000000).snapshot == 43);
+    assert(collected() == 0x80);
+    std::filesystem::remove("bbsc-test-hold-world");
+    tick();
+    snapshot(44, 0x80);
+    assert(bbsc_test_hold.phase == BbscHeldWorldSnapshot::Phase::Idle);
+    std::cout << "PASS a snapshot held back by the test seam is fed again late and not collected\n";
+}
+#endif
 '''
     fixture = directory / 'reorder-collect.cpp'
     fixture.write_text(code, encoding='utf-8')
     binary = directory / ('reorder-collect.exe' if os.name == 'nt' else 'reorder-collect')
-    subprocess.run([shutil.which('clang++'), '-std=c++23', '-O0', '-I', str(source.parents[1]),
-                    str(fixture), '-o', str(binary)], check=True)
-    subprocess.run([str(binary)], check=True)
+    subprocess.run([shutil.which('clang++'), '-std=c++23', '-O0', '-I', str(source.parents[1])] +
+                   (['-DHOLD', '-g', '-fsanitize=address'] if hold else []) +
+                   [str(fixture), '-o', str(binary)], check=True)
+    env = dict(os.environ, SHADPS4_BBSC_TEST_HOLD_WORLD='1000') if hold else None
+    subprocess.run([str(binary)], check=True, cwd=directory, env=env)
 
 
 @unittest.skipUnless(shutil.which('clang++') and SOURCE.is_file(),
@@ -150,6 +189,10 @@ class ReorderCollectTests(unittest.TestCase):
     def test_delayed_older_snapshots_are_not_party_progress(self):
         with tempfile.TemporaryDirectory() as directory:
             run_reorder_fixture(SOURCE, Path(directory))
+
+    def test_test_hold_seam_feeds_the_held_snapshot_late(self):
+        with tempfile.TemporaryDirectory() as directory:
+            run_reorder_fixture(SOURCE, Path(directory), hold=True)
 
 
 if __name__ == '__main__':
