@@ -17,8 +17,8 @@ SOURCE = ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp
 def run_delivery_fixture(source, directory):
     src = source.read_text(encoding='utf-8')
     p = directory
-    def function(name):
-        start = src.index('void ' + name + '(')
+    def function(name, kind='void'):
+        start = src.index(kind + ' ' + name + '(')
         brace = src.index('{', start)
         depth, end = 1, brace + 1
         while depth:
@@ -79,7 +79,13 @@ bool item_ready = true, event_ready = true, loaded = true, alive = true,
      add_ok = true, taken = false, slot_ready = true;
 int adds = 0, popups = 0;
 u32 here = 0x18010000;
-bool bbsc_join_teleport_done = true; // placed beside the host
+bool bbsc_join_teleport_done = false; // the join teleport's latch (spectate on only)
+bool bbsc_party_placed = true;        // placed beside the host
+bool spectate = false;
+s32 session_state = 6, character_type = 1;
+bool BbscSpectateEnabled() { return spectate; }
+s32 GetSessionState() { return session_state; }
+s32 GetLocalCharacterType() { return character_type; }
 BbscSaveSlot current{"sd1", 1};
 bool EnvFlagEnabled(const char *) { return true; }
 std::optional<BbscSaveSlot> bbsc_own_world_slot;
@@ -121,6 +127,9 @@ template <class T> T ReadValue(u64 at, u64 off) {
     else:
         code += 'std::vector<s64> bbsc_boss_reward_queue, bbsc_boss_reward_given;\n'
     code += function('NoteBbscBossRewardEvent') + '\n' + function('TickBbscBossRewards')
+    if 'void TickBbscPartyPlacement(' in src:
+        code += '\n' + function('BbscGuestInHostWorld', 'bool') + '\n' + function('TickBbscPartyPlacement')
+        code += "\n#define PARTY_PLACEMENT\n"
     entry = '{12411700, current}' if owner_bound else '12411700'
     code += 'void enqueue_test_event() { bbsc_boss_reward_queue.push_back(' + entry + '); }\n'
     code += """
@@ -199,10 +208,10 @@ int main() {
   NoteBbscBossRewardEvent(12411700);
   assert(bbsc_boss_reward_queue.empty());
   here = 0x18010000;
-  bbsc_join_teleport_done = false; // the boss dies during our join load: the host's kill
+  bbsc_party_placed = false; // the boss dies during our join load: the host's kill
   NoteBbscBossRewardEvent(12411700);
   assert(bbsc_boss_reward_queue.empty());
-  bbsc_join_teleport_done = true;
+  bbsc_party_placed = true;
   NoteBbscBossRewardEvent(12411700);
   NoteBbscBossRewardEvent(12411700);
   assert(bbsc_boss_reward_queue.size() == 1);
@@ -217,6 +226,61 @@ int main() {
   assert(bbsc_boss_reward_queue.size() == 1);
   TickBbscBossRewards();
   assert(adds == 2 && bbsc_boss_reward_given.size() == 2);
+#ifdef PARTY_PLACEMENT
+  // PR #7 review: spectate OFF ("Respawn in place" off), boss items ON. There is no join teleport,
+  // so its latch stays false; the game's summon load places the guest.
+  seed();
+  bbsc_boss_reward_queue.clear();
+  spectate = false;
+  bbsc_join_teleport_done = false;
+  session_state = 0;
+  TickBbscPartyPlacement();
+  assert(!bbsc_party_placed); // a new session starts unplaced
+  session_state = 6;
+  loaded = false;
+  TickBbscPartyPlacement();
+  assert(!bbsc_party_placed);
+  NoteBbscBossRewardEvent(12411700); // the boss dies during our summon load: the host's kill
+  assert(bbsc_boss_reward_queue.empty());
+  loaded = true;
+  alive = false;
+  TickBbscPartyPlacement();
+  assert(!bbsc_party_placed);
+  alive = true;
+  character_type = 0; // not a guest
+  TickBbscPartyPlacement();
+  assert(!bbsc_party_placed);
+  character_type = 1;
+  NoteBbscBossRewardEvent(12411700);
+  assert(bbsc_boss_reward_queue.empty()); // not before the first placement tick
+  TickBbscPartyPlacement();
+  assert(bbsc_party_placed && !bbsc_join_teleport_done);
+  alive = false; // a death and a load in the session keep it
+  loaded = false;
+  TickBbscPartyPlacement();
+  assert(bbsc_party_placed);
+  alive = true;
+  loaded = true;
+  NoteBbscBossRewardEvent(12411700);
+  NoteBbscBossRewardEvent(12411700);
+  assert(bbsc_boss_reward_queue.size() == 1);
+  TickBbscBossRewards();
+  TickBbscBossRewards();
+  NoteBbscBossRewardEvent(12411700);
+  assert(adds == 1 && bbsc_boss_reward_given.size() == 1 && bbsc_boss_reward_queue.empty());
+  // Spectate ON: placement still waits for the join teleport.
+  session_state = 0;
+  TickBbscPartyPlacement();
+  assert(!bbsc_party_placed);
+  session_state = 6;
+  spectate = true;
+  TickBbscPartyPlacement();
+  assert(!bbsc_party_placed);
+  bbsc_join_teleport_done = true;
+  TickBbscPartyPlacement();
+  assert(bbsc_party_placed);
+  std::cout << "PASS spectate off: no reward before the summon load places us, then exactly one\n";
+#endif
   std::cout << "PASS unavailable item/event/loading/death; failed direct add "
                "retry without popup; owner isolation; once-only confirmed "
                "goods; completed lot\n";

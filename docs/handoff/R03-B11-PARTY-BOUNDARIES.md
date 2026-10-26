@@ -60,6 +60,28 @@
 
 All protected source saves are unchanged. All test processes were closed.
 
+## Review fix: placement without the spectate option (PR #7 review, P2)
+
+The review found that the reward gate was never satisfied with `SHADPS4_BBSC_SPECTATE` off ("Respawn in place"). Both `bbsc_join_teleport_done = true` assignments are in `TickBbscJoinTeleport`, and `TraceEntry` calls it only when spectate is on. So with spectate off and guest boss items on, every valid reward was rejected. The shared-progress collector had the same dependency: it starts collecting at the same latch.
+
+- New latch `bbsc_party_placed`, kept by `TickBbscPartyPlacement`, which runs every tick whatever the spectate option.
+  - **Spectate on:** it follows the join teleport (`bbsc_join_teleport_done`), as before.
+  - **Spectate off:** there is no join teleport; the game's own summon load places the guest. The latch is set on the first tick when all of these hold:
+    - a guest in the host's world (`BbscGuestInHostWorld`: session state 6, type not 0/8);
+    - not loading (`global+0x08` and `+0x1592` zero);
+    - the local character alive.
+  - It holds through deaths and loads in the session and is cleared when session state leaves 6, as the join teleport latch is.
+- `NoteBbscBossRewardEvent` and the shared-progress eligibility now read `bbsc_party_placed`. `TickBbscFollowHost` still waits for the join teleport itself.
+- **Fixture:** `test_bbsc_reward_delivery.py` compiles the actual `BbscGuestInHostWorld` and `TickBbscPartyPlacement` with the reward producer/consumer, spectate off, the join teleport latch false throughout:
+  - before placement: no reward during the summon load, while dead, while not a guest, or before the first placement tick;
+  - after placement, two kill events give exactly one queued and one delivered reward;
+  - a death plus a load keeps the latch;
+  - a new session starts unplaced;
+  - with spectate on, placement still waits for the join teleport.
+  - **RED** with the reviewed gate (`bbsc_join_teleport_done`) restored: `bbsc_boss_reward_queue.size() == 1` fails. **GREEN** now.
+- The other fixtures set the renamed latch. `test_bbsc_*` 5 OK, `test_native_bbsc` 2 OK, `git diff --check` clean.
+- DLL build `d5250903…`, exit 0. No native run with spectate off yet.
+
 ## Status after B11
 
 | Case | Result |

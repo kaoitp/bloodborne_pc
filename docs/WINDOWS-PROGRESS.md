@@ -537,3 +537,7 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
   - CL03 B-30: the `ForceSummonSuccess` trace is the BlockClear2 entry, firing at the kill.
 - **G2-17:** actual receiver + collector fixture, RED without the B06 guard, GREEN with it.
 - **Not native:** G2-03 (the host processes the kill after the joining guest arrives); G2-17 injection; a guest in a follow load at the kill. [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
+- **Review fix (PR #7, P2):**
+  - Reward and shared-progress eligibility now use `bbsc_party_placed`, which works with the spectate option off: the game's summon load places the guest.
+  - Spectate-off fixture: RED with the reviewed gate restored, GREEN now.
+  - Native run with spectate off still open.

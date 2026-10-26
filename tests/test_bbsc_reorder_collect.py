@@ -82,7 +82,7 @@ bool LoadBbscPendingProgress(const BbscSaveSlot&) { return false; }
 void WriteBbscPendingProgress() {}
 void FinishBbscPendingProgress() {}
 void BbscAnnounce(const char16_t*, const char*) {}
-bool bbsc_join_teleport_done = false;
+bool bbsc_party_placed = false;
 u32 BbscRelayHostForPackets() { return 0x68a4be6d; }
 bool BbscGuestInHostWorld() { return true; }
 u32 GetCurrentPackedMap() { return 0x18000000; }
@@ -118,7 +118,7 @@ int main() {
     tick();
     snapshot(41, 0x00);
     tick();
-    bbsc_join_teleport_done = true; // placed beside the host
+    bbsc_party_placed = true; // placed beside the host
     tick();
     // During the party the host sets 0x80: collected.
     snapshot(42, 0x80);
