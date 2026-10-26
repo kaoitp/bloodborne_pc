@@ -80,7 +80,18 @@ The review found that the reward gate was never satisfied with `SHADPS4_BBSC_SPE
   - with spectate on, placement still waits for the join teleport.
   - **RED** with the reviewed gate (`bbsc_join_teleport_done`) restored: `bbsc_boss_reward_queue.size() == 1` fails. **GREEN** now.
 - The other fixtures set the renamed latch. `test_bbsc_*` 5 OK, `test_native_bbsc` 2 OK, `git diff --check` clean.
-- DLL build `d5250903…`, exit 0. No native run with spectate off yet.
+- DLL build `d5250903…`, exit 0.
+- **Native, spectate off** (`SHADPS4_BBSC_SPECTATE=0` on both clients, fresh save copies, same server):
+  - Join 1:
+    - 12:59:09 `connect-first: summoned reload finished in host map 0x18000000`;
+    - 12:59:19.996 `party: placed in the host's world by the summon load (no join teleport)`;
+    - 12:59:21 shared progress became eligible (baseline 12 flags, 160 groups).
+  - The guest then fell to its death twice (a debug teleport into an unloaded spot). The first death kept the session and respawned at the host's lamp (12:59:40 → 13:00:05, `v8 respawned`). The latch stayed set: no second placement line.
+  - Rejoin after the guest and host processes were restarted:
+    - 13:24:27 `new party`;
+    - 13:24:43.883 placed again by the summon load;
+    - 13:24:44 eligible.
+  - **Not shown natively:** a reward after placement with spectate off. In the first party the host died to Amelia before the debug HP-0 found her, and her fight never came back without a load. After the restart the fog door could not be reached. The reward path itself is the fixture's.
 
 ## Status after B11
 

@@ -540,4 +540,4 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - **Review fix (PR #7, P2):**
   - Reward and shared-progress eligibility now use `bbsc_party_placed`, which works with the spectate option off: the game's summon load places the guest.
   - Spectate-off fixture: RED with the reviewed gate restored, GREEN now.
-  - Native run with spectate off still open.
+  - Native, spectate off: the guest was placed by the summon load (twice, the second time as a new party after a rejoin); a death in the party kept it. A reward after placement with spectate off was not reached natively (Amelia could not be re-triggered).
