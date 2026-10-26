@@ -97,7 +97,7 @@ void FinishBbscPendingProgress() { ++finishes; pending_file = false; }
 void BbscAnnounce(const char16_t*, const char*) { ++notices; }
 std::atomic<u32> bbsc_host_world_resets{0};
 std::filesystem::file_time_type bbsc_active_slot_written{};
-bool bbsc_join_teleport_done = false;
+bool bbsc_party_placed = false;
 u32 BbscRelayHostForPackets() { return 0; }
 bool BbscGuestInHostWorld() { return false; }
 u32 GetCurrentPackedMap() { return 0; }

@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..d983874 100644
+index 6c278c3..a2f56f3 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -241,14 +241,14 @@ index 6c278c3..d983874 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,9 +6171,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,7 +6171,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-     WriteBbscOwnWorldFile();
- }
- 
++    WriteBbscOwnWorldFile();
++}
++
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -257,7 +257,7 @@ index 6c278c3..d983874 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-+    WriteBbscOwnWorldFile();
+     WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -271,11 +271,9 @@ index 6c278c3..d983874 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
-+}
-+
+ }
+ 
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
-     if (BbscIsMapFlagGroup(key)) {
-         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6259,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -487,7 +485,43 @@ index 6c278c3..d983874 100644
      const u64 global = registers.rcx; // 0x01332C14: mov rcx, [0x05556678]
      if (image_base == 0 || global != GetGlobalState() || !ReadablePointer(global, 0x1598) ||
          ReadValue<u8>(global, 0x1520) == 0) {
-@@ -10292,8 +10469,17 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
+@@ -10094,6 +10271,35 @@ bool BbscGuestInHostWorld() {
+     return type > 0 && type != 8;
+ }
+ 
++// Placed in the host's world: boss rewards and shared progress count from here on (R03 B11,
++// CL02 A-27/G2-03). With the spectate option ("Respawn in place") the join teleport puts the guest
++// beside the host and sets bbsc_join_teleport_done. Without it there is no join teleport: the game's
++// own summon load places the guest, so the first tick as a living guest in the host's world after
++// that load does (PR #7 review). Holds through deaths and loads in the session; cleared when it ends.
++bool bbsc_party_placed = false;
++void TickBbscPartyPlacement() {
++    if (GetSessionState() != 6) {
++        bbsc_party_placed = false;
++        return;
++    }
++    if (bbsc_party_placed) {
++        return;
++    }
++    if (BbscSpectateEnabled()) {
++        bbsc_party_placed = bbsc_join_teleport_done;
++        return;
++    }
++    const u64 global = GetGlobalState();
++    const u64 player = GetLocalPlayerCharacter();
++    if (!BbscGuestInHostWorld() || ReadValue<u8>(global, 0x08) != 0 ||
++        !ReadablePointer(player, 0x410) || GetCharacterHp(player) <= 0) {
++        return; // not a guest, still in the summon load, or not alive in it yet
++    }
++    bbsc_party_placed = true;
++    LOG_INFO(Debug, "BBSC party: placed in the host's world by the summon load (no join teleport)");
++    BBSC_TIMELINE("JOIN", "placed in the host's world by the summon load (no join teleport)");
++}
++
+ bool BbscEventFlag(u32 flag) {
+     // 0x01399BF0 panics when SprjEventFlagMan does not exist.
+     if (ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
+@@ -10292,8 +10498,17 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
  constexpr u64 ItemManPointerOffset = 0x0553D6E0;
  constexpr u64 AwardItemLotOffset = 0x017DDC50; // (item man, lot, 0) as the 2003[04] handler calls it
  std::mutex bbsc_boss_reward_mutex;
@@ -507,18 +541,11 @@ index 6c278c3..d983874 100644
  std::vector<u32> bbsc_boss_goods_check;   // boss goods given in a session, checked once home
  
  void NoteBbscBossRewardEvent(s64 event) {
-@@ -10302,16 +10488,22 @@ void NoteBbscBossRewardEvent(s64 event) {
+@@ -10302,16 +10517,31 @@ void NoteBbscBossRewardEvent(s64 event) {
                                           [event](const auto& r) { return r.event == event; })) {
          return;
      }
-+    const auto owner = bbsc_own_world_slot ? bbsc_own_world_slot : BbscActiveSaveSlot();
-+    const u32 boss_map = (static_cast<u32>((event / 100'000) % 100) << 24) |
-+                         (static_cast<u32>((event / 10'000) % 10) << 16);
-+    // Check the fight's area now; a valid queued reward can be delivered after the trip home.
-+    if (!owner || BbscMapArea(GetCurrentPackedMap()) != BbscMapArea(boss_map)) {
-+        return;
-+    }
-     std::scoped_lock lock{bbsc_boss_reward_mutex};
+-    std::scoped_lock lock{bbsc_boss_reward_mutex};
 -    if (std::ranges::find(bbsc_boss_reward_given, event) == bbsc_boss_reward_given.end() &&
 -        std::ranges::find(bbsc_boss_reward_queue, event) == bbsc_boss_reward_queue.end()) {
 -        bbsc_boss_reward_queue.push_back(event);
@@ -527,7 +554,23 @@ index 6c278c3..d983874 100644
 -                 event);
 -        BBSC_TIMELINE("BOSS", "boss drop: event {} reached its player-type wait on the guest - "
 -                        "reward queued",
--                 event);
++    const auto owner = bbsc_own_world_slot ? bbsc_own_world_slot : BbscActiveSaveSlot();
++    const u32 boss_map = (static_cast<u32>((event / 100'000) % 100) << 24) |
++                         (static_cast<u32>((event / 10'000) % 10) << 16);
++    // Check the fight's area now; a valid queued reward can be delivered after the trip home.
++    if (!owner || BbscMapArea(GetCurrentPackedMap()) != BbscMapArea(boss_map)) {
++        return;
++    }
++    // Only a kill after we were placed in the host's world (R03 B11, CL02 A-27/G2-03): a boss that
++    // dies during our join load is the host's. The flag holds through deaths and loads in the session.
++    if (!bbsc_party_placed) {
++        LOG_INFO(Debug, "BBSC boss drop: event {} before we were placed in the host's world - not ours",
+                  event);
++        BBSC_TIMELINE("BOSS", "boss drop: event {} before we were placed in the host's world - not ours",
++                      event);
++        return;
++    }
++    std::scoped_lock lock{bbsc_boss_reward_mutex};
 +    const auto same = [&](const auto& entry) { return SameBbscBossReward(entry, event, *owner); };
 +    if (std::ranges::none_of(bbsc_boss_reward_given, same) &&
 +        std::ranges::none_of(bbsc_boss_reward_queue, same)) {
@@ -539,7 +582,7 @@ index 6c278c3..d983874 100644
      }
  }
  
-@@ -10414,76 +10606,96 @@ void TickBbscBossGoodsCheck() {
+@@ -10414,76 +10644,96 @@ void TickBbscBossGoodsCheck() {
  
  // Game tick: award the queued boss lots, once each.
  void TickBbscBossRewards() {
@@ -690,7 +733,7 @@ index 6c278c3..d983874 100644
  // Reliable packets waiting for a member that does not take them (see SendBacklog.Limit in
  // bbsc_patch_tables.h): [SprjSessionManager]+0x188 is a list head, each node +0x10 -> queue, +0x30
  // its packet count; +0x1B0 one more count. Logged while it grows past 100 (at most every 30 s).
-@@ -10809,16 +11021,95 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
+@@ -10809,16 +11059,95 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
  std::mutex bbsc_progress_mutex;
  std::vector<u32> bbsc_progress_host_flags;                         // guest: host's boss flags seen
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_progress_groups; // guest: kind 1, OR-ed
@@ -787,7 +830,7 @@ index 6c278c3..d983874 100644
      std::vector<u32> flags;
      std::map<u32, std::array<u8, BbscWorldGroupBytes>> groups;
      {
-@@ -10827,11 +11118,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
+@@ -10827,11 +11156,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
          groups = bbsc_progress_groups;
      }
      if (flags.empty() && groups.empty()) {
@@ -815,7 +858,7 @@ index 6c278c3..d983874 100644
      using SetEventFlag = u64 PS4_SYSV_ABI (*)(u64 unused, u32 flag, u8 value);
      const auto set = reinterpret_cast<SetEventFlag>(image_base + 0x0132E5A0);
      s64 bosses = 0;
-@@ -10906,9 +11213,10 @@ void TickBbscProgressBroadcast() {
+@@ -10906,9 +11251,10 @@ void TickBbscProgressBroadcast() {
  // newest userdata00NN (0..9) of the user's CUSA00207\SPRJ0005 folder, written during this run.
  constexpr s64 BbscProgressFileMs = 10'000;
  constexpr s64 BbscProgressRecoverMs = 15'000;
@@ -828,7 +871,22 @@ index 6c278c3..d983874 100644
  
  std::filesystem::path BbscPendingProgressPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() /
-@@ -11054,6 +11362,11 @@ void TickBbscSharedProgress() {
+@@ -11033,6 +11379,14 @@ void TickBbscSharedProgress() {
+     }
+     last_ms = now;
+     const s32 state = GetSessionState();
++    // Leaving the host's world ends the party (R03 B11): state 6 holds through the guest's deaths,
++    // wipes and loads, and a rejoin - even to the same host within the relay's 5 s unlock - or a
++    // host back with another character starts a new baseline.
++    static s32 last_state = -1;
++    if (last_state == 6 && state != 6) {
++        ++bbsc_host_world_resets;
++    }
++    last_state = state;
+     const u64 global = GetGlobalState();
+     const bool own_world = ReadablePointer(global, 0x1598) && ReadValue<u8>(global, 0x1592) != 0;
+     static s64 file_written_ms = 0;
+@@ -11054,6 +11408,11 @@ void TickBbscSharedProgress() {
          if (!bbsc_progress_slot.has_value()) {
              bbsc_progress_slot = BbscActiveSaveSlot();
              if (bbsc_progress_slot.has_value()) {
@@ -840,12 +898,12 @@ index 6c278c3..d983874 100644
                  LoadBbscPendingProgress(*bbsc_progress_slot);
              }
          }
-@@ -11077,6 +11390,17 @@ void TickBbscSharedProgress() {
+@@ -11077,6 +11436,17 @@ void TickBbscSharedProgress() {
              }
          }
          std::scoped_lock lock{bbsc_progress_mutex};
 +        SyncBbscProgressPartyLocked(BbscRelayHostForPackets());
-+        if (!bbsc_progress_eligible && bbsc_join_teleport_done) {
++        if (!bbsc_progress_eligible && bbsc_party_placed) {
 +            bbsc_progress_eligible = true;
 +            LOG_INFO(Debug, "BBSC shared progress: placed in the host's world - from now on only new "
 +                            "progress is collected (baseline: {} flag(s), {} group(s))",
@@ -858,7 +916,7 @@ index 6c278c3..d983874 100644
          for (const BbscWorldSnapshot& snap : blocks) {
              // Not the Hunter's Dream (report 2026-10-07: "guest does not have the starter items in
              // the Hunter's Dream"): its groups hold the messengers' starter weapons, the Doll and
-@@ -11089,13 +11413,48 @@ void TickBbscSharedProgress() {
+@@ -11089,13 +11459,48 @@ void TickBbscSharedProgress() {
                  if ((snap.present & (u64{1} << i)) == 0) {
                      continue;
                  }
@@ -910,7 +968,7 @@ index 6c278c3..d983874 100644
      }
      if (!bbsc_progress_was_guest) {
          // A file an earlier session left (crash, quit while a guest): merged once this character
-@@ -11154,17 +11513,30 @@ void TickBbscSharedProgress() {
+@@ -11154,17 +11559,30 @@ void TickBbscSharedProgress() {
      if (now - bbsc_progress_home_ms < BbscProgressSettleMs) {
          return;
      }
@@ -944,7 +1002,7 @@ index 6c278c3..d983874 100644
      bbsc_progress_slot.reset();
      if (bosses < 0) {
          LOG_INFO(Debug, "BBSC shared progress: home again, nothing from the host to merge");
-@@ -11235,6 +11607,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
+@@ -11235,6 +11653,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
      }
      const s64 event = ReadablePointer(registers->rdx, 0xC0) ? BbscEventIdOf(registers->rdx) : -1;
      if (event > 0) {
@@ -952,7 +1010,7 @@ index 6c278c3..d983874 100644
          NoteBbscBossRewardEvent(event); // a boss reward event the guest's copy never finishes
      }
      if (type != 0) {
-@@ -14398,10 +14771,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -14398,10 +14817,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -970,7 +1028,7 @@ index 6c278c3..d983874 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -15997,6 +16374,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -15997,6 +16420,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      }
  
      const auto& site = Sites[tag];
@@ -981,7 +1039,7 @@ index 6c278c3..d983874 100644
      if (site.offset == ItemUsableResultOffset) {
          ApplyBbscBellsAnywhere(registers);
      }
-@@ -16024,6 +16405,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16024,6 +16451,15 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
@@ -997,7 +1055,15 @@ index 6c278c3..d983874 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -16762,25 +17152,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
+@@ -16100,6 +16536,7 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+             TickBbscStateDiff();
+             TickBbscJoinTeleport();
+         }
++        TickBbscPartyPlacement();
+         TickBbscGuestRejoin();
+         if (BbscRejoinEnabled()) {
+             TrackBbscSignType();
+@@ -16762,25 +17199,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
      s32 time_bits = 0; // the packet holds every listed flag the host has on, so absent = off
      {
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1038,7 +1104,7 @@ index 6c278c3..d983874 100644
      }
  }
  
-@@ -16890,6 +17289,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16890,6 +17336,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
          std::scoped_lock lock{bbsc_world_mutex};
          BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
          BbscWorldSnapshot& ready = dream ? bbsc_dream_ready : bbsc_world_ready;
@@ -1059,7 +1125,7 @@ index 6c278c3..d983874 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -17791,7 +18204,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +18251,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,

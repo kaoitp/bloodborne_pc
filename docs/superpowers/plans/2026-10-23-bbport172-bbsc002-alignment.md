@@ -245,4 +245,15 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 ### PR #7 review (2026-10-26)
 
 - [x] Inline exact-head review `e4e0f8c`, reconstructed pinned source, five actual-function fixtures and two native-header tests PASS; whitespace clean.
-- [ ] Merge blocked: new reward placement gate depends on the independent spectate toggle. Preserve valid rewards with spectate OFF and test that production path before re-review. See tracker PR07-REV01; PR remains open, no native replay or broad R03 closure.
+- [x] Historical PR07-REV01 blocker resolved by `2522e2f`: independent party-placement latch and spectate-OFF reward regression. Exact head `b66936a` accepted after five actual-function fixtures PASS. This does not close broad R03 gameplay gates.
+### B11 party boundaries (Claude)
+
+- [x] Departure (state 6 → other) ends the party: native rejoin and host-character change, fixture for rejoin before the unlock.
+- [x] Dead guest at the kill earns and receives after the respawn (native).
+- [x] Reward item only after placement (fixture RED/GREEN); native pre-placement window not reproducible with this rig.
+- [x] CL03 B-30 label resolved natively.
+- [ ] G2-17 native injection seam; a guest in a follow load at the kill; progress classes beyond the boss area.
+
+### PR #7 / #8 integration (2026-10-26)
+
+- [ ] IN_PROGRESS: merge reviewed heads `b66936a` then `84d3fbd` into seamless, preserve both documentation histories, verify candidate source and focused fixtures, publish without force and confirm both PRs merged.

@@ -532,3 +532,27 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - Fresh evidence in ignored `.superpowers/pr7-review`: git archive of exact PR head; pinned BBSC archive at `4f11faf88b6ba658ebde6fe5fbefdadedba4fa41`; isolated git init and full patch apply/check exit0. Patch SHA256 `f9a7af396002cf13a1ecf2d3d15d943c3ac4df23e3a61e292d60535d0645c35e`; reconstructed bloodborne_re.cpp SHA256 `389b2a26d05d194d5803bd93a3884737609992afdfe31045dda94710a9680085`.
 - CLANG64 Python unittest loader ran all five test_bbsc modules against that reconstructed source (SOURCE overridden for older fixtures, skip flags cleared only after prerequisites were present), local TEMP/TMP and clang++ PATH: 5 tests PASS, no skips, 26.234s. Exact-head native-header discovery: 2 tests PASS, 9.200s. `git diff --check 4492dd5...origin/pr7-review` exit0. Source reachability assertions PASS for both latch writes and the gated sole caller. Initial harness attempt hit sandbox temporary-directory permissions and missing exported reference paths; corrected isolated setup, not a product failure.
 - GitHub exact-head statuses and review threads empty, not CI PASS. PR left OPEN, no merge or external review/message. No full suite, DLL build, native/gameplay replay, packaging or deployment. Native claims remain author-reported; G2-03/G2-17 native injection/follow-load gaps remain explicit. Next: author corrects eligibility/config coupling and returns a new SHA for re-review.
+### B11 party boundaries, dead guest, pre-placement rewards — VERIFIED with limits (2026-10-26, Claude)
+
+- **Source:**
+  - leaving the host's world (state 6 → other) starts a new shared-progress party;
+  - the reward item is queued only after the guest was placed.
+- **Fixtures:** rejoin-before-unlock and reward-before-placement scenarios, each RED on the previous source and GREEN now. `test_bbsc_*` 4 OK, `test_native_bbsc` 2 OK.
+- **Native:**
+  - A guest dead at the kill still earns and receives the reward after the respawn.
+  - Leave/rejoin the same host: new party, baseline includes Amelia, second merge empty.
+  - Host quits and returns as EiEi in the same process: the guest is sent home to its exact origin, a new party starts, the merge is empty. No PM4 crash this time.
+  - CL03 B-30: the `ForceSummonSuccess` trace is the BlockClear2 entry, firing at the kill.
+- **G2-17:** actual receiver + collector fixture, RED without the B06 guard, GREEN with it.
+- **Not native:** G2-03 (the host processes the kill after the joining guest arrives); G2-17 injection; a guest in a follow load at the kill. [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
+- **Review fix (PR #7, P2):**
+  - Reward and shared-progress eligibility now use `bbsc_party_placed`, which works with the spectate option off: the game's summon load places the guest.
+  - Spectate-off fixture: RED with the reviewed gate restored, GREEN now.
+  - Native, spectate off: the guest was placed by the summon load (twice, the second time as a new party after a rejoin); a death in the party kept it. A reward after placement with spectate off was not reached natively (Amelia could not be re-triggered).
+
+### PR07/08-INTEGRATE: IN_PROGRESS (2026-10-26)
+
+- User authorized integration of reviewed PR #7 `b66936aa6d6c9659e778131f011dbdb8c825dfba` and PR #8 `84d3fbd6b6ccd04ca63b2450153cd30d8e9defa1`, in that order. Base seamless `7d0a1eb`. Dependencies: prior exact-head reviews accepted after fixes to Spectate eligibility and diagnostic bounds. Acceptance: preserve history and both sides of documentation conflicts, unchanged reviewed runtime blobs, reconstructed pinned-source fixture checks, normal push, remote SHA and PR-merged confirmation. No subagents, packaging or deployment.
+- PR07-REV01 above is historical: its blocker is resolved by `2522e2f`, with native-evidence documentation added by `b66936a`. Remaining native/gameplay limitations stay explicit.
+
+- PR #7 integration checkpoint: two documentation conflicts resolved by retaining both histories and marking the old blocker resolved. Runtime patch and test blobs equal reviewed `b66936a`. `C:/msys64/clang64/bin/python.exe .superpowers/pr-review-7-8/verify_integrated.py merged7` (local TEMP/TMP, CLANG64 PATH) exit0: five actual-function fixtures + two native-header fixtures, 7 tests PASS, no skips, 27.736s. Reconstructed pinned bloodborne_re.cpp SHA256 `a563519a9423034cdfbe6983a1e9f08568e7aff4b6ef978ce729712465e2af2a`, matching reviewed source. No DLL build/gameplay rerun; author native evidence and remaining limitations preserved. Next: commit PR #7 merge, integrate/test #8, then publish and verify.

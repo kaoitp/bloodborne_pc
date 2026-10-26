@@ -86,7 +86,7 @@ void FinishBbscPendingProgress() {}
 void BbscAnnounce(const char16_t*, const char*) {}
 std::atomic<u32> bbsc_host_world_resets{0};
 std::filesystem::file_time_type bbsc_active_slot_written{};
-bool bbsc_join_teleport_done = false;
+bool bbsc_party_placed = false;
 u32 relay_host = 0x68a4be6d;
 u32 BbscRelayHostForPackets() { return relay_host; }
 bool in_host_world = true;
@@ -131,7 +131,7 @@ int main() {
     snapshot(0x18000000, 100, true);
     tick();
     packet({2401, 2200});
-    bbsc_join_teleport_done = true; // placed beside the host
+    bbsc_party_placed = true; // placed beside the host
     tick();
     packet({2401, 2200});
     tick();
@@ -155,7 +155,7 @@ int main() {
     admit(12401800);
     assert(bit(12401, 800));
     // Death or loading in the same party keeps the party open.
-    bbsc_join_teleport_done = false;
+    bbsc_party_placed = false;
     packet({2401, 2200, 2300, 2500});
     tick();
     assert(has(2500));
@@ -164,23 +164,36 @@ int main() {
     ++bbsc_host_world_resets;
     packet({2401, 2200, 2300, 2500, 2600});
     tick();
-    bbsc_join_teleport_done = true;
+    bbsc_party_placed = true;
     tick();
     packet({2401, 2200, 2300, 2500, 2600});
     tick();
     assert(!has(2600) && has(2300) && has(2500) && bit(12401, 800));
+    // Leaving and rejoining the same host before the relay lock is released: also a new party.
+    // What the host did while we were away is history; what we collected stays.
+    session_state = 0;
+    tick();
+    session_state = 6;
+    bbsc_party_placed = false;
+    packet({2401, 2200, 2300, 2500, 2600, 2601});
+    tick();
+    bbsc_party_placed = true;
+    tick();
+    packet({2401, 2200, 2300, 2500, 2600, 2601});
+    tick();
+    assert(!has(2601) && has(2300) && has(2500));
     // A different host: also a new party.
     relay_host = 0x1234;
-    bbsc_join_teleport_done = false;
+    bbsc_party_placed = false;
     packet({2401, 2700});
     tick();
-    bbsc_join_teleport_done = true;
+    bbsc_party_placed = true;
     tick();
     packet({2401, 2700, 2800});
     tick();
     assert(!has(2700) && has(2800));
     std::cout << "PASS party baseline, earned flags/bits, first-sight blocks, reward event, "
-                 "death/load continuity, new party and new host\n";
+                 "death/load continuity, new party, rejoin and new host\n";
 }
 '''
     fixture = directory / 'party-progress.cpp'
