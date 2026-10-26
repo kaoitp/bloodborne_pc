@@ -72,6 +72,45 @@ Run with the new DLL, fresh saves:
 - the host sees the guest's body beside its name tag after the respawn;
 - the guest sees the host normally.
 
+## Provenance (PR #10 review)
+
+**Source**
+- Pinned BBSC `4f11faf` plus the tracked patch at commit `2bb0d37`. The patch SHA256 is `9dd2a7d936ce54138840c0fead3c58f6c49df07110f8b4884d912eafc2576e8c`.
+- The resulting `emulator/src/core/bloodborne_re.cpp` hashes differently depending on line endings:
+  - LF, as in the build tree: `90a0cb06931d40671b7c0b9460723fd3b87c6bc25d20788ae49f45a0ba1d2fb6`;
+  - CRLF, as in an `autocrlf` reconstruction: `b0ea78cef0ed3aad00c7de3ac054d34aab00adfe8854690c22bb8e561b4b7b35`.
+- The content is the same either way. There was no uncommitted delta: the patch was regenerated from the build tree and compared with `cmp` just before the build, and it was committed unchanged.
+
+**DLL**
+- The native run loaded `bbsc.dll` SHA256 `8dc083de125d901bf5ccf15750d969f7f867978680b230180bbef2ef0cd8c16a`. Its SHA was checked on both clients' `mod` folders after copying.
+- **Rebuild check:** a later rebuild from the reconstructed `2bb0d37` source gave `2c6fe130ae1fb2d93d6e5d6b46c7d71462005f5d0ad5980d35b4da8d8ee0f51b`. The files are the same size, and only 20 bytes differ. All 20 are build time:
+  - the PE TimeDateStamp;
+  - the `__DATE__`/`__TIME__` strings;
+  - the debug-directory timestamp;
+  - the CodeView PDB GUID.
+
+  So the tested DLL is this source's build.
+
+**Build:** with `C:\msys64\clang64\bin` first on PATH:
+```
+C:\msys64\clang64\bin\python.exe tools\build_bbsc_mod.py .superpowers\reference\BBSC <outdir>
+```
+It exits 0 and prints the DLL SHA256.
+
+**Tests:** run from `tests/`, with the same PATH:
+```
+python -m unittest test_bbsc_remote_show test_bbsc_reward_delivery test_bbsc_party_progress test_bbsc_progress_backup test_bbsc_reorder_collect test_bbsc_world_ordering test_native_bbsc
+```
+It reported OK.
+
+**RED:** the same `test_bbsc_remote_show` run with `BBSC_FIXTURE_SOURCE` pointing at the merged-seamless reconstruction. It failed at `flags(guest_chr) == 0x109800`.
+
+**Effective configuration of the native run**
+- Mod options: the `mod.json` defaults. Among them: `SHADPS4_BBSC_REJOIN`, `SHADPS4_BBSC_SHARED_PROGRESS`, `SHADPS4_BBSC_GUEST_ITEMS`, `SHADPS4_BBSC_PERSIST_HOSTDEAD`, `SHADPS4_BBSC_CONNECT_FIRST` and world sync are on.
+- Overridden: `SHADPS4_BBSC_SPECTATE=0` on both clients.
+- `run.py` sets `SHADPS4_BBSC_WARP_JOIN=0`.
+- Emulator `out/bb-probe.exe` through the mod loader, 1280x720 at 30 FPS, the self-hosted server, copied profiles.
+
 ## Limits
 
 - Only the host-death path was tested natively. Self-heal re-arming the window has fixture coverage only.
