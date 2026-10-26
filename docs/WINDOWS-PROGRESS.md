@@ -625,3 +625,19 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - Read exact new head `fe31de229afad2754856c7bdc88eb58aa40e3e88` and comment6411996546. `git diff 4dc9369..origin/pr11` shows only B14/tracker documentation additions; runtime/fixture blobs unchanged. No repeated fixture run warranted.
 - New author native evidence: on the named merged-runtime/default-path run, six differing host Dream values returned to guest-own values after interruption; S0/S2 has no cleared flags. Sold counts equal0 on both sides do not exercise their preservation. This is bounded author-reported native evidence, not this review's replay, not proof of the historical experimental-build cause, and not same-name/unknown-owner journal isolation.
 - Replied in PR11 acknowledging the new evidence and retaining review5649253920's two reproduced ownership blockers. Full native/build provenance remains requested. PR10 unchanged at161d516, no new reply; no duplicate comment. No merge or R03 acceptance change. Next: re-review focused author corrections. Usage60%/94% remaining.
+
+### B13 guest invisible on the host after the host's death â€” FIXED, native (2026-10-26, Claude)
+
+- **Finding:** after a host death and respawn in the party, the host saw only the guest's name tag. The guest character recreated by the v8 reinsert lacked `+0x1E0` bit `0x100000`. Setting that bit live showed the body.
+- **Source:** `TickBbscRemoteShow` sets the bit once on remote member characters, for 30 s after a v8 or self-heal restart.
+- **Fixture:** `test_bbsc_remote_show.py`, RED on merged seamless, GREEN now. DLL `8dc083deâ€¦`.
+- **Native:** after a host death the fix logged `shown bit â€¦ - set`, and the host saw the guest's body.
+- **Rig:** the earlier host stops during a load were most likely the emulator's `Unimplemented PM4 type 0` GPU assertion. The old PowerShell launcher hid it; the new one logs it (exit 23).
+- [B13 evidence](handoff/R03-B13-HOST-RESPAWN-SHOW.md).
+
+### PR10-REV03 / INTEGRATE: IN_PROGRESS (2026-10-26, Codex)
+
+- Exact accepted head `d7da4f25e4c8c099b2ee3ed8a360fc723bea6bfb`; provenance correction complete. Fresh source normalization confirms LF SHA256 `90a0cb06931d40671b7c0b9460723fd3b87c6bc25d20788ae49f45a0ba1d2fb6` equals reviewed CRLF source; patch/test blobs byte-identical to reviewed2bb0d37. Full tested DLL SHA256 `8dc083de125d901bf5ccf15750d969f7f867978680b230180bbef2ef0cd8c16a`, build/test commands and effective configuration are recorded in B13. DLL comparison/native run remain author-reported, not independently replayed. Accepted diagnosis correction: likely PM4/GPU assertion; launcher hid output.
+- Approval5650133506 submitted; no remaining scoped Standards/Spec blocker. Fresh CI statuses/workflows and inline review threads empty. Normal local no-commit merge into seamless; sole conflict in tracker resolved by preserving both histories. Acceptance: exact reviewed runtime/test/B13 blobs, focused integrated fixtures, links/whitespace, no broad R03 closure, normal push/readback. Preserve unrelated graphify-out and submodule state. Usage45%/91% remaining.
+
+- Integrated verification PASS: verify_integrated.py pr10-integrated exit0, 9 tests/no skips, 26.735s; same source/patch hashes as PR10-REV01. Fresh assertions confirm exact reviewed patch/test/B13 content, preserved HEAD tracker bytes, UTF8/no BOM/no conflicts and local links. A prefix assertion exposed one historical replacement-character normalization during text handling; rebuilt the prefix from original HEAD bytes, rechecked successfully. No runtime code divergence. Publication/closure readback pending.

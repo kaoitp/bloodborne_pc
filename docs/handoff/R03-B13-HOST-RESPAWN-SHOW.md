@@ -1,0 +1,128 @@
+# R03 B13: the guest is invisible on the host after the host's death
+
+2026-10-26, Claude (R03 takeover). Base: seamless `cc4858d` (PR #7 and #8 merged). Source change in the tracked patch (`bloodborne_re.cpp` only).
+
+Native setup:
+- two online copied clients on the owner's self-hosted server;
+- fresh copies of the protected Kaori host and U-I-AHH guest saves;
+- spectate off on both clients;
+- the disclosed debug aids (the host's own HP 0, a position read, the pad file).
+
+## Finding
+
+After the host died and respawned in the party, the host's screen showed only the guest's name tag and HP bar, not its body. The guest's own view was normal.
+
+**Reproduction:** one host death (own HP 0) with the guest standing 0.6 m away.
+- Before the death the guest's body was visible.
+- After the respawn only the name tag showed.
+- A Parting Blank and a rejoin brought the body back.
+
+The mod's side looked healthy:
+- the v8 reinsert restarted the guest's insert task (`v8 restarted 1 remote player insert task(s)`);
+- the task returned to CreateWait;
+- `hunters: 2` was logged;
+- self-heal never fired, because the character exists.
+
+## Cause
+
+The guest's `PlayerIns` was dumped from the host's WorldChrMan in both states.
+
+| State | `+0x1E0` |
+|---|---|
+| Recreated after the host death (invisible) | `0x9800`, later `0x8800` |
+| After a fresh join (visible) | `0x109800` |
+| The host's own character | `0x109800` |
+
+**Test:** setting bit `0x100000` on the invisible guest character in the running host game made its body appear at once.
+
+**Corroboration:** this bit is byte `+0x1E2` bit `0x10`. It is the same bit that BBSC's earlier phantom-flags experiment cleared (`+0x1E1` u32 `0x1001098 -> 0x1004098`, TickBbscReinsertV8 comment), and that experiment is documented as having made the guest invisible.
+
+## Change
+
+- `FindRemotePlayerOf(task)`: the existing WorldChrMan member lookup, now returning the `PlayerIns`. `RemotePlayerExists` uses it.
+- `ArmBbscRemoteShow()` opens a 30 s window. It is called when the v8 reinsert restarts at least one task, and when self-heal restarts one.
+- `TickBbscRemoteShow()` runs after self-heal in the rejoin block.
+  - During the window and outside a load, it looks at each remote member (task mode 1/2) that has a character. If that character lacks the bit, the tick sets it, once, and logs `member character recreated without its shown bit … - set`.
+  - It never touches the local player.
+
+## Fixture
+
+`test_bbsc_remote_show.py` compiles the actual `FindRemotePlayerOf`/`RemotePlayerExists` and the new show block with controlled memory. It covers:
+- not armed;
+- armed while loading;
+- armed, which sets the remote guest's bit and leaves the self-host character and an already shown member alone;
+- the window over;
+- re-armed.
+
+It is built with ASan.
+- **RED** on the merged seamless source (`flags(guest_chr) == 0x109800` fails).
+- **GREEN** now.
+- `test_bbsc_*` 7 OK, `test_native_bbsc` 2 OK, `git diff --check` clean.
+- DLL build `8dc083de…`, exit 0.
+
+## Native evidence
+
+Run with the new DLL, fresh saves:
+- the guest joined and was placed (spectate off);
+- host HP 0;
+- 14:59:26.618 `v8 restarted`;
+- 14:59:26.651 `member character recreated without its shown bit (+0x1E0 0x0, mode 1) - set`. The character was brand new, so its flags read 0, and the game filled in the rest later: it read `0x108800` afterwards.
+
+**Screenshots:**
+- the host sees the guest's body beside its name tag after the respawn;
+- the guest sees the host normally.
+
+## Provenance (PR #10 review)
+
+**Source**
+- Pinned BBSC `4f11faf` plus the tracked patch at commit `2bb0d37`. The patch SHA256 is `9dd2a7d936ce54138840c0fead3c58f6c49df07110f8b4884d912eafc2576e8c`.
+- The resulting `emulator/src/core/bloodborne_re.cpp` hashes differently depending on line endings:
+  - LF, as in the build tree: `90a0cb06931d40671b7c0b9460723fd3b87c6bc25d20788ae49f45a0ba1d2fb6`;
+  - CRLF, as in an `autocrlf` reconstruction: `b0ea78cef0ed3aad00c7de3ac054d34aab00adfe8854690c22bb8e561b4b7b35`.
+- The content is the same either way. There was no uncommitted delta: the patch was regenerated from the build tree and compared with `cmp` just before the build, and it was committed unchanged.
+
+**DLL**
+- The native run loaded `bbsc.dll` SHA256 `8dc083de125d901bf5ccf15750d969f7f867978680b230180bbef2ef0cd8c16a`. Its SHA was checked on both clients' `mod` folders after copying.
+- **Rebuild check:** a later rebuild from the reconstructed `2bb0d37` source gave `2c6fe130ae1fb2d93d6e5d6b46c7d71462005f5d0ad5980d35b4da8d8ee0f51b`. The files are the same size, and only 20 bytes differ. All 20 are build time:
+  - the PE TimeDateStamp;
+  - the `__DATE__`/`__TIME__` strings;
+  - the debug-directory timestamp;
+  - the CodeView PDB GUID.
+
+  So the tested DLL is this source's build.
+
+**Build:** with `C:\msys64\clang64\bin` first on PATH:
+```
+C:\msys64\clang64\bin\python.exe tools\build_bbsc_mod.py .superpowers\reference\BBSC <outdir>
+```
+It exits 0 and prints the DLL SHA256.
+
+**Tests:** run from `tests/`, with the same PATH:
+```
+python -m unittest test_bbsc_remote_show test_bbsc_reward_delivery test_bbsc_party_progress test_bbsc_progress_backup test_bbsc_reorder_collect test_bbsc_world_ordering test_native_bbsc
+```
+It reported OK.
+
+**RED:** the same `test_bbsc_remote_show` run with `BBSC_FIXTURE_SOURCE` pointing at the merged-seamless reconstruction. It failed at `flags(guest_chr) == 0x109800`.
+
+**Effective configuration of the native run**
+- Mod options: the `mod.json` defaults. Among them: `SHADPS4_BBSC_REJOIN`, `SHADPS4_BBSC_SHARED_PROGRESS`, `SHADPS4_BBSC_GUEST_ITEMS`, `SHADPS4_BBSC_PERSIST_HOSTDEAD`, `SHADPS4_BBSC_CONNECT_FIRST` and world sync are on.
+- Overridden: `SHADPS4_BBSC_SPECTATE=0` on both clients.
+- `run.py` sets `SHADPS4_BBSC_WARP_JOIN=0`.
+- Emulator `out/bb-probe.exe` through the mod loader, 1280x720 at 30 FPS, the self-hosted server, copied profiles.
+
+## Limits
+
+- Only the host-death path was tested natively. Self-heal re-arming the window has fixture coverage only.
+- The meaning of the bit beyond "drawn" is not known. It is set only on remote member characters, only for 30 s after a restart, and only when missing.
+- A guest's own death respawn was not looked at here: the guest's view of the host after a guest death.
+
+## Also from this session: host stops during a load
+
+The host process stopped twice during a load earlier today. Two things were found:
+- **The rig launcher hid the output.** It used `$ErrorActionPreference='Stop'` with `*>` redirection, and PowerShell 5.1 then dies on the game's first stderr line. This was reproduced without the game. The rig now launches through `cmd` and keeps one log per launch with the exit code.
+- **The stop itself is most likely the emulator's GPU.** With the fixed launcher, a later run caught the same stop at the same load point: `Unimplemented PM4 type 0` / `STOP: GPU library assertion failed`, exit code 23.
+
+No mod change.
+
+All protected source saves are unchanged. Test processes were closed.

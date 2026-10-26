@@ -30,7 +30,7 @@ Unscheduled: wholesale legacy module migration, THD/bbhost/public-server/cross-e
 
 The pins are carried forward from the approved plan. The local BBport tag was rechecked when creating `seamless`; R02 subsequently verified/applied the pinned patch and assembled/tested the complete native composition here. See the R02 evidence for exact hashes and limitations. A moving upstream branch is not a replacement pin.
 
-## F01 — Plan and branch migration
+## F01 â€” Plan and branch migration
 
 Owner: Codex. Documentation-only; no dependency on old worktrees.
 
@@ -38,21 +38,21 @@ Owner: Codex. Documentation-only; no dependency on old worktrees.
 - [x] Transfer the current three-goal plan, outcomes, handoffs and fresh progress tracker; verify links/content/whitespace and unchanged runtime.
 - [x] Commit and publish only this checkpoint to `origin/seamless`; verify remote SHA. Initial checkpoint `6fc134256ab2b5e4c85a45b0a50f53b4e4157697` was pushed and matched HEAD/origin/seamless; windows stayed unchanged. Follow-up documentation records this outcome.
 
-## F02 — New-session handoff
+## F02 â€” New-session handoff
 
 Owner: Codex. Dependency: F01. Documentation-only; R02 remains unstarted.
 
 - [x] Make the handoff self-contained: repository/branch checks, current evidence boundary, first R02 actions, later private setup needs and a ready-to-paste development prompt.
 - [x] Verify links/content/whitespace and documentation-only scope; commit/push the handoff checkpoint to origin/seamless. Handoff checkpoint `cb9fcabfe0f5ab6968a3148623b71e56a614701d` was pushed and matched the remote SHA; this follow-up records the result.
 
-## R01 — Baseline references and ownership
+## R01 â€” Baseline references and ownership
 
 Owner: Codex. Dependency: F01.
 
 - [x] Record approved release pins, scope and existing-loader requirement.
 - [x] Publish the shared plan, entry points and Claude audit instructions as part of F01.
 
-## R02 — Complete reference composition
+## R02 â€” Complete reference composition
 
 Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native startup (2026-10-23); [evidence](../../handoff/BBSC-BASELINE.md). Gameplay remains R03. Source/evidence checkpoint `f3734da56722f21dd2c25dcca89b85d1c93f2109` pushed to origin/seamless and remote SHA verified.
 
@@ -62,7 +62,7 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 - [x] Establish fresh copied-profile test boundaries and existing self-hosted settings; preserve baseline authentication/validation and keep custom admission/application OFF.
 - [x] Verify actual module load/startup at the required native boundaries; keep artifact/source/configuration evidence separate from gameplay acceptance.
 
-## R03 — Reproduce the complete baseline on self-hosted services
+## R03 â€” Reproduce the complete baseline on self-hosted services
 
 Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS. Native same-map and Cathedral Ward -> Dream join/adjacent placement succeeded. [R04-J01](../../handoff/R04-JOIN-RELOAD.md) verified the existing-flag fix for a second-load guest-role/return gap. The earlier pre-claim failure remains unexplained; full G1/G2/G3 remain open. [Progress evidence](../../WINDOWS-PROGRESS.md), [resume](../../handoff/R03-RESUME.md).
 
@@ -81,7 +81,7 @@ R03-A01: IN_PROGRESS; [quota checkpoint](../../handoff/R03-ACCEPTANCE.md) record
 
 R03-A02 closure run: IN_PROGRESS. Resume A01 crashed guest recovery, symbolicate the actual null read, establish an existing-toolchain DLL build if possible, then correct and natively verify only demonstrated gaps. User authorizes game tests and retains quota stopping.
 
-## R04 — Minimum fixes for demonstrated goal gaps
+## R04 â€” Minimum fixes for demonstrated goal gaps
 
 Owner: Codex. Dependency: R02/R03 evidence and relevant CL01 findings.
 
@@ -98,7 +98,7 @@ R04-J01 is VERIFIED for its bounded case: [five-part justification, native RED/G
 - [x] Actual fixed Cathedral Ward -> Dream guest placement and normal origin return; original profile unchanged.
 - [x] Inline review and honest full-suite results recorded (154 tests, 1 failure, 8 errors, 48 skips); broader gates remain open.
 
-## CL01 — External Claude Code source/reuse audit
+## CL01 â€” External Claude Code source/reuse audit
 
 CL01-INT01: VERIFIED / INTEGRATED (2026-10-24). User requests the reviewed PR's closure, waiving usage-based stopping. Approved unchanged head `108bf28f069d7017712fd71e24fb7fd6b2bbde36` merged into `seamless` as `7a0a0153cbf36de0b88ab4aeba1e9bb0cdb9d96e`, preserving both audit commits. GitHub confirms PR #1 merged/closed; four threads resolved, no listed commit statuses or PR workflow runs. Fresh 90-citation/27-file, link/coverage/format/scope checks pass; local checkout fast-forwarded. Merge delta is exactly the four accepted audit documents, with identical blobs and no runtime changes. G1/G2/G3 remain open; CL02-P01 remains the separate assigned follow-up.
 
@@ -128,7 +128,7 @@ CL02-REV01: REVIEW COMPLETE / CHANGES REQUESTED (2026-10-24). Reviewed handback 
 
 [PR approval and CL02 assignment](https://github.com/kaoitp/bloodborne_pc/pull/1#pullrequestreview-5637592348) posted successfully; four REV01 threads resolved. [PR #1](https://github.com/kaoitp/bloodborne_pc/pull/1) is now merged/closed by CL01-INT01.
 
-## CL03 — Existing earned-event and party-epoch feasibility
+## CL03 â€” Existing earned-event and party-epoch feasibility
 
 Owner: external Claude in its separate clone, same four-document allowlist. Status: READY / ASSIGNED. Dependency: integrated CL02 at c5018fb and current B02/B03/C01/B04 records. User authorizes assignment via PR #2 comment. [CL03-P02 work package](../../handoff/CLAUDE-CODE-WINDOWS.md#cl03-p02-earned-event-and-party-epoch-source-feasibility) freezes comparison base `7a5eca3fcdc662afcce1de7b6d57510311b710b2` on new branch `claude/p02-event-provenance`.
 
@@ -250,7 +250,7 @@ CL04-REV01: ACCEPTED / INTEGRATED. PR #4 exact head cb11a4f merged normally as44
 - [x] Historical PR07-REV01 blocker resolved by `2522e2f`: independent party-placement latch and spectate-OFF reward regression. Exact head `b66936a` accepted after five actual-function fixtures PASS. This does not close broad R03 gameplay gates.
 ### B11 party boundaries (Claude)
 
-- [x] Departure (state 6 → other) ends the party: native rejoin and host-character change, fixture for rejoin before the unlock.
+- [x] Departure (state 6 â†’ other) ends the party: native rejoin and host-character change, fixture for rejoin before the unlock.
 - [x] Dead guest at the kill earns and receives after the respawn (native).
 - [x] Reward item only after placement (fixture RED/GREEN); native pre-placement window not reproducible with this rig.
 - [x] CL03 B-30 label resolved natively.
@@ -272,3 +272,9 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Inline exact head `4dc9369`: 9 focused fixtures/header tests PASS, whitespace PASS; two extra actual-function safety controls reproduce same-name and unavailable-name cross-character restoration.
 - [ ] IN_PROGRESS / awaiting author: address P1 stable identity and unknown-identity deferral with owner retry regressions (review5649253920); complete B14 provenance. No native acceptance or merge.
+
+### PR #10 provenance re-review / integration
+
+- [x] Exact d7da4f2 provenance accepted; source line-ending hashes independently match, reviewed runtime/tests unchanged; approval5650133506.
+- [x] Both tracker histories preserved and integrated fixtures/links/whitespace verified.
+- [ ] Publish normal merge and verify closure/readback. Broad R03 gates remain open.
