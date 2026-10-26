@@ -550,3 +550,4 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
   - The pre-kill snapshot 472 of `0x18000000` was fed again 15 s late, after 500. The cache kept 500; the held one differed by 9 bits.
   - The merge was 2 boss + 19 world flags, the same as without a reorder.
 - **Not native:** the live apply at a load after a reorder. There is no in-party load in this rig: deaths respawn in place, and lamps are disabled in co-op. [B12 evidence](handoff/R03-B12-HELD-SNAPSHOT.md).
+- **Review fix (PR #8, P2):** the seam's late comparison now uses the receiver's bounds; a held chunk claiming 255 groups is RED under ASan with the old loop, GREEN now.

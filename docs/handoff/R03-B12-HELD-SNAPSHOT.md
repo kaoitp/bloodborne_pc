@@ -63,6 +63,20 @@ The live apply after a reorder is therefore **not exercised natively**. It reads
 
 All protected source saves are unchanged: no file under `r03-b06/native/after-a-savedata` or `before-b-savedata` was modified today. All test processes were closed and the trigger file was removed.
 
+## Review fix: diagnostic bounds (PR #8 review, P2)
+
+**The problem.** After the late feed, the seam compares the held snapshot with the cache. That comparison looped to `chunk.group_count`, which is the sender's word, while a packet holds only 8 groups (`BbscWorldChunkGroups`). So a held chunk claiming 9 or more read past `groups`. The actual receiver was not affected: it already clamps the count. The issue only arises with the default-off switch.
+
+**The fix.** The comparison now applies the receiver's own bounds:
+- It skips a chunk the receiver drops (wrong `chunk_count`, or a chunk index out of range).
+- It compares at most `min(group_count, BbscWorldChunkGroups, BbscWorldGroupCount - first)` groups.
+
+**Fixture.** In `test_bbsc_reorder_collect.py`, the held snapshot 41 now claims 255 groups in every chunk, and the seam binary is built with `-fsanitize=address`.
+- **RED** with the old loop: ASan reports `stack-buffer-overflow` in `OnBbscWorldFlagsPacket`.
+- **GREEN** now, with the same asserts as before: the cache keeps 43 and only `0x80` is collected.
+- Results: `test_bbsc_*` 6 OK, `test_native_bbsc` 2 OK, `git diff --check` clean.
+- DLL build `f14d8481…`, exit 0.
+
 ## Status after B12
 
 | Case | Result |

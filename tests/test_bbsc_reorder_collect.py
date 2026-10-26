@@ -98,8 +98,9 @@ constexpr std::array<BbscBossReward, 1> BbscBossRewards{{{12401800, 0, 50000001,
     code += function('void TickBbscSharedProgress') + '\n'
     code += r'''
 using Packet = Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
-// One complete snapshot of map 0x18000000 whose first group has `byte` in byte 0.
-void snapshot(u32 sequence, u8 byte) {
+// One complete snapshot of map 0x18000000 whose first group has `byte` in byte 0. `claimed`, when
+// set, is the group count every chunk claims (a sender's word, not the packet's room).
+void snapshot(u32 sequence, u8 byte, u8 claimed = 0) {
     for (size_t i = 0; i < BbscWorldChunkCount; ++i) {
         Packet p{};
         p.version = 1; p.packed_map = 0x18000000; p.snapshot = sequence;
@@ -107,6 +108,7 @@ void snapshot(u32 sequence, u8 byte) {
         p.group_count = std::min(BbscWorldChunkGroups, BbscWorldGroupCount - i * BbscWorldChunkGroups);
         p.present = (1u << p.group_count) - 1;
         if (i == 0) p.groups[0][0] = byte;
+        if (claimed != 0) p.group_count = claimed;
         OnBbscWorldFlagsPacket(&p, sizeof(p));
     }
 }
@@ -151,7 +153,9 @@ int main() {
     tick();
     std::ofstream{"bbsc-test-hold-world"} << "18000000"; // this map only
     tick();
-    snapshot(41, 0x40); // held back: an old bit the host has cleared since
+    // Held back: an old bit the host has cleared since. Its chunks claim 255 groups where a packet
+    // holds 8; the late comparison must stay inside the packet (built with ASan, review of PR #8).
+    snapshot(41, 0x40, 255);
     tick();
     assert(bbsc_world_blocks.at(0x18000000).snapshot == 40);
     snapshot(42, 0x80); // the host sets a bit during the party; the hold time has passed
@@ -173,7 +177,8 @@ int main() {
     fixture.write_text(code, encoding='utf-8')
     binary = directory / ('reorder-collect.exe' if os.name == 'nt' else 'reorder-collect')
     subprocess.run([shutil.which('clang++'), '-std=c++23', '-O0', '-I', str(source.parents[1])] +
-                   (['-DHOLD'] if hold else []) + [str(fixture), '-o', str(binary)], check=True)
+                   (['-DHOLD', '-g', '-fsanitize=address'] if hold else []) +
+                   [str(fixture), '-o', str(binary)], check=True)
     env = dict(os.environ, SHADPS4_BBSC_TEST_HOLD_WORLD='1000') if hold else None
     subprocess.run([str(binary)], check=True, cwd=directory, env=env)
 

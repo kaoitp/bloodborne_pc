@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..c4f5620 100644
+index 6c278c3..bd4e181 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -241,14 +241,14 @@ index 6c278c3..c4f5620 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,9 +6171,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,7 +6171,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-     WriteBbscOwnWorldFile();
- }
- 
++    WriteBbscOwnWorldFile();
++}
++
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -257,7 +257,7 @@ index 6c278c3..c4f5620 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-+    WriteBbscOwnWorldFile();
+     WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -271,11 +271,9 @@ index 6c278c3..c4f5620 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
-+}
-+
+ }
+ 
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
-     if (BbscIsMapFlagGroup(key)) {
-         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6259,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -705,8 +703,7 @@ index 6c278c3..c4f5620 100644
 -                            "to give",
 -                     event, it->flag);
 -            continue;
-+            bbsc_boss_reward_given.push_back(pending);
-         }
+-        }
 -        const auto goods = std::ranges::find_if(BbscBossGoodsLots,
 -                                                [lot](const auto& g) { return g.lot == lot; });
 -        if (goods != BbscBossGoodsLots.end() && GiveBbscBossGoods(*goods)) {
@@ -716,7 +713,8 @@ index 6c278c3..c4f5620 100644
 -            BBSC_TIMELINE("BOSS", "boss drop: event {} - item lot {} given to the guest directly ({})",
 -                     event, lot, taken ? "repeat lot, flag already set" : "first kill");
 -            continue;
--        }
++            bbsc_boss_reward_given.push_back(pending);
+         }
 -        using AwardItemLot = void PS4_SYSV_ABI (*)(u64 item_man, s32 lot, u32 forced);
 -        reinterpret_cast<AwardItemLot>(image_base + AwardItemLotOffset)(item_man, lot, 0);
 -        LOG_INFO(Debug, "BBSC boss drop: event {} - item lot {} given to the guest ({})", event, lot,
@@ -1136,7 +1134,7 @@ index 6c278c3..c4f5620 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -16920,6 +17380,137 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16920,6 +17380,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
      }
  }
  
@@ -1255,8 +1253,15 @@ index 6c278c3..c4f5620 100644
 +        for (const auto& bytes : release) {
 +            SignalingBbscWorldFlags chunk;
 +            std::memcpy(&chunk, bytes.data(), sizeof(chunk));
++            // The receiver's bounds: a chunk it drops is not compared, and never more groups than
++            // the packet holds (review of PR #8: group_count is the sender's word).
++            if (chunk.chunk_count != BbscWorldChunkCount || chunk.chunk >= BbscWorldChunkCount) {
++                continue;
++            }
 +            const size_t first = chunk.chunk * BbscWorldChunkGroups;
-+            for (size_t i = 0; i < chunk.group_count && first + i < BbscWorldGroupCount; ++i) {
++            const size_t count = std::min<size_t>(
++                chunk.group_count, std::min(BbscWorldChunkGroups, BbscWorldGroupCount - first));
++            for (size_t i = 0; i < count; ++i) {
 +                for (size_t b = 0; b < BbscWorldGroupBytes; ++b) {
 +                    differ += std::popcount(
 +                        static_cast<u8>(chunk.groups[i][b] ^ cache.groups[first + i][b]));
@@ -1274,7 +1279,7 @@ index 6c278c3..c4f5620 100644
  void OnBbscHostFollowPacket(std::uint32_t packed_map, float x, float y, float z, float heading,
                              std::uint32_t sequence, std::int32_t lamp_point) {
      if (!BbscWarpTogetherEnabled()) {
-@@ -17791,7 +18382,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +18389,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,
