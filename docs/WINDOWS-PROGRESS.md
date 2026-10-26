@@ -665,3 +665,22 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - COMPLETE: Graphify0.9.95 `graphify extract . --code-only --no-dedup --max-workers 4`, `graphify cluster-only .`, `graphify export html` all exit0; 681 code files scanned,25392 nodes/49095 edges/778 communities. `graphify query 'summon_service' --budget 500` exit0 resolves run.py:L30 (123 traversal nodes, deliberately truncated to budget). Python integrity assertions PASS: unique IDs/nonempty graph/all edge endpoints valid/no private or external-dependency source prefixes;678 represented source files.
 - Graph SHA25659c46e5defe5653226c3f216393309c8e574f0601d3a95958204ff6c06dcabdf; report5d257c4298e1f8347bbd84855ef63df4584556b8349b352adc1ddafce3990126; HTMLa1f0019cb876a680b459733c87fed4feade28a6e981a93152bf341be15c1a348. `git check-ignore -v` confirms graph/interpreter ignored; diff whitespace PASS. Added scoped .graphifyignore and docs/GRAPHIFY.md recipe. All generated files remain local.
 - Limits: code-only,73 non-code files omitted; patch files unsupported;15 partial parser results/43 zero-symbol files; np_manager.cpp cp1252 fallback. No LLM semantic pass, watcher, hook, runtime modification or native/gameplay checks. Existing submodule access limitation bypassed only for status/diff with diff.ignoreSubmodules=all; submodule untouched. Next: use queries for navigation and read source/patches directly for omitted relationships. Publication follows this checkpoint.
+
+
+### B14 own-world journal owner (A02 blocker) — FIXED, native (2026-10-26, Claude)
+
+- **Source:** the journal owner is the save slot.
+  - It is put back at once only while the same character has stayed loaded: a load from the title (`Warp.StageDescriptor.Finalize`, `rdi 0`) or another name ends that.
+  - Otherwise it waits for the slot's save: the owner's slot is put back; another slot is not, and the file is kept.
+- **Fixture:** six scenarios. RED on four weakened checks (same name, empty name, no continuity, no title signal); GREEN now.
+- **Native (DLL `554e5ba2…`):** a guest's U-I-AHH (slot 3) quit to the title and loaded Six (slot 2). The log said `not put back, the file stays for its owner`. Back on U-I-AHH, the journal was recovered.
+- An earlier tick-based title check failed natively; that build was rejected.
+- **Second review:** the own world is now back before either shared-progress merge, so the merge waits for it. Scenario 7 keeps the own flags and the earned bit (0x91); RED without the ordering. Rebuilt on seamless with PR #10: the union of fixtures is 10 OK, DLL `700f2275…`.
+- **Third review:** a journal-file status error now waits instead of counting as an absence. Scenario 8 covers it, RED with the old reading; 10 OK, DLL `0ed5981e…`. [B14](handoff/R03-B14-OWN-WORLD-OWNER.md)
+- **A02's 18 flags:** all are Hunter's Dream state groups (2, 70000, 70009). In a native check on the default path, a guest crashed in the host's Dream, and the host's values (1) did not survive the restart (own 0). [B14](handoff/R03-B14-OWN-WORLD-OWNER.md).
+
+### PR11-REV05 / INTEGRATE: VERIFIED, PUBLICATION PENDING (2026-10-26, Codex)
+
+- IN_PROGRESS exact accepted head `782a74bb726dc2db09b3fcaaaf905ade7d08ee63`, reviewed base4426543; current seamless6d780e4 includes unrelated Graphify checkpoint, retained. Accepted filesystem Gone/There/Unknown correction and scenario8; all previous P1/P2 requests resolved for this source patch. Approval5651212193; no reported CI statuses/workflows or inline review threads.
+- Independent exact candidate union `.superpowers/pr11-review-v4.py` via CLANG64 Python/local TEMP/TMP exit0,10 tests/no skips,38.311s. CRLF source SHA256 `f58324e93020978561fd499b127e986394f51af0e6bf8980f44087be9bcbc438`; independently normalized LF matches `c0c115d14fc14c12b432f509feb693273a9ea2f06add5b1cf442da03cd7b2000`; patch `7a531913d5f3a1a46d560579e95673dedebf320d981de25f7dd49f094a47826e`. Latest DLL `0ed5981e1111e1250f655640d00a0069f77822f111a8bdabab3d5f3ba7de90ca` build is author-reported, no native run for ordering/error fix. Earlier slot-switch native uses554e5ba2 only; not attributed to final build.
+- Normal no-commit merge conflicts only in tracker; retain exact premerge tracker bytes and append author's B14 entry. Acceptance: exact reviewed patch/tests/B14, both histories, focused suite/source proof, links/UTF8/whitespace, normal push and closed/merged readback. No broad R03 checkbox closure; final same-build gameplay/save-reload and existing matrix gaps remain. No packaging/deployment/native replay.

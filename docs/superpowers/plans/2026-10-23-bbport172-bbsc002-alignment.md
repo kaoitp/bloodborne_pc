@@ -273,7 +273,8 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [x] Inline exact head `4dc9369`: 9 focused fixtures/header tests PASS, whitespace PASS; two extra actual-function safety controls reproduce same-name and unavailable-name cross-character restoration.
 - [x] Original P1 stable identity/unknown deferral and B14 provenance addressed at385db1b; original-owner fixture passes.
 - [x] Normal own-file-before-progress ordering fixed at6b406ed; combined10-test union PASS.
-- [ ] IN_PROGRESS / awaiting author: new readiness helper must defer on filesystem status errors at both exists queries; controlled-dependency fixture reproduces false readiness. No merge or broad native acceptance.
+- [x] File-status errors defer at both queries in782a74b; all10 exact candidate fixtures PASS.
+- [ ] IN_PROGRESS: publish normal PR11 integration and verify GitHub closure. Final native/R03 acceptance remains open.
 
 ### PR #10 provenance re-review / integration
 

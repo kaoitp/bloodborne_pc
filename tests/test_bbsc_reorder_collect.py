@@ -82,6 +82,7 @@ template<class T> T ReadValue(u64, size_t) { return 0; }
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() { return BbscSaveSlot{"sd1", 3}; }
 std::filesystem::file_time_type bbsc_active_slot_written{};
 void RestoreBbscOwnWorld(const char*) {}
+bool BbscOwnWorldReadyForProgress() { return true; } // own world: test_bbsc_own_world_owner
 bool RecoverBbscOwnWorldFile(const BbscSaveSlot&) { return false; }
 bool LoadBbscPendingProgress(const BbscSaveSlot&) { return false; }
 void WriteBbscPendingProgress() {}

@@ -88,6 +88,7 @@ template<class T> T ReadValue(u64 at, size_t off) {
 }
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() { if (!active_ready) return {}; return current; }
 void RestoreBbscOwnWorld(const char*) {}
+bool BbscOwnWorldReadyForProgress() { return true; } // own world: test_bbsc_own_world_owner
 void RestoreBbscOwnWorldAtLoad() {}
 std::vector<int> recovered, loaded; // slots whose own journal / pending file was read
 bool RecoverBbscOwnWorldFile(const BbscSaveSlot& slot) { recovered.push_back(slot.slot); return false; }
