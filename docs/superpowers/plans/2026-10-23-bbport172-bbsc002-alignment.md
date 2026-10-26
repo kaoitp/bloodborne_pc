@@ -274,7 +274,7 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [x] Original P1 stable identity/unknown deferral and B14 provenance addressed at385db1b; original-owner fixture passes.
 - [x] Normal own-file-before-progress ordering fixed at6b406ed; combined10-test union PASS.
 - [x] File-status errors defer at both queries in782a74b; all10 exact candidate fixtures PASS.
-- [ ] IN_PROGRESS: publish normal PR11 integration and verify GitHub closure. Final native/R03 acceptance remains open.
+- [x] Published normal PR11 merge17be9b4; fresh GitHub confirms MERGED. Final native/R03 acceptance remains open.
 
 ### PR #10 provenance re-review / integration
 

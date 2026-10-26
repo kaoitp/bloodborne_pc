@@ -13,6 +13,8 @@ Use this with the [product outcomes](../superpowers/specs/2026-10-18-bbsc-anywhe
 
 No broad R03 acceptance checkbox is closed by this document. Historical native runs use several DLLs; their union is not a same-build end-to-end pass. In particular, B12 native injection used pre-review-fix builds with spectate ON. Its final diagnostic-bounds fix has ASan fixture evidence; a final integrated native composition remains to be verified.
 
+2026-10-26 follow-up: PR10 visibility repair and PR11 journal ownership/recovery ordering are integrated as `26952d9` and `17be9b4`. [B13](R03-B13-HOST-RESPAWN-SHOW.md) records bounded host-respawn visibility native evidence. [B14](R03-B14-OWN-WORLD-OWNER.md) records a native different-slot rejection/original-owner recovery on DLL `554e5ba2...`; its final ordering/file-error fixes have a combined 10-test fixture pass and author DLL-build evidence, with no final native run. The earlier matrix's in-memory wrong-character timeout is superseded by that bounded B14 run. Same-name native, experimental recovery, final same-build earned-bit/inventory/save-reload preservation and the other open rows remain unclosed.
+
 ## Current matrix
 
 | Goal / cases | Strongest committed evidence | What remains before claiming the full case |
