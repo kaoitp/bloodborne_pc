@@ -272,7 +272,8 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Inline exact head `4dc9369`: 9 focused fixtures/header tests PASS, whitespace PASS; two extra actual-function safety controls reproduce same-name and unavailable-name cross-character restoration.
 - [x] Original P1 stable identity/unknown deferral and B14 provenance addressed at385db1b; original-owner fixture passes.
-- [ ] IN_PROGRESS / awaiting author: own-file restoration must precede pending shared-progress merge/finalization; actual-function ordering reproducer loses earned bit (review5650699613). No merge or broad native acceptance.
+- [x] Normal own-file-before-progress ordering fixed at6b406ed; combined10-test union PASS.
+- [ ] IN_PROGRESS / awaiting author: new readiness helper must defer on filesystem status errors at both exists queries; controlled-dependency fixture reproduces false readiness. No merge or broad native acceptance.
 
 ### PR #10 provenance re-review / integration
 
