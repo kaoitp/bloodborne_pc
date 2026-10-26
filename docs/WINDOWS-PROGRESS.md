@@ -593,10 +593,13 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
   - two host stops during a load were the rig launcher's own failure (PowerShell `Stop` + stderr redirection), not a game crash.
 - Details: [B11 evidence](handoff/R03-B11-PARTY-BOUNDARIES.md).
 
-### PR09-INTEGRATE: IN_PROGRESS (2026-10-26, Codex)
+### PR09-INTEGRATE: VERIFIED / MERGED AND CLOSED (2026-10-26, Codex)
 
 - User authorized verification and closure of PR #9. Reviewed head 8502fbe57b1507119b0790c9c8914e5ce03bac25; current seamless base 3f769c736f65eb74a8e84d944484b8053a7a7058. Documentation only; no subagents.
 - GitHub merge API reported a conflict in the progress tracker. Local merge retains both the acceptance-matrix checkpoint and the author follow-up. B11 content must remain byte-identical to the reviewed head. PR description corrected to reflect the launcher diagnosis.
 - Acceptance: preserve both parent histories and existing acceptance gaps; UTF-8/no-BOM, local links, no conflict markers, exact two-file author scope, whitespace checks, normal push and GitHub merged/closed readback. No build, full suite or native/gameplay rerun; native statements remain author evidence. Guest invisibility after repeated host respawns remains open.
 
 - Pre-commit verification PASS: CLANG64 Python assertions checked the exact B11 text after checkout newline normalization, retained seamless tracker prefix, two-file author scope, three UTF-8/no-BOM documents, 59 local link targets and no conflict markers. `git diff --check --ignore-submodules` exit0. Initial raw-byte assertion exposed checkout CRLF only; normalized comparison passes. GitHub checks/statuses empty at reviewed head. Publication/closure readback pending.
+
+- Publication confirmed: merge commit `1b2625c14f472def2d0d0f97091113cddfe90950` has parents `3f769c7` and reviewed `8502fbe`; normal `git push origin seamless` exit0. Fresh `gh pr view 9 --repo kaoitp/bloodborne_pc --json state,mergedAt,mergeCommit,baseRefOid,headRefOid` confirms state MERGED, mergeCommit 1b2625c, mergedAt 2026-10-26T07:48:11Z. Initial connector readback was stale; direct GitHub CLI confirms closure. Tracked worktree clean after merge; submodule state preserved.
+- Staged B11 blob `b5a5dd88359534ea3e79b7f464df6fa9d97b4705` exactly equals reviewed head; staged whitespace check exit0. No runtime acceptance added. Next: continue remaining R03 gameplay/acceptance cases, including invisible guest after repeated host respawns.
