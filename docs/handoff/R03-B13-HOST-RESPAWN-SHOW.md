@@ -78,12 +78,12 @@ Run with the new DLL, fresh saves:
 - The meaning of the bit beyond "drawn" is not known. It is set only on remote member characters, only for 30 s after a restart, and only when missing.
 - A guest's own death respawn was not looked at here: the guest's view of the host after a guest death.
 
-## Also from this session: host stops were the rig
+## Also from this session: host stops during a load
 
-The host process stopped twice during a load earlier today. There was no crash line and no Windows error record, and the rig's PowerShell launcher ended with exit 1 at the same moment.
+The host process stopped twice during a load earlier today. Two things were found:
+- **The rig launcher hid the output.** It used `$ErrorActionPreference='Stop'` with `*>` redirection, and PowerShell 5.1 then dies on the game's first stderr line. This was reproduced without the game. The rig now launches through `cmd` and keeps one log per launch with the exit code.
+- **The stop itself is most likely the emulator's GPU.** With the fixed launcher, a later run caught the same stop at the same load point: `Unimplemented PM4 type 0` / `STOP: GPU library assertion failed`, exit code 23.
 
-- **Cause:** the launcher used `$ErrorActionPreference='Stop'` with `*>` redirection. PowerShell 5.1 turns the first stderr line into a terminating error. This was reproduced without the game.
-- **Fix:** the rig now launches through `cmd` and keeps one log per launch with the exit code.
-- No mod change.
+No mod change.
 
 All protected source saves are unchanged. Test processes were closed.

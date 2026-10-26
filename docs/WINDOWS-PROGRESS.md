@@ -579,5 +579,5 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - **Source:** `TickBbscRemoteShow` sets the bit once on remote member characters, for 30 s after a v8 or self-heal restart.
 - **Fixture:** `test_bbsc_remote_show.py`, RED on merged seamless, GREEN now. DLL `8dc083de…`.
 - **Native:** after a host death the fix logged `shown bit … - set`, and the host saw the guest's body.
-- **Rig:** the earlier host "crashes" were the PowerShell launcher (`Stop` + stderr redirection), not the game.
+- **Rig:** the earlier host stops during a load were most likely the emulator's `Unimplemented PM4 type 0` GPU assertion. The old PowerShell launcher hid it; the new one logs it (exit 23).
 - [B13 evidence](handoff/R03-B13-HOST-RESPAWN-SHOW.md).
