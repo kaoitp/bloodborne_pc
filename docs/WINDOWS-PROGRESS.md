@@ -661,5 +661,6 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - **Fixture:** six scenarios. RED on four weakened checks (same name, empty name, no continuity, no title signal); GREEN now.
 - **Native (DLL `554e5ba2…`):** a guest's U-I-AHH (slot 3) quit to the title and loaded Six (slot 2). The log said `not put back, the file stays for its owner`. Back on U-I-AHH, the journal was recovered.
 - An earlier tick-based title check failed natively; that build was rejected.
-- **Second review:** the own world is now back before either shared-progress merge, so the merge waits for it. Scenario 7 keeps the own flags and the earned bit (0x91); RED without the ordering. Rebuilt on seamless with PR #10: the union of fixtures is 10 OK, DLL `700f2275…`. [B14](handoff/R03-B14-OWN-WORLD-OWNER.md)
+- **Second review:** the own world is now back before either shared-progress merge, so the merge waits for it. Scenario 7 keeps the own flags and the earned bit (0x91); RED without the ordering. Rebuilt on seamless with PR #10: the union of fixtures is 10 OK, DLL `700f2275…`.
+- **Third review:** a journal-file status error now waits instead of counting as an absence. Scenario 8 covers it, RED with the old reading; 10 OK, DLL `0ed5981e…`. [B14](handoff/R03-B14-OWN-WORLD-OWNER.md)
 - **A02's 18 flags:** all are Hunter's Dream state groups (2, 70000, 70009). In a native check on the default path, a guest crashed in the host's Dream, and the host's values (1) did not survive the restart (own 0). [B14](handoff/R03-B14-OWN-WORLD-OWNER.md).

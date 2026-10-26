@@ -147,6 +147,34 @@ python -m unittest test_bbsc_own_world_owner test_bbsc_party_progress test_bbsc_
 
 **Not native.** No new run with this DLL. The B14 native run above used `554e5ba2…`, which has the slot identity but not this ordering.
 
+## A status error is not an absence (third PR #11 review, P2)
+
+**The problem.** `BbscOwnWorldReadyForProgress` used `exists(path, ec)` twice and ignored `ec`. A failed status query (permissions, I/O) returned false. That read as "no journal file" and let the merge go ahead while the pre-visit journal could still be there.
+
+**Change.** `BbscOwnWorldFileState(path)` returns one of three states:
+- **Gone:** `not_found` with no error, or with `no_such_file_or_directory`. libc++ sets that code for a missing file (checked 2026-10-26).
+- **There:** no error and the file exists.
+- **Unknown:** anything else.
+
+Only a confirmed **Gone**, before or after the recovery, lets the merge run. **Unknown** waits and leaves the pending progress untouched.
+
+**Fixture**, scenario 8 of `test_bbsc_own_world_owner.py`. The actual `BbscOwnWorldFileState` is compiled renamed; a fixture wrapper can inject a state per query, otherwise it calls the actual query. The scenario covers:
+- the actual query: a missing file is Gone, an existing one is There;
+- error before recovery: the merge waits, and the journal file and pending progress are untouched;
+- error after recovery: the journal is recovered (0x11), but the merge still waits;
+- healthy retry, confirmed absence: the merge runs, giving 0x91.
+
+**RED:** a copy with the old reading (error = absence) fails at `!BbscOwnWorldReadyForProgress()` before recovery. **GREEN** now.
+
+**Results:** the union of all fixtures is 10 OK.
+
+**Hashes**
+- Patch `7a531913d5f3a1a46d560579e95673dedebf320d981de25f7dd49f094a47826e`.
+- LF source `c0c115d14fc14c12b432f509feb693273a9ea2f06add5b1cf442da03cd7b2000`.
+- DLL `0ed5981e1111e1250f655640d00a0069f77822f111a8bdabab3d5f3ba7de90ca`, exit 0.
+
+No native run, as the review asked.
+
 ## The 18 unclassified A02 flags
 
 A02 listed 18 cleared global flags after its V3/V4 recovery runs: 2300, 2410, 2411, 2412, 2800, 70000030, and 70009260 through 70009370 in steps of 10.

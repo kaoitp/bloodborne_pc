@@ -105,6 +105,26 @@ bool BbscEventFlag(u32) { return true; }
     if 'bool BbscOwnWorldReadyForProgress(' not in src:  # the source before the ordering fix
         code += 'size_t RestoreBbscOwnWorld(std::string_view);\n'
         code += 'bool BbscOwnWorldReadyForProgress() { return true; }\n'
+    if 'BbscFileState BbscOwnWorldFileState(' in src:
+        # The actual status query, renamed; the fixture's own wrapper can inject a state first.
+        start = src.index('enum class BbscFileState')
+        code += src[start:src.index('\n', start) + 1]
+        code += function('BbscFileState BbscOwnWorldFileState(').replace(
+            'BbscOwnWorldFileState(', 'RealBbscOwnWorldFileState(', 1) + '\n'
+        code += r'''
+std::vector<BbscFileState> injected_states; // consumed one per query, then the real query
+int state_queries = 0;
+BbscFileState BbscOwnWorldFileState(const std::filesystem::path& path) {
+    ++state_queries;
+    if (!injected_states.empty()) {
+        const BbscFileState state = injected_states.front();
+        injected_states.erase(injected_states.begin());
+        return state;
+    }
+    return RealBbscOwnWorldFileState(path);
+}
+#define HAS_FILE_STATE
+'''
     for head in ('std::u16string BbscLocalCharacterName(', 'std::string BbscNameForLog(',
                  'const u8* KeepBbscOwnWorldGroup(', 'void WriteBbscOwnWorldFile(',
                  'bool LoadBbscOwnWorldFile(', 'bool BbscOwnWorldOwnerConfirmed(',
@@ -224,6 +244,34 @@ int main() {
     assert(merged.first == 0 && live_group[0] == 0x91); // the earned bit on top of her own world
     assert(!RecoverBbscOwnWorldFile(eiei)); // the throttled recovery later finds nothing to undo
     assert(live_group[0] == 0x91 && std::filesystem::exists("own-sd1-1.bin.restored"));
+#ifdef HAS_FILE_STATE
+    // 8. PR #11 review: a status error is not an absence. EiEi's pending progress waits.
+    assert(RealBbscOwnWorldFileState("own-none.bin") == BbscFileState::Gone);
+    assert(RealBbscOwnWorldFileState("own-sd1-1.bin.restored") == BbscFileState::There);
+    std::filesystem::remove("own-sd1-1.bin.restored");
+    bbsc_progress_slot = eiei;
+    const auto pending = bbsc_progress_groups;
+    play(u"EiEi", eiei);
+    fill(0x11);
+    KeepBbscOwnWorldGroup(1240, live_group);
+    WriteBbscOwnWorldFile();               // her journal is on disk again
+    bbsc_own_world.clear();                // ... and not in memory (another process run)
+    bbsc_own_world_slot.reset();
+    bbsc_own_world_owner.clear();
+    bbsc_own_world_continuous = false;
+    fill(0x44);
+    injected_states = {BbscFileState::Unknown};                      // error before recovery
+    assert(!BbscOwnWorldReadyForProgress());
+    assert(live_group[0] == 0x44 && std::filesystem::exists("own-sd1-1.bin"));
+    assert(bbsc_progress_groups == pending && bbsc_progress_slot.has_value());
+    injected_states = {BbscFileState::There, BbscFileState::Unknown}; // error after recovery
+    assert(!BbscOwnWorldReadyForProgress());
+    assert(live_group[0] == 0x11 && bbsc_progress_groups == pending); // recovered, merge still waits
+    state_queries = 0;
+    assert(BbscOwnWorldReadyForProgress());                           // healthy retry: confirmed gone
+    assert(state_queries == 1 && bbsc_progress_groups == pending);
+    assert(MergeBbscSharedProgress("after the home load").first == 0 && live_group[0] == 0x91);
+#endif
     std::cout << "PASS the journal is put back only for its owner's save slot\n";
 }
 '''
