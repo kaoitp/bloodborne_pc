@@ -266,15 +266,16 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 ### PR #10 review (2026-10-26)
 
 - [x] Exact-head `2bb0d37` inline standards/spec/caller review, seven actual-function fixtures plus two native-header tests PASS (no skips), whitespace clean.
-- [ ] IN_PROGRESS / awaiting author: complete native DLL/source/build/config provenance in B13 per review 5649128995, then re-review and integrate if accepted. No demonstrated runtime blocker found in reviewed scope; native gameplay not replayed and broad R03 gates remain open.
+- [x] B13 provenance completed and PR10 integrated as26952d9; native gameplay not replayed and broad R03 gates remain open.
 
 ### PR #11 review (2026-10-26)
 
 - [x] Inline exact head `4dc9369`: 9 focused fixtures/header tests PASS, whitespace PASS; two extra actual-function safety controls reproduce same-name and unavailable-name cross-character restoration.
-- [ ] IN_PROGRESS / awaiting author: address P1 stable identity and unknown-identity deferral with owner retry regressions (review5649253920); complete B14 provenance. No native acceptance or merge.
+- [x] Original P1 stable identity/unknown deferral and B14 provenance addressed at385db1b; original-owner fixture passes.
+- [ ] IN_PROGRESS / awaiting author: own-file restoration must precede pending shared-progress merge/finalization; actual-function ordering reproducer loses earned bit (review5650699613). No merge or broad native acceptance.
 
 ### PR #10 provenance re-review / integration
 
 - [x] Exact d7da4f2 provenance accepted; source line-ending hashes independently match, reviewed runtime/tests unchanged; approval5650133506.
 - [x] Both tracker histories preserved and integrated fixtures/links/whitespace verified.
-- [x] Published normal merge26952d9; fresh GitHub confirms PR10 CLOSED/merged=true. Broad R03 gates remain open. Broad R03 gates remain open.
+- [x] Published normal merge26952d9; fresh GitHub confirms PR10 CLOSED/merged=true. Broad R03 gates remain open.
