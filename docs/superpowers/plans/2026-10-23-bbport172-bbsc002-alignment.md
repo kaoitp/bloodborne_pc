@@ -267,3 +267,8 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Exact-head `2bb0d37` inline standards/spec/caller review, seven actual-function fixtures plus two native-header tests PASS (no skips), whitespace clean.
 - [ ] IN_PROGRESS / awaiting author: complete native DLL/source/build/config provenance in B13 per review 5649128995, then re-review and integrate if accepted. No demonstrated runtime blocker found in reviewed scope; native gameplay not replayed and broad R03 gates remain open.
+
+### PR #11 review (2026-10-26)
+
+- [x] Inline exact head `4dc9369`: 9 focused fixtures/header tests PASS, whitespace PASS; two extra actual-function safety controls reproduce same-name and unavailable-name cross-character restoration.
+- [ ] IN_PROGRESS / awaiting author: address P1 stable identity and unknown-identity deferral with owner retry regressions (review5649253920); complete B14 provenance. No native acceptance or merge.
