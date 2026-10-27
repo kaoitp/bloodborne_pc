@@ -330,3 +330,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [ ] IN_PROGRESS R03-FINAL-NATIVE-02: same-composition positive boss/reward and saved progress, command-assisted boss HP-0 on fresh test copies. Broad R03 and remaining native gates stay open.
 
 - [ ] R03-FINAL-NATIVE-02 remains open: staging inconclusive (guest respawn-map mismatch plus invalid position aid; kill helper precondition stop). Both copied test processes stopped; clean same-map staging and validated boss lookup required before positive reward/save assertions.
+
+- [x] User-requested no-death test setup: existing cheat_no_death=1 in both fresh native03 copied profiles; compiled patch writes independently asserted.
+- [ ] Native03: verify both survive actual boss hits; then validate live boss target and complete joint kill/reward/reloads. No-death does not close death/recovery gates.
