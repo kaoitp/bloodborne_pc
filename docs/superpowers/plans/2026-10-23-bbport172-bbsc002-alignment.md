@@ -290,3 +290,10 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [x] Exact-head inline review and pinned-source/actual-function checks; PR12 union10PASS/1FAIL and unsaved-reward safety control fails; B16 lifecycle evidence and prerequisites read.
 - [ ] IN_PROGRESS / awaiting author: preserve integrated PR11 protections in PR12 and make durable reward suppression consistent with actual owner saves (review5662203115).
 - [ ] IN_PROGRESS / awaiting author: correct B16 tested composition and bound position/early-load conclusions (review5662203440); durable-origin implementation is already within the active takeover, with safety/native gates still required.
+
+### PR12 / PR13 revision 2 (2026-10-27)
+
+- [x] PR12 integrated owner/title/order/error protection union passes11 tests; original unsaved-success fixture addressed.
+- [ ] IN_PROGRESS / awaiting author: failed-grant then save/exit still becomes permanently given; actual-function negative reproduced, REQUEST_CHANGES sent. Save snapshot timing remains unproved natively.
+- [x] PR13 B16 provenance and bounded observations corrected at2aab142; acknowledgement sent.
+- [ ] Integrate corrected documentation when B15 link dependency is available or changed to PR12 URL; align stale PR descriptions. No broad R03 gate closed.
