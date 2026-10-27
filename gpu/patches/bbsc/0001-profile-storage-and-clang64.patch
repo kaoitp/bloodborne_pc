@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..41f7ab6 100644
+index 6c278c3..7d06cac 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -392,14 +392,14 @@ index 6c278c3..41f7ab6 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,9 +6276,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,7 +6276,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-     WriteBbscOwnWorldFile();
- }
- 
++    WriteBbscOwnWorldFile();
++}
++
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -408,7 +408,7 @@ index 6c278c3..41f7ab6 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-+    WriteBbscOwnWorldFile();
+     WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -422,11 +422,9 @@ index 6c278c3..41f7ab6 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
-+}
-+
+ }
+ 
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
-     if (BbscIsMapFlagGroup(key)) {
-         return; // a map group: its first kept copy is the right one
 @@ -6200,13 +6364,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
@@ -573,7 +571,26 @@ index 6c278c3..41f7ab6 100644
      SuspendBbscPersistence("quit to title");
  }
  
-@@ -8958,6 +9193,7 @@ struct BbscHomeSpot {
+@@ -8942,6 +9177,18 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
+ // it up. A player in its own world that is not a guest never needs it: BBSC takes it off again
+ // (tick, once nothing is loading for a while) and, as the last stop, at the map choice itself when
+ // +0x14F0 holds no map. The callers are logged so the next log names the handler.
++// A load to the recorded lamp (global+0x1528): the forced-warp byte off, then the map choice and the
++// stage transition the game uses for a lamp. True when the choice landed on the target's map.
++bool RequestBbscLampReturn(u64 global, u32 target) {
++    using Selector = bool PS4_SYSV_ABI (*)(u64, s32);
++    using Transition = u64 PS4_SYSV_ABI (*)();
++    WriteValue<u8>(global, 0x1520, 0);
++    const bool chosen = reinterpret_cast<Selector>(image_base + SelectSummonedPlacementOffset)(0, -1) &&
++                        ReadValue<u32>(global, 0x0C) == target;
++    if (chosen) reinterpret_cast<Transition>(image_base + StageTransitionOffset)();
++    return chosen;
++}
++
+ // ---- Back home where we were (2026-10-19) ---------------------------------------------------------
+ // Request list (2026-10-18) and testers: leaving co-op should put a guest back where it was before
+ // joining, not in an area it has not reached. The trip home (Silencing Blank, the host leaving, the
+@@ -8958,6 +9205,7 @@ struct BbscHomeSpot {
      std::array<float, 4> rotation{};
      bool valid = false;
      bool left = false; // we have been in another world since it was kept
@@ -581,7 +598,7 @@ index 6c278c3..41f7ab6 100644
  };
  BbscHomeSpot bbsc_home_spot; // game thread
  
-@@ -8972,14 +9208,180 @@ void KeepBbscHomeSpot() {
+@@ -8972,14 +9220,210 @@ void KeepBbscHomeSpot() {
          return;
      }
      bbsc_home_spot = {map, {here->position[0], here->position[1], here->position[2], 1.0f},
@@ -612,17 +629,23 @@ index 6c278c3..41f7ab6 100644
 +// woke in its own world at the HOST's spot - a level-10 Clinic character in Cathedral Ward). After a
 +// crash the journal's home spot takes the character back to where it joined from, or to its recorded
 +// lamp. It was behind SHADPS4_BBSC_EXPERIMENTAL_HOME_RECOVERY=1 because a pending return crossed from
-+// one character to another after Quit Game -> title -> Load (A02). It is on by default now that it is
-+// bound to its owner: armed only from RecoverBbscOwnWorldFile (the journal's save slot is the active
-+// one, PR #11), dropped at any load from the title (NoteBbscOwnWorldCharacterLoad), and every step
-+// checks the active save slot is still the owner's (TickBbscHomeRecovery). The journal file stays on
-+// disk until the return settles, so a dropped return is taken up again by its owner.
-+// SHADPS4_BBSC_HOME_RECOVERY=0 turns it off.
-+constexpr int BbscHomeRecoveryMaxTries = 5;
++// one character to another after Quit Game -> title -> Load (A02). It is now bound to its owner:
++// armed only from RecoverBbscOwnWorldFile (the journal's save slot is the active one, PR #11), dropped
++// at any load from the title (NoteBbscOwnWorldCharacterLoad), and every step checks the active save
++// slot is still the owner's (TickBbscHomeRecovery). The journal file stays on disk until the return
++// settles, so a dropped return is taken up again by its owner. Each target is bounded: an accepted
++// request whose load never comes times out, a refused or missed point goes to the recorded lamp, and
++// an exhausted lamp (or point without a lamp) ends with the journal kept as .unreturned.
++// Still an opt-in candidate (SHADPS4_BBSC_HOME_RECOVERY=1, or the older experimental variable) until
++// the native gate in R03-B17-DURABLE-ORIGIN.md (N1 locked-map return, N2 title/other character, lamp
++// fallback with save/reload) has evidence on a matching build.
++constexpr int BbscHomeRecoveryMaxTries = 3;          // per target (point, then lamp)
++constexpr s64 BbscHomeRecoveryLoadTimeoutMs = 30'000; // accepted request, no load
 +
 +bool BbscHomeRecoveryOn() {
 +    const char* value = std::getenv("SHADPS4_BBSC_HOME_RECOVERY");
-+    return !(value != nullptr && value[0] == '0' && value[1] == '\0');
++    return Bbsc::HomeRecoveryEnabled(value) ||
++           Bbsc::HomeRecoveryEnabled(std::getenv("SHADPS4_BBSC_EXPERIMENTAL_HOME_RECOVERY"));
 +}
 +
 +void RecoverBbscHomeSpot(const BbscSaveSlot& slot) {
@@ -656,24 +679,44 @@ index 6c278c3..41f7ab6 100644
 +    bbsc_own_world_continuous = false;
 +}
 +
-+// The return is over (arrived, or no way back): the journal is kept as .restored.
++// The return is over. Arrived: the journal is kept as .restored. No way back: kept as .unreturned
++// (the origin evidence stays on disk; the own world is already back) and the player is told.
 +void SettleBbscHomeRecovery(bool arrived) {
 +    std::error_code ec;
 +    const auto path = BbscOwnWorldPath(*bbsc_home_recovery_slot);
-+    std::filesystem::rename(path, std::filesystem::path(path).concat(".restored"), ec);
++    std::filesystem::rename(path, std::filesystem::path(path).concat(arrived ? ".restored" : ".unreturned"),
++                            ec);
 +    if (ec) return; // keep recovery pending on a storage failure
 +    if (arrived) {
 +        LOG_INFO(Debug, "BBSC home recovery: own world and return point settled; journal retained as restored");
 +    } else {
-+        LOG_WARNING(Debug, "BBSC home recovery: no way back to the spot or lamp ({} tries) - left where "
-+                           "we are, own world kept; journal retained as restored",
-+                    bbsc_home_recovery_tries);
++        LOG_WARNING(Debug, "BBSC home recovery: no way back to the spot or the lamp - left where we "
++                           "are, own world kept; journal retained as unreturned");
 +        BbscAnnounce(u"Could not take you back to where you joined from.\n"
 +                     u"Your own world is kept; travel from a lamp.",
 +                     "home recovery gave up");
 +    }
 +    bbsc_home_recovery_slot.reset();
 +    bbsc_home_spot.valid = false;
++}
++
++// A request was refused, its load never came, or it arrived somewhere else: the point falls back to
++// a recorded lamp; otherwise the same target is tried again until its budget is spent.
++void FailBbscHomeRecoveryTarget(std::string_view why) {
++    bbsc_home_recovery_requested = false;
++    bbsc_home_recovery_loaded = false;
++    const bool lamp_ok = Bbsc::SupportedHomeMap(BbscLampPointMap(bbsc_home_spot.lamp));
++    LOG_WARNING(Debug, "BBSC home recovery: {} ({} {} of {})", why,
++                bbsc_home_recovery_lamp ? "lamp" : "point", bbsc_home_recovery_tries,
++                BbscHomeRecoveryMaxTries);
++    if (!bbsc_home_recovery_lamp && lamp_ok) {
++        bbsc_home_recovery_lamp = true;
++        bbsc_home_recovery_tries = 0;
++        return;
++    }
++    if (bbsc_home_recovery_tries >= BbscHomeRecoveryMaxTries) {
++        SettleBbscHomeRecovery(false);
++    }
 +}
 +
 +void TickBbscHomeRecovery() {
@@ -683,8 +726,8 @@ index 6c278c3..41f7ab6 100644
 +    if (ReadValue<u8>(global, 0x08) != 0) return;
 +    const auto here = ReadCharacterTransform(GetLocalPlayerCharacter());
 +    if (!here || GetCharacterHp(GetLocalPlayerCharacter()) <= 0) return;
-+    // Only for its owner: the active save slot must be the journal's (unknown right after a load
-+    // until the game saves: wait).
++    // Only for its owner, before every action: the active save slot must be the journal's (unknown
++    // right after a load until the game saves: wait).
 +    const auto active = BbscActiveSaveSlot();
 +    if (!active) return;
 +    if (active->user != bbsc_home_recovery_slot->user ||
@@ -698,50 +741,54 @@ index 6c278c3..41f7ab6 100644
 +    }
 +    const u32 target = bbsc_home_recovery_lamp ? BbscLampPointMap(bbsc_home_spot.lamp)
 +                                             : bbsc_home_spot.map;
-+    if (!Bbsc::SupportedHomeMap(target) || bbsc_home_recovery_tries >= BbscHomeRecoveryMaxTries) {
-+        SettleBbscHomeRecovery(false);
-+        return;
-+    }
-+    if (!bbsc_home_recovery_requested) {
++    if (bbsc_home_recovery_requested) {
++        if (!bbsc_home_recovery_loaded) {
++            if (now - bbsc_home_recovery_ms >= BbscHomeRecoveryLoadTimeoutMs) {
++                FailBbscHomeRecoveryTarget("the requested load did not come");
++            }
++            return;
++        }
 +        if (now - bbsc_home_recovery_ms < 2'000) return;
-+        ++bbsc_home_recovery_tries;
-+        bbsc_home_recovery_ms = now;
-+        bbsc_home_recovery_requested = true;
-+        bbsc_home_recovery_loaded = false;
-+        if (bbsc_home_spot.lamp >= 1'000'000) {
-+            WriteValue<s32>(global, 0x1528, bbsc_home_spot.lamp);
++        // The arrival first: a last try that worked is a success, not a spent budget.
++        const float dx = here->position[0] - bbsc_home_spot.position[0];
++        const float dy = here->position[1] - bbsc_home_spot.position[1];
++        const float dz = here->position[2] - bbsc_home_spot.position[2];
++        if (GetCurrentPackedMap() == target &&
++            (bbsc_home_recovery_lamp || dx * dx + dy * dy + dz * dz <= 25.f)) {
++            SettleBbscHomeRecovery(true);
++            return;
 +        }
-+        bool requested = false;
-+        if (!bbsc_home_recovery_lamp) {
-+            const SummonPlacementDescriptor to{target, bbsc_home_spot.position[0],
-+                bbsc_home_spot.position[1], bbsc_home_spot.position[2],
-+                bbsc_home_spot.rotation[1], -1};
-+            requested = RequestBbscSessionWarp(global, to, "home recovery", false);
-+        } else {
-+            using Selector = bool PS4_SYSV_ABI (*)(u64, s32);
-+            using Transition = u64 PS4_SYSV_ABI (*)();
-+            WriteValue<u8>(global, 0x1520, 0);
-+            requested = reinterpret_cast<Selector>(image_base + SelectSummonedPlacementOffset)(0, -1)
-+                        && ReadValue<u32>(global, 0x0C) == target;
-+            if (requested) reinterpret_cast<Transition>(image_base + StageTransitionOffset)();
-+        }
-+        bbsc_home_recovery_requested = requested;
-+        LOG_INFO(Debug, "BBSC home recovery: requested {} into {:#x}, lamp {}, accepted {}",
-+                 bbsc_home_recovery_lamp ? "recorded lamp" : "original point", target,
-+                 bbsc_home_spot.lamp, requested);
++        FailBbscHomeRecoveryTarget("arrived elsewhere");
 +        return;
 +    }
-+    if (!bbsc_home_recovery_loaded || now - bbsc_home_recovery_ms < 2'000 ||
-+        GetCurrentPackedMap() != target) return;
-+    const float dx = here->position[0] - bbsc_home_spot.position[0];
-+    const float dy = here->position[1] - bbsc_home_spot.position[1];
-+    const float dz = here->position[2] - bbsc_home_spot.position[2];
-+    if (!bbsc_home_recovery_lamp && dx * dx + dy * dy + dz * dz > 25.f) {
-+        bbsc_home_recovery_lamp = true;
-+        bbsc_home_recovery_requested = false;
++    if (!Bbsc::SupportedHomeMap(target)) {
++        bbsc_home_recovery_tries = BbscHomeRecoveryMaxTries;
++        FailBbscHomeRecoveryTarget("no supported target");
 +        return;
 +    }
-+    SettleBbscHomeRecovery(true);
++    if (now - bbsc_home_recovery_ms < 2'000) return;
++    ++bbsc_home_recovery_tries;
++    bbsc_home_recovery_ms = now;
++    bbsc_home_recovery_loaded = false;
++    if (bbsc_home_spot.lamp >= 1'000'000) {
++        WriteValue<s32>(global, 0x1528, bbsc_home_spot.lamp);
++    }
++    bool requested = false;
++    if (!bbsc_home_recovery_lamp) {
++        const SummonPlacementDescriptor to{target, bbsc_home_spot.position[0],
++            bbsc_home_spot.position[1], bbsc_home_spot.position[2],
++            bbsc_home_spot.rotation[1], -1};
++        requested = RequestBbscSessionWarp(global, to, "home recovery", false);
++    } else {
++        requested = RequestBbscLampReturn(global, target);
++    }
++    bbsc_home_recovery_requested = requested;
++    LOG_INFO(Debug, "BBSC home recovery: requested {} into {:#x}, lamp {}, accepted {} (try {})",
++             bbsc_home_recovery_lamp ? "recorded lamp" : "original point", target,
++             bbsc_home_spot.lamp, requested, bbsc_home_recovery_tries);
++    if (!requested) {
++        FailBbscHomeRecoveryTarget("request refused");
++    }
 +}
 +
 +// Warp.RespawnPoint.Resolve: the load the return asked for, or another one (which drops it).
@@ -763,7 +810,7 @@ index 6c278c3..41f7ab6 100644
      if (!bbsc_home_spot.valid) {
          return;
      }
-@@ -9005,6 +9407,10 @@ bool PutBbscHomeSpot(u64 global) {
+@@ -9005,6 +9449,10 @@ bool PutBbscHomeSpot(u64 global) {
          !WriteValue(global, 0x1510, bbsc_home_spot.rotation)) {
          return false;
      }
@@ -774,7 +821,7 @@ index 6c278c3..41f7ab6 100644
      LOG_INFO(Debug, "BBSC return home: the trip home goes to our own spot {:#x} ({:.2f}, {:.2f}, "
                      "{:.2f}), not {:#x} (the last warp's)",
               bbsc_home_spot.map, bbsc_home_spot.position[0], bbsc_home_spot.position[1],
-@@ -9021,6 +9427,7 @@ bool BbscOwnWorldNonGuest(u64 global) {
+@@ -9021,6 +9469,7 @@ bool BbscOwnWorldNonGuest(u64 global) {
  }
  
  void GuardBbscStrayForcedWarp(const GuestRegisterSnapshot& registers) {
@@ -782,7 +829,7 @@ index 6c278c3..41f7ab6 100644
      const u64 global = registers.rcx; // 0x01332C14: mov rcx, [0x05556678]
      if (image_base == 0 || global != GetGlobalState() || !ReadablePointer(global, 0x1598) ||
          ReadValue<u8>(global, 0x1520) == 0) {
-@@ -10094,6 +10501,35 @@ bool BbscGuestInHostWorld() {
+@@ -10094,6 +10543,35 @@ bool BbscGuestInHostWorld() {
      return type > 0 && type != 8;
  }
  
@@ -818,7 +865,7 @@ index 6c278c3..41f7ab6 100644
  bool BbscEventFlag(u32 flag) {
      // 0x01399BF0 panics when SprjEventFlagMan does not exist.
      if (ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
-@@ -10292,8 +10728,17 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
+@@ -10292,8 +10770,17 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
  constexpr u64 ItemManPointerOffset = 0x0553D6E0;
  constexpr u64 AwardItemLotOffset = 0x017DDC50; // (item man, lot, 0) as the 2003[04] handler calls it
  std::mutex bbsc_boss_reward_mutex;
@@ -838,7 +885,7 @@ index 6c278c3..41f7ab6 100644
  std::vector<u32> bbsc_boss_goods_check;   // boss goods given in a session, checked once home
  
  void NoteBbscBossRewardEvent(s64 event) {
-@@ -10302,16 +10747,31 @@ void NoteBbscBossRewardEvent(s64 event) {
+@@ -10302,16 +10789,31 @@ void NoteBbscBossRewardEvent(s64 event) {
                                           [event](const auto& r) { return r.event == event; })) {
          return;
      }
@@ -879,7 +926,7 @@ index 6c278c3..41f7ab6 100644
      }
  }
  
-@@ -10414,76 +10874,96 @@ void TickBbscBossGoodsCheck() {
+@@ -10414,76 +10916,96 @@ void TickBbscBossGoodsCheck() {
  
  // Game tick: award the queued boss lots, once each.
  void TickBbscBossRewards() {
@@ -1000,8 +1047,7 @@ index 6c278c3..41f7ab6 100644
 -                            "to give",
 -                     event, it->flag);
 -            continue;
-+            bbsc_boss_reward_given.push_back(pending);
-         }
+-        }
 -        const auto goods = std::ranges::find_if(BbscBossGoodsLots,
 -                                                [lot](const auto& g) { return g.lot == lot; });
 -        if (goods != BbscBossGoodsLots.end() && GiveBbscBossGoods(*goods)) {
@@ -1011,7 +1057,8 @@ index 6c278c3..41f7ab6 100644
 -            BBSC_TIMELINE("BOSS", "boss drop: event {} - item lot {} given to the guest directly ({})",
 -                     event, lot, taken ? "repeat lot, flag already set" : "first kill");
 -            continue;
--        }
++            bbsc_boss_reward_given.push_back(pending);
+         }
 -        using AwardItemLot = void PS4_SYSV_ABI (*)(u64 item_man, s32 lot, u32 forced);
 -        reinterpret_cast<AwardItemLot>(image_base + AwardItemLotOffset)(item_man, lot, 0);
 -        LOG_INFO(Debug, "BBSC boss drop: event {} - item lot {} given to the guest ({})", event, lot,
@@ -1030,7 +1077,7 @@ index 6c278c3..41f7ab6 100644
  // Reliable packets waiting for a member that does not take them (see SendBacklog.Limit in
  // bbsc_patch_tables.h): [SprjSessionManager]+0x188 is a list head, each node +0x10 -> queue, +0x30
  // its packet count; +0x1B0 one more count. Logged while it grows past 100 (at most every 30 s).
-@@ -10809,16 +11289,141 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
+@@ -10809,16 +11331,141 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
  std::mutex bbsc_progress_mutex;
  std::vector<u32> bbsc_progress_host_flags;                         // guest: host's boss flags seen
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_progress_groups; // guest: kind 1, OR-ed
@@ -1173,7 +1220,7 @@ index 6c278c3..41f7ab6 100644
      std::vector<u32> flags;
      std::map<u32, std::array<u8, BbscWorldGroupBytes>> groups;
      {
-@@ -10827,11 +11432,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
+@@ -10827,11 +11474,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
          groups = bbsc_progress_groups;
      }
      if (flags.empty() && groups.empty()) {
@@ -1201,7 +1248,7 @@ index 6c278c3..41f7ab6 100644
      using SetEventFlag = u64 PS4_SYSV_ABI (*)(u64 unused, u32 flag, u8 value);
      const auto set = reinterpret_cast<SetEventFlag>(image_base + 0x0132E5A0);
      s64 bosses = 0;
-@@ -10906,9 +11527,10 @@ void TickBbscProgressBroadcast() {
+@@ -10906,9 +11569,10 @@ void TickBbscProgressBroadcast() {
  // newest userdata00NN (0..9) of the user's CUSA00207\SPRJ0005 folder, written during this run.
  constexpr s64 BbscProgressFileMs = 10'000;
  constexpr s64 BbscProgressRecoverMs = 15'000;
@@ -1214,7 +1261,7 @@ index 6c278c3..41f7ab6 100644
  
  std::filesystem::path BbscPendingProgressPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() /
-@@ -11033,6 +11655,14 @@ void TickBbscSharedProgress() {
+@@ -11033,6 +11697,14 @@ void TickBbscSharedProgress() {
      }
      last_ms = now;
      const s32 state = GetSessionState();
@@ -1229,7 +1276,7 @@ index 6c278c3..41f7ab6 100644
      const u64 global = GetGlobalState();
      const bool own_world = ReadablePointer(global, 0x1598) && ReadValue<u8>(global, 0x1592) != 0;
      static s64 file_written_ms = 0;
-@@ -11054,6 +11684,11 @@ void TickBbscSharedProgress() {
+@@ -11054,6 +11726,11 @@ void TickBbscSharedProgress() {
          if (!bbsc_progress_slot.has_value()) {
              bbsc_progress_slot = BbscActiveSaveSlot();
              if (bbsc_progress_slot.has_value()) {
@@ -1241,7 +1288,7 @@ index 6c278c3..41f7ab6 100644
                  LoadBbscPendingProgress(*bbsc_progress_slot);
              }
          }
-@@ -11077,6 +11712,17 @@ void TickBbscSharedProgress() {
+@@ -11077,6 +11754,17 @@ void TickBbscSharedProgress() {
              }
          }
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1259,7 +1306,7 @@ index 6c278c3..41f7ab6 100644
          for (const BbscWorldSnapshot& snap : blocks) {
              // Not the Hunter's Dream (report 2026-10-07: "guest does not have the starter items in
              // the Hunter's Dream"): its groups hold the messengers' starter weapons, the Doll and
-@@ -11089,13 +11735,48 @@ void TickBbscSharedProgress() {
+@@ -11089,13 +11777,48 @@ void TickBbscSharedProgress() {
                  if ((snap.present & (u64{1} << i)) == 0) {
                      continue;
                  }
@@ -1311,7 +1358,7 @@ index 6c278c3..41f7ab6 100644
      }
      if (!bbsc_progress_was_guest) {
          // A file an earlier session left (crash, quit while a guest): merged once this character
-@@ -11154,17 +11835,32 @@ void TickBbscSharedProgress() {
+@@ -11154,17 +11877,32 @@ void TickBbscSharedProgress() {
      if (now - bbsc_progress_home_ms < BbscProgressSettleMs) {
          return;
      }
@@ -1348,7 +1395,7 @@ index 6c278c3..41f7ab6 100644
      bbsc_progress_slot.reset();
      if (bosses < 0) {
          LOG_INFO(Debug, "BBSC shared progress: home again, nothing from the host to merge");
-@@ -11201,7 +11897,9 @@ void ApplyBbscSharedProgressAtLoad() {
+@@ -11201,7 +11939,9 @@ void ApplyBbscSharedProgressAtLoad() {
          ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
          return; // not home yet, or our own Dream state still to be put back (the tick merges then)
      }
@@ -1359,7 +1406,7 @@ index 6c278c3..41f7ab6 100644
      const auto [bosses, bits] = MergeBbscSharedProgress("during the home load");
      bbsc_progress_merged_at_load = bosses >= 0;
  }
-@@ -11235,6 +11933,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
+@@ -11235,6 +11975,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
      }
      const s64 event = ReadablePointer(registers->rdx, 0xC0) ? BbscEventIdOf(registers->rdx) : -1;
      if (event > 0) {
@@ -1367,7 +1414,7 @@ index 6c278c3..41f7ab6 100644
          NoteBbscBossRewardEvent(event); // a boss reward event the guest's copy never finishes
      }
      if (type != 0) {
-@@ -14398,10 +15097,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -14398,10 +15139,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -1385,7 +1432,7 @@ index 6c278c3..41f7ab6 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -15997,6 +16700,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -15997,6 +16742,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      }
  
      const auto& site = Sites[tag];
@@ -1396,7 +1443,7 @@ index 6c278c3..41f7ab6 100644
      if (site.offset == ItemUsableResultOffset) {
          ApplyBbscBellsAnywhere(registers);
      }
-@@ -16012,6 +16719,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16012,6 +16761,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      if (summon_reload_state_hook_installed && site.offset == StageWarpDescriptorFinalizeOffset) {
          ApplySummonReloadStateAtDescriptor(*registers);
      }
@@ -1407,7 +1454,7 @@ index 6c278c3..41f7ab6 100644
      if (site.offset == 0x0178D9C0) {
          BbscConnectFirstReloadFinished();
      }
-@@ -16024,6 +16735,8 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16024,6 +16777,8 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
@@ -1416,7 +1463,7 @@ index 6c278c3..41f7ab6 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -16100,11 +16813,13 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16100,11 +16855,13 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
              TickBbscStateDiff();
              TickBbscJoinTeleport();
          }
@@ -1430,7 +1477,7 @@ index 6c278c3..41f7ab6 100644
              static s64 last_shape_ms = 0;
              if (const s64 now = SteadyNowMs(); now - last_shape_ms > 1'000) {
                  last_shape_ms = now;
-@@ -16762,25 +17477,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
+@@ -16762,25 +17519,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
      s32 time_bits = 0; // the packet holds every listed flag the host has on, so absent = off
      {
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1471,7 +1518,7 @@ index 6c278c3..41f7ab6 100644
      }
  }
  
-@@ -16866,7 +17590,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
+@@ -16866,7 +17632,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
  
  // Arrives on the signaling receive thread, so it does no game-memory work at all: it records the
  // message and TickBbscFollowHost decides, on the game thread, whether to act on it.
@@ -1480,7 +1527,7 @@ index 6c278c3..41f7ab6 100644
      using Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
      if (!BbscWorldSyncEnabled() || data == nullptr || size != sizeof(SignalingBbscWorldFlags)) {
          return;
-@@ -16890,6 +17614,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16890,6 +17656,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
          std::scoped_lock lock{bbsc_world_mutex};
          BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
          BbscWorldSnapshot& ready = dream ? bbsc_dream_ready : bbsc_world_ready;
@@ -1501,7 +1548,7 @@ index 6c278c3..41f7ab6 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -16920,6 +17658,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16920,6 +17700,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
      }
  }
  
@@ -1646,7 +1693,7 @@ index 6c278c3..41f7ab6 100644
  void OnBbscHostFollowPacket(std::uint32_t packed_map, float x, float y, float z, float heading,
                              std::uint32_t sequence, std::int32_t lamp_point) {
      if (!BbscWarpTogetherEnabled()) {
-@@ -17791,7 +18667,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +18709,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,

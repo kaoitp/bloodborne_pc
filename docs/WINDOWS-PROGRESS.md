@@ -710,7 +710,8 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - `.superpowers/pr14-v1-review.py` via CLANG64 Python/local TEMP/TMP: reconstructed pinned patch520125e83b15b075fa5aa8f145c9d262bcfa14cb3a42e7331e7e93023abff34e, CRLF sourcecf8513f2a5e0dec6228de09e696349aad32b2a55d5416279db5ef71fe032b508. All11 actual-function/header tests PASS/no skips21.343s; whitespace clean; GitHub reports no statuses/workflow runs/inline threads. No native/DLL build by reviewer. Author DLL0a9ddf062e537bf6e30e7953e43a0a8a65f7caf20ecbc2462490002c1d41807a has no native run.
 - Additional actual-function/ASan `.superpowers/pr14-no-load.py`: accepted warp with no completion stays pending after40 ticks and forever (requested=true/loaded=false/tries1), assert !bbsc_home_recovery_slot at generated home-recovery.cpp351 fails exit3221226505. Source also repeats refused point without valid-lamp fallback, and budget>=5 precedes arrival evaluation (fifth success becomes give-up). REQUEST_CHANGES sent for bounded arrival timeout/fallback/outcome ordering and focused regressions with safe lamp stubs.
 - Default change needs matching-build interrupted locked-map return, title/other-character isolation/original-owner retry, lamp fallback/settled reload evidence. Fixture is not native acceptance; broad R03 stays open. Clarified no takeover rule itself prohibits Claude native work; document actual practical limitation/help needed. No local switch change/packaging/deployment/competing implementation. Next: await corrected head/native evidence; PR12 failed-grant durability and PR13 linked-doc dependency remain pending; no duplicate comments on unchanged heads.
-### B17 durable origin after a guest crash, owner-bound and on by default (2026-10-27, Claude)
+
+### B17 durable origin after a guest crash, owner-bound (2026-10-27, Claude)
 
 - **Source.** The journaled home-spot return (R02) now runs by default. Opt-out: `SHADPS4_BBSC_HOME_RECOVERY=0`. Guards:
   - arming only from the owner-confirmed file recovery (PR11);
@@ -720,3 +721,13 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 - **Fixture.** `test_bbsc_home_recovery.py` covers B16 case 2, A02 (with and without the title hook), a death, no way back, and opt-out. RED by source mutations (old gate; no owner guards; slot check removed; no try limit), GREEN. Union: 32 OK, 1 skip.
 - **Hashes.** Patch `520125e8...f34e`, LF source `53415c39...fb3e`, DLL `0a9ddf06...807a`.
 - **Native: NOT run.** It needs a guest kill within seconds of placement and Quit-to-title steering. The N1-N4 steps for the friend's side are in [B17](handoff/R03-B17-DURABLE-ORIGIN.md). `ProtectBbscNativeJoin` (A04) stays opt-in.
+- **Revision 2 (PR14 review P1).** Recovery is bounded per target (3 tries).
+  - An accepted request without a load times out after 30 s.
+  - A refused, timed-out or off-target point goes to a valid recorded lamp at once.
+  - The arrival is checked before the budget.
+  - An exhausted lamp, or a point without a lamp, ends once with the journal kept as `.unreturned`.
+  - The lamp request is now `RequestBbscLampReturn`, and the fixture exercises it.
+  - **Back to an opt-in candidate** (`SHADPS4_BBSC_HOME_RECOVERY=1`) until the native gate N1/N2/N3 has evidence.
+  - Fixture: 12 cases. RED by mutations: no timeout, lamp only after arrival, budget before arrival, default on, owner guards. Union 32 OK, 1 skip.
+  - Patch `59dd1451...9344`, LF source `19acf644...64ee`, DLL `99733756...7f73`.
+  - Native not run: a session limit set by the user (token cost, RAM), not an R03 rule. The help needed is in [B17](handoff/R03-B17-DURABLE-ORIGIN.md).
