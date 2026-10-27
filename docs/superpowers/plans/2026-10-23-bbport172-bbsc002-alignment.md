@@ -303,3 +303,5 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [x] Exact e149702 source/callers and11 fixture/header tests verified; accepted-request/no-load negative reproduced.
 - [ ] IN_PROGRESS / awaiting author: bounded arrival timeout, point-to-lamp fallback, fifth-arrival ordering and tests; REQUEST_CHANGES sent.
 - [ ] Matching-build native owner/return/fallback and settled reload before accepting new default. No R03 acceptance closure.
+
+- [x] PR13 exact85e9e12 approved and documentation integration verified; native/origin gates remain open.
