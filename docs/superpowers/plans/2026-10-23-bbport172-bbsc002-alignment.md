@@ -284,3 +284,9 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 ### Graphify local tooling
 - [x] Local code graph and query/export/integrity verified; generated outputs ignored. See docs/GRAPHIFY.md and GRAPHIFY-INIT progress checkpoint; scoped publication authorized.
+
+### PR12 / PR13 review (2026-10-27)
+
+- [x] Exact-head inline review and pinned-source/actual-function checks; PR12 union10PASS/1FAIL and unsaved-reward safety control fails; B16 lifecycle evidence and prerequisites read.
+- [ ] IN_PROGRESS / awaiting author: preserve integrated PR11 protections in PR12 and make durable reward suppression consistent with actual owner saves (review5662203115).
+- [ ] IN_PROGRESS / awaiting author: correct B16 tested composition and bound position/early-load conclusions (review5662203440); durable-origin implementation is already within the active takeover, with safety/native gates still required.
