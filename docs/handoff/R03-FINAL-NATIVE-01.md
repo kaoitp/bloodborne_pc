@@ -46,3 +46,5 @@ Do not close broad R03 or reward/recovery gates from this run. Finish settled re
 - User explicitly requested whether command-assisted boss killing is possible; next positive uses a disclosed HP-0 aid on test copies only, with real game reward/event/save handling.
 
 Commands used: private `build.py` wrapping tools/build_bbsc_mod.py; private `verify.py`; `pwsh -NoProfile -File .superpowers/r03-final-native-01/launch-test.ps1 -Client a|b` (outside sandbox); `.superpowers/r03-close/read-world.py PID OUTPUT` and `read-position.py PID OUTPUT` read-only snapshots; existing BB_PAD_FILE input. No full suite, product implementation, release packaging, default enablement or service deployment.
+
+- Final fresh-process stable repeat: all1250 groups exact again. PID24924 stopped after this read. Checkpoint published as eb8b5d1. The later boss staging attempt uses separate native02 copies and does not change this bounded result.
