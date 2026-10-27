@@ -297,3 +297,9 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [ ] IN_PROGRESS / awaiting author: failed-grant then save/exit still becomes permanently given; actual-function negative reproduced, REQUEST_CHANGES sent. Save snapshot timing remains unproved natively.
 - [x] PR13 B16 provenance and bounded observations corrected at2aab142; acknowledgement sent.
 - [ ] Integrate corrected documentation when B15 link dependency is available or changed to PR12 URL; align stale PR descriptions. No broad R03 gate closed.
+
+### PR14 durable-origin review (2026-10-27)
+
+- [x] Exact e149702 source/callers and11 fixture/header tests verified; accepted-request/no-load negative reproduced.
+- [ ] IN_PROGRESS / awaiting author: bounded arrival timeout, point-to-lamp fallback, fifth-arrival ordering and tests; REQUEST_CHANGES sent.
+- [ ] Matching-build native owner/return/fallback and settled reload before accepting new default. No R03 acceptance closure.
