@@ -35,10 +35,16 @@ def run_delivery_fixture(source, directory):
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <cstdlib>
+#include <filesystem>
+#include <format>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <system_error>
+#include <utility>
 #include <vector>
 using s64 = int64_t;
 using u64 = uint64_t;
@@ -49,10 +55,22 @@ using u8 = uint8_t;
 #define LOG_INFO(...)
 #define LOG_WARNING(...)
 #define BBSC_TIMELINE(...)
+namespace fmt {  // the once-per-character record's path (B15); only flagged rows here
+template <class... A> std::string format(std::format_string<A...> f, A&&... a) {
+  return std::format(f, std::forward<A>(a)...);
+}
+}
+namespace Common::FS {
+enum class PathType { CapturesDir };
+std::filesystem::path GetUserPath(PathType) { return "user/captures"; }
+}
 struct BbscSaveSlot {
   std::string user;
   int slot = -1;
 };
+std::optional<std::filesystem::file_time_type> BbscSaveSlotWritten(const BbscSaveSlot &) {
+  return std::nullopt; // only flagged rows here: no once-per-character record
+}
 struct BbscBossReward {
   s64 event;
   u32 flag;
@@ -107,6 +125,8 @@ bool GiveBbscBossGoods(const BbscBossGoodsLot &) {
   return add_ok;
 }
 void fake_award(u64, s32, u32) { ++popups; }
+u64 BbscCarriedInventory() { return 0; } // only flagged rows here: never asked
+bool BbscInventoryHas(u64, u32) { return false; }
 u64 image_base = reinterpret_cast<u64>(&fake_award) - AwardItemLotOffset;
 template <class T> T ReadValue(u64 at, u64 off) {
   if (at == 9)
