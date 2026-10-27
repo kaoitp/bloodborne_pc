@@ -1,7 +1,8 @@
 """Actual boss reward producer/consumer: a reward without a taken flag is given once per character,
 also across runs (R03 B15, G2-07/12), and only becomes final once the owner's save is written after
 the grant (PR #12 reviews: attempt line before the add, outcome right after it, held when an earlier
-run left an attempt without its outcome). A fresh process is simulated by clearing the in-memory lists and running
+run left an attempt without its outcome; an experimental opt-in, SHADPS4_BBSC_REWARD_ONCE=1, while
+a failed add with an unwritten removal cannot be told from a used-up delivery). A fresh process is simulated by clearing the in-memory lists and running
 the start settle; the per-character record is a real file in a temporary folder, the save file's
 write time is controlled. Not native gameplay proof."""
 from paths import ROOT
@@ -92,7 +93,8 @@ bool in_inventory = false;           // the lot's goods in the owner's carried i
 bool GiveBbscBossGoods(const BbscBossGoodsLot&) {
     if (break_record_after_add) {
         std::filesystem::create_directories(std::filesystem::path("user/boss-rewards") /
-                                            ("given-" + std::string("sd1-") + "14.txt.tmp"));
+                                            ("given-" + current.user + "-" +
+                                             std::to_string(current.slot) + ".txt.tmp"));
     }
     if (!add_ok) return false;
     ++adds;
@@ -138,7 +140,15 @@ void kill() { // a joint Amelia kill, then the reward tick
     NoteBbscBossRewardEvent(12401800);
     TickBbscBossRewards();
 }
+void reward_once(const char* value) {
+#ifdef _WIN32
+    _putenv_s("SHADPS4_BBSC_REWARD_ONCE", value);
+#else
+    setenv("SHADPS4_BBSC_REWARD_ONCE", value, 1);
+#endif
+}
 int main() {
+    reward_once("1"); // the experimental opt-in; default OFF is checked at the end
     const BbscSaveSlot u_i_ahh{"sd1", 3}, six{"sd1", 2}, other{"sd1", 5}, seven{"sd1", 7},
         eight{"sd1", 8};
     // Run 1: U-I-AHH helps kill Amelia and gets the Gold Pendant; pending until the game saves.
@@ -336,6 +346,49 @@ int main() {
     add_ok = true;
     TickBbscBossRewards();
     assert(adds == before_ten + 1 && record(ten).find("granted 12401800 ") == 0);
+    // PR #12 review 4: the add FAILS and the removal of its attempt cannot be written, then a save,
+    // an exit while unwritable, storage back. On disk this is the same as a delivery that worked
+    // and was used up: held - no lot, no drop - however many kills and ticks follow. The log names
+    // the line a person removes to release it; after that the reward is given once.
+    restart();
+    bbsc_boss_reward_queue.clear();
+    const BbscSaveSlot fifteen{"sd1", 15};
+    current = fifteen;
+    add_ok = false;
+    break_record_after_add = true;
+    const int before_failed_outcome = adds;
+    kill();
+    break_record_after_add = false;
+    assert(adds == before_failed_outcome && record(fifteen).find("attempt 12401800 ") == 0);
+    game_saves(fifteen);
+    restart();                                   // still unwritable
+    std::filesystem::remove("user/boss-rewards/given-sd1-15.txt.tmp");
+    restart();
+    add_ok = true;
+    kill();
+    for (int i = 0; i < 50; ++i) TickBbscBossRewards();
+    assert(adds == before_failed_outcome);       // held: neither given nor dropped
+    assert(record(fifteen).find("attempt 12401800 ") == 0 && bbsc_boss_reward_queue.size() == 1);
+    std::filesystem::remove("user/boss-rewards/given-sd1-15.txt"); // the logged manual release
+    TickBbscBossRewards();
+    assert(adds == before_failed_outcome + 1);   // the debt is paid once
+    game_saves(fifteen);
+    TickBbscBossRewards();
+    assert(record(fifteen) == "12401800\n");
+
+    // Default OFF: without the variable nothing is written or read; once per process, as before.
+    reward_once("0");
+    restart();
+    bbsc_boss_reward_queue.clear();
+    const BbscSaveSlot sixteen{"sd1", 16};
+    current = sixteen;
+    const int before_off = adds;
+    kill();
+    kill();
+    assert(adds == before_off + 1 && !std::filesystem::exists("user/boss-rewards/given-sd1-16.txt"));
+    restart();
+    kill();
+    assert(adds == before_off + 2); // a new process may give it again (the existing behaviour)
     std::cout << "PASS a boss reward without a taken flag is given once per character across runs, "
                  "final only once saved\n";
 }

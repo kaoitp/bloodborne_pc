@@ -1,8 +1,10 @@
 # R03 B15: a boss reward without a taken flag is given once per character
 
-2026-10-26, revised 2026-10-27 three times after the PR #12 reviews. Claude (R03 takeover).
+2026-10-26, revised 2026-10-27 four times after the PR #12 reviews. Claude (R03 takeover).
 
-**Base:** seamless `b9e6c29`, with PR #10, PR #11, PR #13 and PR #14 merged. The source change is in the tracked patch (`bloodborne_re.cpp` only). Matrix rows G2-07/11/12 (reward deduplication) and G2-19 (deferred ownership).
+**State:** an **experimental opt-in, default OFF**, enabled by `SHADPS4_BBSC_REWARD_ONCE=1`. Without the variable the existing behaviour stays: once per event and character within a process, and nothing on disk. See the open gate under Limits.
+
+**Base:** seamless `e7d0bc7`, with PR #10, PR #11, PR #13 and PR #14 merged. The source change is in the tracked patch (`bloodborne_re.cpp` only). Matrix rows G2-07/11/12 (reward deduplication) and G2-19 (deferred ownership).
 
 ## Revisions
 
@@ -14,6 +16,10 @@
   - an attempt line before the add, with no add if it cannot be written;
   - the outcome written at once after the add, whether it failed or succeeded;
   - an unknown outcome held at the next start, never given again and never called given without evidence.
+- **Revision 5 (review 4).** One case is a held obligation that can never resolve itself: an add that **failed**, a removal that could not be written, then a save. That leaves the same bytes on disk as a delivery that worked and was used up. Nothing in the game or the save tells the two apart yet, so the record is now an **experimental opt-in** (`SHADPS4_BBSC_REWARD_ONCE=1`, default OFF):
+  - the default keeps the existing behaviour, so there is no new permanent reward blocker;
+  - under the opt-in, the held entry is neither given again nor dropped;
+  - its log line names the file and the `attempt` line a person removes to release a reward that was never delivered.
 
 ## The gap
 
@@ -25,7 +31,7 @@ For flag-0 rows, the only guard against a second delivery was the in-memory `bbs
 
 ## Change
 
-**Rows covered.** `BbscBossRewardOnce(event)` is true for rows with flag 0. Flagged rows are unchanged: the game's taken flag decides.
+**Rows covered.** `BbscBossRewardOnce(event)` is true for rows with flag 0, and only with `SHADPS4_BBSC_REWARD_ONCE=1` (`BbscBossRewardOnceEnabled`; the start settle also does nothing without it). Flagged rows are unchanged: the game's taken flag decides.
 
 **Record file.** Per save slot, in `<mod>/boss-rewards/given-<user>-<slot>.txt`, written by an atomic temp-file rename through `SetBbscBossRewardLine`. Lines:
 
@@ -47,7 +53,7 @@ For flag-0 rows, the only guard against a second delivery was the in-memory `bbs
 | `granted` | Line goes; the lot can be earned again | Given (kept or used since) | Stays; waits |
 | `attempt` (outcome not on disk) | Line goes; the lot can be earned again | **Held**: the outcome is unknown. The event waits. | Stays; waits |
 
-**Held attempts.** The tick settles a held attempt as given when the lot's goods are in the owner's carried items (`BbscInventoryHas`). Otherwise it keeps waiting. It is never given again and never called given without that evidence.
+**Held attempts.** The tick settles a held attempt as given when the lot's goods are in the owner's carried items (`BbscInventoryHas`). Otherwise it keeps waiting. It is never given again and never called given without that evidence. The warning names the file and line to remove when the reward was never delivered (**manual release**).
 
 **When an attempt can be held.** An attempt line can outlive its outcome only if the record breaks, or the process dies, between two writes a moment apart: the attempt, then the outcome right after the add. If the record is unwritable before the add, nothing is given. That covers the review 3 case.
 
@@ -59,7 +65,9 @@ For flag-0 rows, the only guard against a second delivery was the in-memory `bbs
 **Original owner.** The owner stays bound to the queued entry and to its slot's record.
 
 **Limits (honest).**
-- **Held without evidence.** If the add worked and the item was then used up, or the add failed but its removal could not be written, the attempt stays held. That event waits for the character; it is logged, not decided. Both need the record to break in the moment between the two writes.
+- **OPEN protocol gate: held without evidence.** If the add worked and the item was then used up, or the add failed but its removal could not be written, the attempt stays held. Both need the record to break in the moment between the two writes. These two cases cannot be told apart from the record, the save time or the inventory.
+  - Until game or save evidence can separate them, the feature stays opt-in.
+  - A held entry is resolved by its goods being seen, or released by hand through the logged line.
 - **In-flight save, unproved natively.** A save the game had already begun before the add, but finished after `<time>`, counts as written after it. A file time does not prove the inventory snapshot.
 
 ## Fixtures
@@ -90,14 +98,19 @@ Scenarios, all kept from earlier revisions plus the review 3 cases:
   - Seen in the inventory: final.
 - **The same break with no save before the exit:** the line goes, and the lot is given again.
 - **Failed add:** no line, and the retry gives it once.
+- **Review 4 (slot 15).** The add fails and its removal cannot be written, then a save, a restart while unwritable, storage back, a restart, and a kill plus 50 ticks.
+  - The entry is **held**: no lot and no drop.
+  - The logged manual release (removing the line) lets the next tick give it **once**, and it is then final.
+- **Default OFF (slot 16).** Without the variable, no file is written. The reward is once per process and can be given again in a new process, which is the existing behaviour.
 
-**RED**, by mutating copies of the actual source (`.superpowers/claude-r03/b15v4/red/`):
+**RED**, by mutating copies of the actual source (`.superpowers/claude-r03/b15v5/red/`):
 
 | Mutation | Fails at |
 |---|---|
 | `red-no-attempt-line` (revision 3: no line before the add) | `adds == before_unrecorded && record(thirteen).empty()`. Revision 3 gives while unwritable, then again after the restart. |
 | `red-failure-written-later` (revision 2's deferred removal) | `adds == before_failed && record(eleven).empty()` |
 | `red-held-dropped` (an outcome-less attempt treated as never saved) | `record(fourteen)` held. That is the duplicate path. |
+| `red-default-on` (the record without the opt-in) | Slot 16: a file is written and the second process gives nothing. |
 | `red-keep-unsaved` | `record(seven).empty()` |
 | `red-drop-at-start` | `record(eight) == "12401800\n"` |
 
@@ -105,15 +118,15 @@ Scenarios, all kept from earlier revisions plus the review 3 cases:
 
 `test_bbsc_reward_delivery.py` has stubs for `BbscSaveSlotWritten`, `BbscCarriedInventory` and `BbscInventoryHas`. Its rows are flagged, so its scenarios are unchanged.
 
-**Union** on seamless `b9e6c29` + this change, CLANG64 Python:
+**Union** on seamless `e7d0bc7` + this change, CLANG64 Python:
 - All 9 `test_bbsc_*` modules, including B17's `test_bbsc_home_recovery`: 10 tests OK.
 - With `test_patches`, `test_native_bbsc` and `test_run_bbsc`: 33 OK, 1 skip.
 
-**Hashes (revision 4):**
-- Patch: `a4851220a37c3613bd6bb97525c74158ca5184cdc0db4d02fcf138b3b2d5bafe`.
-- LF source: `2603468c4f06609a32d20da4b46c74cec3c195e0c1dbca31ff01b2feff4a8ad1`.
-- CRLF source: `63f3c65916a448a7d7d428de062430b1705ff2a52dbdf697d0adbc6319f8f9f4`.
-- `bbsc.dll`: `c03936671ff8c7a287be229d9a6cb678c2c3f4826d5234c5ad9ced2f17dd9b00`.
+**Hashes (revision 5):**
+- Patch: `7871e606f8d2c90d59ae58abc02abd4456cf6b7e7075cef2c300ecfc16cc25cf`.
+- LF source: `4a94e78ac2ca8a54b10c7ace0ba3cd44ce8787943c56c30bf73b94960557cbcf`.
+- CRLF source: `ee21b5e71dee64b3c39dcda8107fd34c4e703676f5dade701f9f07220910aad2`.
+- `bbsc.dll`: `908d5a1afe0209efc62bb441ead39eddbb6990ce69425b0c0e5d148ef2e4c96a`.
 
 ## Native evidence
 
@@ -132,7 +145,7 @@ The build recorded the reward at the grant and had no PR #11 guards. It is an ob
 - Round 1, 23:42:24: `goods 4001 x1 put into the carried items`, `lot 50000001 finished`. The guest's save was written at 23:42:50. That 26 s gap is the only native timing evidence behind the save-confirmation rule.
 - Round 2, after both processes restarted: `already given ... not again`, and the inventory shows **Gold Pendant 1/1**.
 
-### Revisions 2–4: NOT run natively (needs the friend's side)
+### Revisions 2–5: NOT run natively (needs the friend's side)
 
 **Why not here.** The user set this session's limit: no long two-instance native runs, because of token cost and because each instance needs about 17 GB of RAM on the user's gaming PC. In-game steps go to the friend's side.
 
@@ -140,7 +153,7 @@ The cases also need:
 - a kill inside the add-to-save window (R4-N2);
 - an unwritable record (R4-N3): read-only ACL on `<mod>/boss-rewards`.
 
-**Steps:** copied profiles, the revision 4 DLL, mod defaults, spectate off.
+**Steps:** copied profiles, the revision 5 DLL, `SHADPS4_BBSC_REWARD_ONCE=1` on the guest, other mod defaults, spectate off. R4-N0: without the variable, a restart and second joint kill gives a second Pendant (the existing behaviour, unchanged).
 
 1. **R4-N1, normal grant.** Joint Amelia kill with a guest that never had the Pendant.
    - The file goes `attempt …` → `granted 12401800 <t>` (at once) → `12401800` (within about 30 s, with `is in the save … - final`).
