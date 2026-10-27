@@ -63,6 +63,7 @@ struct { u64 held = 0; } bbsc_dream_own;
 void RestoreBbscOwnDreamState(std::string_view) { bbsc_dream_own.held = 0; }
 const char* BbscTimeName(int) { return ""; }
 void RecoverBbscHomeSpot(const BbscSaveSlot&) {}
+void SuspendBbscHomeRecovery() { bbsc_home_recovery_slot.reset(); } // B17: a title load drops a pending return
 void BbscAnnounce(const char16_t*, const char*) {}
 bool BbscHomeForOwnWorld() { return true; }
 s64 SteadyNowMs() { static s64 now = 0; return now += 1000; }
