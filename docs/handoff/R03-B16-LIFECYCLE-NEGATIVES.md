@@ -82,6 +82,6 @@ The rows split into prerequisites and practical help. Help with steering or typi
 | G2-05/06 progress outside the boss area: an NPC choice the two characters made differently, and a guest ahead of the host (boss or lamp) | A person steers the host (or both) to the NPC step or lamp, about 30–60 min. My pad steering cannot reach it reliably. Claude prepares the build, snapshots and comparison. |
 | G1-04 empty / one-empty password cross-map controls | A person sets an empty password with the on-screen keyboard in the Network menu, about 5 min. Claude runs the join and the world comparison. |
 
-**Also open, runnable without new prerequisites:** the B15 native rows (consumed and flagged rewards, and revision 2's save-confirmed cases; steps in [B15](R03-B15-REWARD-ONCE.md)), the final same-build lifecycle acceptance after the open PRs merge, and the native run of PR #11's final DLL.
+**Also open, runnable without new prerequisites:** the B15 native rows (consumed and flagged rewards, and the save-confirmed cases; steps in [PR #12](https://github.com/kaoitp/bloodborne_pc/pull/12), `docs/handoff/R03-B15-REWARD-ONCE.md`), the final same-build lifecycle acceptance after the open PRs merge, and the native run of PR #11's final DLL.
 
 All test processes are closed. The protected source saves are unchanged.
