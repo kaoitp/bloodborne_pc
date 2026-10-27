@@ -315,3 +315,8 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] PR12 rev4 exact e77f1a6:12 fixture/header checks PASS; initial-write deferral verified.
 - [ ] IN_PROGRESS / awaiting author: failed add plus failed removal/save/restart is held forever; actual-function negative reproduced. Resolve safely or keep default-OFF candidate with remaining protocol/native gates.
+
+### PR12 revision5 gated integration (2026-10-27)
+
+- [x] Exact976c13b default-OFF record candidate reviewed;12 actual-function/header tests PASS, normal existing default retained; approved and integration verified.
+- [ ] Failed-outcome protocol ambiguity, in-flight-save and matching-build native reward gates remain open. No R03 gate completion/default enablement.

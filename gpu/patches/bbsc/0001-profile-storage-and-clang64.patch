@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..7d06cac 100644
+index 6c278c3..daf681c 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -270,7 +270,13 @@ index 6c278c3..7d06cac 100644
  std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked();
  // Runs inside game hooks (the join load): a filesystem error must never become an exception there.
  std::optional<BbscSaveSlot> BbscActiveSaveSlot() {
-@@ -5907,9 +5986,11 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
+@@ -5902,14 +5981,16 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlot() {
+     }
+ }
+ 
+-std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
++std::vector<std::filesystem::path> BbscSaveBases() {
+     namespace fs = std::filesystem;
      std::error_code ec;
      // As shadPS4 picks its user folder: <working folder>\user when it exists (portable install),
      // else %APPDATA%\shadPS4 - never both (another window may play from the other one).
@@ -284,16 +290,24 @@ index 6c278c3..7d06cac 100644
          !fs::is_directory(bases.front() / "savedata", ec)) {
          bases.clear();
          if (const char* appdata = std::getenv("APPDATA")) {
-@@ -5919,7 +6000,7 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
+@@ -5918,8 +5999,15 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
+     }
      ec.clear();
  #endif
++    return bases;
++}
++
++std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
++    namespace fs = std::filesystem;
++    std::error_code ec;
++    const std::vector<fs::path> bases = BbscSaveBases();
      std::optional<BbscSaveSlot> best;
 -    fs::file_time_type best_time = bbsc_run_started;
 +    fs::file_time_type best_time = bbsc_slot_load_started;
      // BBSC_SAVE_DIR (2026-10-12): the folder holding userdata0000.. on hosts that keep saves
      // elsewhere (bbhost: <data>\saves\SPRJ0005); its slots count as user "save".
      if (const char* save_dir = std::getenv("BBSC_SAVE_DIR"); save_dir != nullptr && save_dir[0]) {
-@@ -5974,6 +6055,9 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
+@@ -5974,9 +6062,48 @@ std::optional<BbscSaveSlot> BbscActiveSaveSlotUnchecked() {
          }
          ec.clear();
      }
@@ -303,7 +317,46 @@ index 6c278c3..7d06cac 100644
      return best;
  }
  
-@@ -5995,6 +6079,9 @@ constexpr s64 BbscOwnWorldRecoverMs = 15'000;
++// When the save file of one slot was last written (the folders as BbscActiveSaveSlot looks);
++// nullopt when it is not found or cannot be read.
++std::optional<std::filesystem::file_time_type> BbscSaveSlotWritten(const BbscSaveSlot& slot) {
++    namespace fs = std::filesystem;
++    try {
++        std::error_code ec;
++        const std::string file = fmt::format("userdata{:04}", slot.slot);
++        std::vector<fs::path> candidates;
++        if (slot.user == "save") {
++            if (const char* save_dir = std::getenv("BBSC_SAVE_DIR"); save_dir && save_dir[0]) {
++                candidates.push_back(fs::path(save_dir) / file);
++            }
++        } else {
++            for (const fs::path& base : BbscSaveBases()) {
++                if (slot.user.starts_with("sd")) {
++                    candidates.push_back(base / "savedata" / slot.user.substr(2) / "CUSA00207" /
++                                         "SPRJ0005" / file);
++                } else {
++                    candidates.push_back(base / "home" / slot.user / "savedata" / "CUSA00207" /
++                                         "SPRJ0005" / file);
++                }
++            }
++        }
++        for (const fs::path& path : candidates) {
++            const auto written = fs::last_write_time(path, ec);
++            if (!ec) {
++                return written;
++            }
++            ec.clear();
++        }
++    } catch (const std::exception& e) {
++        LOG_WARNING(Debug, "BBSC save slot: could not read the save folder ({})", e.what());
++    }
++    return std::nullopt;
++}
++
+ 
+ // ---- Own world journal (2026-10-08) --------------------------------------------------------------
+ // Test 2026-10-08 (cls_amg guest in abood's world): the guest's game crashed during a follow load
+@@ -5995,6 +6122,9 @@ constexpr s64 BbscOwnWorldRecoverMs = 15'000;
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_own_world; // game thread only
  std::optional<BbscSaveSlot> bbsc_own_world_slot;
  bool bbsc_own_world_dirty = false;
@@ -313,7 +366,7 @@ index 6c278c3..7d06cac 100644
  
  std::filesystem::path BbscOwnWorldPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() / "own-world" /
-@@ -6008,12 +6095,63 @@ bool BbscIsMapFlagGroup(u32 key) {
+@@ -6008,12 +6138,63 @@ bool BbscIsMapFlagGroup(u32 key) {
      return (kind == 1 || kind == 5 || kind == 6 || kind == 7) && area >= 21 && area <= 99;
  }
  
@@ -382,7 +435,7 @@ index 6c278c3..7d06cac 100644
  }
  
  // ---- Time of night in the host's world (2026-10-19) ---------------------------------------------
-@@ -6112,7 +6250,8 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6112,7 +6293,8 @@ void CaptureBbscOwnWorldBeforeJoin() {
          stack.pop_back();
          ++visited;
          const u32 key = ReadValue<u32>(node, 0x20);
@@ -392,14 +445,14 @@ index 6c278c3..7d06cac 100644
              keys.push_back(key);
          }
          node = ReadValue<u64>(node, 0x10);
-@@ -6137,7 +6276,32 @@ void CaptureBbscOwnWorldBeforeJoin() {
+@@ -6137,9 +6319,34 @@ void CaptureBbscOwnWorldBeforeJoin() {
               "{} item(s) taken in our own world",
               kept, visited, items);
      KeepBbscOwnTimeBits();
 +    KeepBbscHomeSpotInJournal();
-+    WriteBbscOwnWorldFile();
-+}
-+
+     WriteBbscOwnWorldFile();
+ }
+ 
 +void ProtectBbscNativeJoin(const GuestRegisterSnapshot* registers) {
 +    bbsc_skip_admission = 0;
 +    const u64 global = GetGlobalState();
@@ -408,7 +461,7 @@ index 6c278c3..7d06cac 100644
 +        ReadValue<u8>(global, 0x1592) == 0) return;
 +    KeepBbscHomeSpot();
 +    CaptureBbscOwnWorldBeforeJoin();
-     WriteBbscOwnWorldFile();
++    WriteBbscOwnWorldFile();
 +    if (!bbsc_own_world.empty() && bbsc_own_world_slot && !bbsc_own_world_dirty &&
 +        bbsc_own_world.contains(Bbsc::HomeSpotKey)) return;
 +    bbsc_skip_admission = 1;
@@ -422,10 +475,12 @@ index 6c278c3..7d06cac 100644
 +    }
 +    BbscAnnounce(u"Could not protect your own world.\nJoin canceled; check storage and ring again.",
 +                 "native join canceled: own-world journal unavailable");
- }
- 
++}
++
  void NoteBbscOwnDreamRestored(u32 key, const u8* live) {
-@@ -6200,13 +6364,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
+     if (BbscIsMapFlagGroup(key)) {
+         return; // a map group: its first kept copy is the right one
+@@ -6200,13 +6407,21 @@ bool LoadBbscOwnWorldFile(const BbscSaveSlot& slot) {
          group_bytes != BbscWorldGroupBytes || !get32(count) || count > 10'000) {
          return false;
      }
@@ -450,7 +505,7 @@ index 6c278c3..7d06cac 100644
      }
      bbsc_own_world_slot = slot;
      return !bbsc_own_world.empty();
-@@ -6221,11 +6393,57 @@ bool BbscHomeForOwnWorld() {
+@@ -6221,11 +6436,57 @@ bool BbscHomeForOwnWorld() {
             ReadValue<u64>(image_base + WorldFlagManPointerOffset, 0) != 0;
  }
  
@@ -508,7 +563,7 @@ index 6c278c3..7d06cac 100644
      if (bbsc_dream_own.held != 0) {
          RestoreBbscOwnDreamState(why); // first: it keeps what the game changed in the Dream
      }
-@@ -6233,7 +6451,7 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
+@@ -6233,7 +6494,7 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
      size_t bits = 0;
      size_t missing = 0;
      for (const auto& [key, own] : bbsc_own_world) {
@@ -517,7 +572,7 @@ index 6c278c3..7d06cac 100644
              continue; // our own night: put back below, after every real group
          }
          const u64 storage = BbscFlagGroupStorage(key);
-@@ -6284,7 +6502,9 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
+@@ -6284,7 +6545,9 @@ size_t RestoreBbscOwnWorld(std::string_view why) {
      }
      bbsc_own_world.clear();
      bbsc_own_world_dirty = false;
@@ -528,7 +583,7 @@ index 6c278c3..7d06cac 100644
          std::error_code ec;
          const auto path = BbscOwnWorldPath(*bbsc_own_world_slot);
          std::filesystem::rename(path, std::filesystem::path(path).concat(".restored"), ec);
-@@ -6340,12 +6560,16 @@ void TickBbscHostTime() {
+@@ -6340,12 +6603,16 @@ void TickBbscHostTime() {
  
  // A file an earlier run left (the game crashed or was closed while a guest): put back now.
  bool RecoverBbscOwnWorldFile(const BbscSaveSlot& slot) {
@@ -546,7 +601,7 @@ index 6c278c3..7d06cac 100644
      if (RestoreBbscOwnWorld("after a crash") != 0) {
          BbscAnnounce(u"Your own world was put back\n(the game had closed while you were a guest).\n"
                       u"Rest at a lamp or reload to see it.",
-@@ -6354,6 +6578,16 @@ bool RecoverBbscOwnWorldFile(const BbscSaveSlot& slot) {
+@@ -6354,6 +6621,16 @@ bool RecoverBbscOwnWorldFile(const BbscSaveSlot& slot) {
      return true;
  }
  
@@ -563,7 +618,7 @@ index 6c278c3..7d06cac 100644
  void TickBbscOwnWorld() {
      static s64 last_ms = 0;
      static s64 recover_checked_ms = 0;
-@@ -8925,6 +9159,7 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
+@@ -8925,6 +9202,7 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
               "map={:#x}",
               caller > image_base ? caller - image_base : caller, GetSessionState(),
               RemotePlayerCount(), GetCurrentPackedMap());
@@ -571,7 +626,7 @@ index 6c278c3..7d06cac 100644
      SuspendBbscPersistence("quit to title");
  }
  
-@@ -8942,6 +9177,18 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
+@@ -8942,6 +9220,18 @@ void PS4_SYSV_ABI BbscQuitToTitleHook(u64, const GuestRegisterSnapshot* register
  // it up. A player in its own world that is not a guest never needs it: BBSC takes it off again
  // (tick, once nothing is loading for a while) and, as the last stop, at the map choice itself when
  // +0x14F0 holds no map. The callers are logged so the next log names the handler.
@@ -590,7 +645,7 @@ index 6c278c3..7d06cac 100644
  // ---- Back home where we were (2026-10-19) ---------------------------------------------------------
  // Request list (2026-10-18) and testers: leaving co-op should put a guest back where it was before
  // joining, not in an area it has not reached. The trip home (Silencing Blank, the host leaving, the
-@@ -8958,6 +9205,7 @@ struct BbscHomeSpot {
+@@ -8958,6 +9248,7 @@ struct BbscHomeSpot {
      std::array<float, 4> rotation{};
      bool valid = false;
      bool left = false; // we have been in another world since it was kept
@@ -598,7 +653,7 @@ index 6c278c3..7d06cac 100644
  };
  BbscHomeSpot bbsc_home_spot; // game thread
  
-@@ -8972,14 +9220,210 @@ void KeepBbscHomeSpot() {
+@@ -8972,14 +9263,210 @@ void KeepBbscHomeSpot() {
          return;
      }
      bbsc_home_spot = {map, {here->position[0], here->position[1], here->position[2], 1.0f},
@@ -810,7 +865,7 @@ index 6c278c3..7d06cac 100644
      if (!bbsc_home_spot.valid) {
          return;
      }
-@@ -9005,6 +9449,10 @@ bool PutBbscHomeSpot(u64 global) {
+@@ -9005,6 +9492,10 @@ bool PutBbscHomeSpot(u64 global) {
          !WriteValue(global, 0x1510, bbsc_home_spot.rotation)) {
          return false;
      }
@@ -821,7 +876,7 @@ index 6c278c3..7d06cac 100644
      LOG_INFO(Debug, "BBSC return home: the trip home goes to our own spot {:#x} ({:.2f}, {:.2f}, "
                      "{:.2f}), not {:#x} (the last warp's)",
               bbsc_home_spot.map, bbsc_home_spot.position[0], bbsc_home_spot.position[1],
-@@ -9021,6 +9469,7 @@ bool BbscOwnWorldNonGuest(u64 global) {
+@@ -9021,6 +9512,7 @@ bool BbscOwnWorldNonGuest(u64 global) {
  }
  
  void GuardBbscStrayForcedWarp(const GuestRegisterSnapshot& registers) {
@@ -829,7 +884,7 @@ index 6c278c3..7d06cac 100644
      const u64 global = registers.rcx; // 0x01332C14: mov rcx, [0x05556678]
      if (image_base == 0 || global != GetGlobalState() || !ReadablePointer(global, 0x1598) ||
          ReadValue<u8>(global, 0x1520) == 0) {
-@@ -10094,6 +10543,35 @@ bool BbscGuestInHostWorld() {
+@@ -10094,6 +10586,35 @@ bool BbscGuestInHostWorld() {
      return type > 0 && type != 8;
  }
  
@@ -865,7 +920,7 @@ index 6c278c3..7d06cac 100644
  bool BbscEventFlag(u32 flag) {
      // 0x01399BF0 panics when SprjEventFlagMan does not exist.
      if (ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
-@@ -10292,8 +10770,17 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
+@@ -10292,26 +10813,327 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
  constexpr u64 ItemManPointerOffset = 0x0553D6E0;
  constexpr u64 AwardItemLotOffset = 0x017DDC50; // (item man, lot, 0) as the 2003[04] handler calls it
  std::mutex bbsc_boss_reward_mutex;
@@ -884,8 +939,279 @@ index 6c278c3..7d06cac 100644
 +}
  std::vector<u32> bbsc_boss_goods_check;   // boss goods given in a session, checked once home
  
++// Rewards without a taken flag once per character, across runs (R03 B15, G2-07/12). A row with
++// flag 0 had only the in-memory given list, which ends with the process: the same guest helping
++// another host kill the same boss after a restart got its lot again (Amelia's Gold Pendant, another
++// One Third of Umbilical Cord). In its own world a character kills a boss once, so it gets such a
++// lot once. A flagged row keeps the game's own rule (taken flag -> repeat lot).
++//
++// Kept per save slot in <mod>/boss-rewards/given-<user>-<slot>.txt, three kinds of line (PR #12
++// reviews: a record written at the grant blocked a lot whose item never reached a save; an attempt
++// line taken for a delivery blocked a lot that was never given; a delivery whose only line could not
++// be written was given again after a restart):
++//   "attempt <event> <time>"  written BEFORE the item is added - no line, no item (an unwritable
++//                             record defers the grant, so a delivery always has a line on disk);
++//   "granted <event> <time>"  the add worked (replaces the attempt; a failed add drops the attempt);
++//   "<event>"                 the owner's save file was written after the grant: final.
++// The process knows each outcome and retries its write every second. A line an earlier run left is
++// settled at the next start, before the game can write a save (SettleBbscBossRewardsAtStart):
++//   save NOT written after <time> -> no item of this event reached a save: the line goes and a later
++//                                    joint kill gives the lot again (attempt or granted alike);
++//   granted, save written after   -> given (kept or used since);
++//   attempt, save written after   -> the outcome is unknown (the record failed between two writes a
++//                                    moment apart): held, the event waits - never given again, never
++//                                    called given without evidence. Settled as given when the lot's
++//                                    goods are seen in the owner's inventory (TickBbscBossRewards);
++//   save not readable             -> the line stays and the event waits.
++// Unproved natively: a save the game had already begun before the add but finished after <time>
++// counts as written after it (a file time is not proof of the inventory snapshot).
++//
++// OPEN protocol gate (PR #12 review 4), so this is an experimental opt-in, default OFF
++// (SHADPS4_BBSC_REWARD_ONCE=1): an attempt whose add FAILED and whose removal could not be written,
++// followed by a save, looks on disk exactly like a delivery that worked and was used up. Nothing in
++// the game or the save tells them apart yet, so such an entry is held - not given again (no second
++// consumed reward) and not dropped (no silently lost debt) - and the log names the file and line a
++// person can remove to release a reward that was never delivered. Without the variable the
++// existing behaviour stays: once per event and character within a process, nothing on disk.
++bool BbscBossRewardOnceEnabled() {
++    const char* value = std::getenv("SHADPS4_BBSC_REWARD_ONCE");
++    return value != nullptr && value[0] == '1' && value[1] == '\0';
++}
++
++bool BbscBossRewardOnce(s64 event) {
++    return BbscBossRewardOnceEnabled() &&
++           std::ranges::any_of(BbscBossRewards,
++                               [event](const auto& r) { return r.event == event && r.flag == 0; });
++}
++
++std::optional<std::filesystem::file_time_type> BbscSaveSlotWritten(const BbscSaveSlot& slot);
++
++struct BbscBossRewardRecord {
++    std::vector<s64> given;                      // saved with the item
++    std::vector<std::pair<s64, s64>> granted;    // event, time (file clock ticks): added, not saved yet
++    std::vector<std::pair<s64, s64>> attempts;   // event, time: about to be added (outcome not on disk)
++};
++
++std::filesystem::path BbscBossRewardFolder() {
++    return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() / "boss-rewards";
++}
++
++std::filesystem::path BbscBossRewardFilePath(const BbscSaveSlot& slot) {
++    return BbscBossRewardFolder() / fmt::format("given-{}-{}.txt", slot.user, slot.slot);
++}
++
++// nullopt when the file cannot be read (a status or read error is not "none given": the caller
++// waits).
++std::optional<BbscBossRewardRecord> LoadBbscBossRewardRecord(const BbscSaveSlot& slot) {
++    const auto path = BbscBossRewardFilePath(slot);
++    std::error_code ec;
++    const auto status = std::filesystem::status(path, ec);
++    if (status.type() == std::filesystem::file_type::not_found &&
++        (!ec || ec == std::errc::no_such_file_or_directory)) {
++        return BbscBossRewardRecord{};
++    }
++    if (ec || !std::filesystem::is_regular_file(status)) {
++        return std::nullopt;
++    }
++    std::ifstream file(path);
++    if (!file) {
++        return std::nullopt;
++    }
++    BbscBossRewardRecord record;
++    std::string line;
++    const auto timed = [&line](size_t skip) {
++        char* end = nullptr;
++        const s64 event = std::strtoll(line.c_str() + skip, &end, 10);
++        return std::pair<s64, s64>{event, std::strtoll(end, nullptr, 10)};
++    };
++    while (std::getline(file, line)) {
++        if (line.starts_with("granted ")) {
++            record.granted.push_back(timed(8));
++        } else if (line.starts_with("attempt ")) {
++            record.attempts.push_back(timed(8));
++        } else if (!line.empty()) {
++            record.given.push_back(std::strtoll(line.c_str(), nullptr, 10));
++        }
++    }
++    if (file.bad()) {
++        return std::nullopt;
++    }
++    return record;
++}
++
++bool WriteBbscBossRewardRecord(const BbscSaveSlot& slot, const BbscBossRewardRecord& record) {
++    const auto path = BbscBossRewardFilePath(slot);
++    std::error_code ec;
++    std::filesystem::create_directories(path.parent_path(), ec);
++    const auto temp = std::filesystem::path(path).concat(".tmp");
++    {
++        std::ofstream file(temp, std::ios::trunc);
++        for (const s64 e : record.given) {
++            file << e << '\n';
++        }
++        for (const auto& [e, time] : record.granted) {
++            file << "granted " << e << ' ' << time << '\n';
++        }
++        for (const auto& [e, time] : record.attempts) {
++            file << "attempt " << e << ' ' << time << '\n';
++        }
++        if (!file.flush()) {
++            return false;
++        }
++    }
++    std::filesystem::rename(temp, path, ec);
++    return !ec;
++}
++
++// One event's line: kind "attempt", "granted", "given" or "" (none). False when not written.
++bool SetBbscBossRewardLine(const BbscSaveSlot& owner, s64 event, std::string_view kind, s64 time) {
++    auto record = LoadBbscBossRewardRecord(owner);
++    if (!record) {
++        return false;
++    }
++    const auto same = [event](const auto& p) { return p.first == event; };
++    std::erase_if(record->granted, same);
++    std::erase_if(record->attempts, same);
++    if (kind == "given") {
++        if (std::ranges::find(record->given, event) == record->given.end()) {
++            record->given.push_back(event);
++        }
++    } else if (kind == "granted") {
++        record->granted.emplace_back(event, time);
++    } else if (kind == "attempt") {
++        record->attempts.emplace_back(event, time);
++    }
++    return WriteBbscBossRewardRecord(owner, *record);
++}
++
++// Added in this process, waiting for the owner's save (see above).
++struct BbscBossRewardUnsaved {
++    BbscBossRewardPending reward;
++    s64 since;
++    bool recorded = false; // its "granted" line is on disk (else the attempt line still is)
++};
++std::vector<BbscBossRewardUnsaved> bbsc_boss_reward_unsaved;
++std::vector<BbscBossRewardPending> bbsc_boss_reward_unclaimed; // add failed: its attempt line goes
++
++// True: this character has the event's lot (saved, or added in this process). False: not, or its
++// last add failed in this process. nullopt: unknown (file unreadable, or a line an earlier run left
++// unsettled - an attempt whose outcome is not on disk).
++std::optional<bool> BbscBossRewardGivenBefore(s64 event, const BbscSaveSlot& owner) {
++    const auto record = LoadBbscBossRewardRecord(owner);
++    if (!record) {
++        return std::nullopt;
++    }
++    if (std::ranges::find(record->given, event) != record->given.end()) {
++        return true;
++    }
++    const auto same = [event](const auto& p) { return p.first == event; };
++    if (std::ranges::none_of(record->granted, same) && std::ranges::none_of(record->attempts, same)) {
++        return false;
++    }
++    const auto mine = [&](const auto& r) { return SameBbscBossReward(r, event, owner); };
++    if (std::ranges::any_of(bbsc_boss_reward_unsaved,
++                            [&](const BbscBossRewardUnsaved& u) { return mine(u.reward); })) {
++        return true;
++    }
++    if (std::ranges::any_of(bbsc_boss_reward_unclaimed, mine)) {
++        return false;
++    }
++    return std::nullopt;
++}
++
++// Game tick (under bbsc_boss_reward_mutex): every outcome this process knows is written (retried),
++// and an added lot is final once the owner's save file is written after it.
++void TickBbscBossRewardSaves() {
++    static s64 last_ms = 0;
++    const s64 now = SteadyNowMs();
++    if (now - last_ms < 1'000) {
++        return;
++    }
++    last_ms = now;
++    std::erase_if(bbsc_boss_reward_unclaimed, [](const BbscBossRewardPending& p) {
++        return SetBbscBossRewardLine(p.owner, p.event, "", 0);
++    });
++    std::erase_if(bbsc_boss_reward_unsaved, [](BbscBossRewardUnsaved& u) {
++        const auto written = BbscSaveSlotWritten(u.reward.owner);
++        if (!written || written->time_since_epoch().count() <= u.since) {
++            if (!u.recorded) {
++                u.recorded = SetBbscBossRewardLine(u.reward.owner, u.reward.event, "granted", u.since);
++            }
++            return false;
++        }
++        if (!SetBbscBossRewardLine(u.reward.owner, u.reward.event, "given", 0)) {
++            return false; // retried next tick; the in-memory entry keeps it from a second lot
++        }
++        LOG_INFO(Debug, "BBSC boss drop: event {} is in the save of user {} slot {} - final",
++                 u.reward.event, u.reward.owner.user, u.reward.owner.slot);
++        BBSC_TIMELINE("BOSS", "boss drop: event {} is in the save of user {} slot {} - final",
++                      u.reward.event, u.reward.owner.user, u.reward.owner.slot);
++        return true;
++    });
++}
++
++// At start, before the game can write a save: settle every line an earlier run left.
++void SettleBbscBossRewardsAtStart() {
++    if (!BbscBossRewardOnceEnabled()) {
++        return; // opt-in only: the files of an earlier opt-in run stay as they are
++    }
++    std::error_code ec;
++    std::vector<std::filesystem::path> files;
++    for (const auto& entry : std::filesystem::directory_iterator(BbscBossRewardFolder(), ec)) {
++        files.push_back(entry.path());
++    }
++    for (const auto& path : files) {
++        const std::string name = path.filename().string();
++        const auto dash = name.rfind('-');
++        if (!name.starts_with("given-") || !name.ends_with(".txt") || dash == std::string::npos ||
++            dash < 6) {
++            continue;
++        }
++        const BbscSaveSlot owner{name.substr(6, dash - 6),
++                                 std::atoi(name.substr(dash + 1).c_str())};
++        const auto record = LoadBbscBossRewardRecord(owner);
++        if (!record) {
++            continue;
++        }
++        const auto settle = [&](s64 event, s64 since, bool granted) {
++            const auto written = BbscSaveSlotWritten(owner);
++            if (!written) {
++                LOG_WARNING(Debug, "BBSC boss drop: event {} of user {} slot {} - save not readable, "
++                                   "left as it is", event, owner.user, owner.slot);
++                return;
++            }
++            const bool saved = written->time_since_epoch().count() > since;
++            if (saved && !granted) {
++                LOG_WARNING(Debug, "BBSC boss drop: event {} of user {} slot {} - an earlier run's add "
++                                   "has no recorded outcome and the game saved after it: held until "
++                                   "its goods are seen in the inventory. If it was never delivered, "
++                                   "remove the line 'attempt {} ...' from {} to release it",
++                            event, owner.user, owner.slot, event,
++                            BbscBossRewardFilePath(owner).string());
++                BBSC_TIMELINE("BOSS", "boss drop: event {} from an earlier run - outcome unknown, held",
++                              event);
++                return;
++            }
++            if (SetBbscBossRewardLine(owner, event, saved ? "given" : "", 0)) {
++                LOG_INFO(Debug, "BBSC boss drop: event {} of user {} slot {} from an earlier run - {}",
++                         event, owner.user, owner.slot,
++                         saved ? "in its save, given" : "never saved, can be earned again");
++                BBSC_TIMELINE("BOSS", "boss drop: event {} from an earlier run - {}", event,
++                              saved ? "in its save, given" : "never saved, can be earned again");
++            }
++        };
++        for (const auto& [event, since] : record->granted) {
++            settle(event, since, true);
++        }
++        for (const auto& [event, since] : record->attempts) {
++            settle(event, since, false);
++        }
++    }
++}
++
  void NoteBbscBossRewardEvent(s64 event) {
-@@ -10302,16 +10789,31 @@ void NoteBbscBossRewardEvent(s64 event) {
+     static const bool enabled = EnvFlagEnabled("SHADPS4_BBSC_GUEST_ITEMS");
+     if (!enabled || std::ranges::none_of(BbscBossRewards,
                                           [event](const auto& r) { return r.event == event; })) {
          return;
      }
@@ -914,6 +1240,13 @@ index 6c278c3..7d06cac 100644
 +                      event);
 +        return;
 +    }
++    if (BbscBossRewardOnce(event) && BbscBossRewardGivenBefore(event, *owner) == true) {
++        LOG_INFO(Debug, "BBSC boss drop: event {} was already given to user {} slot {} in an earlier "
++                        "run - not again",
++                 event, owner->user, owner->slot);
++        BBSC_TIMELINE("BOSS", "boss drop: event {} already given to this character - not again", event);
++        return;
++    }
 +    std::scoped_lock lock{bbsc_boss_reward_mutex};
 +    const auto same = [&](const auto& entry) { return SameBbscBossReward(entry, event, *owner); };
 +    if (std::ranges::none_of(bbsc_boss_reward_given, same) &&
@@ -926,13 +1259,14 @@ index 6c278c3..7d06cac 100644
      }
  }
  
-@@ -10414,76 +10916,96 @@ void TickBbscBossGoodsCheck() {
+@@ -10414,76 +11236,165 @@ void TickBbscBossGoodsCheck() {
  
  // Game tick: award the queued boss lots, once each.
  void TickBbscBossRewards() {
 -    std::vector<s64> due;
 +    {
 +        std::scoped_lock lock{bbsc_boss_reward_mutex};
++        TickBbscBossRewardSaves();
 +        if (bbsc_boss_reward_queue.empty()) {
 +            return;
 +        }
@@ -967,7 +1301,6 @@ index 6c278c3..7d06cac 100644
 -        const u64 item_man = ReadValue<u64>(image_base + ItemManPointerOffset, 0);
 -        if (it == BbscBossRewards.end() || !ReadablePointer(item_man, 0x10) ||
 -            ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
--            continue;
 +    for (auto pending : due) {
 +        {
 +            std::scoped_lock lock{bbsc_boss_reward_mutex};
@@ -976,6 +1309,18 @@ index 6c278c3..7d06cac 100644
 +                })) {
 +                continue;
 +            }
++        }
++        const auto defer = [&] {
++            std::scoped_lock lock{bbsc_boss_reward_mutex};
++            if (std::ranges::none_of(bbsc_boss_reward_queue, [&](const auto& entry) {
++                    return SameBbscBossReward(entry, pending.event, pending.owner);
++                })) {
++                bbsc_boss_reward_queue.push_back(pending);
++            }
++        };
++        if (!SameBbscBossReward(pending, pending.event, *owner)) {
++            defer();
+             continue;
          }
 -        // Only for a fight the guest was in (2026-10-18, valriv55: the Blood-starved Beast's reward
 -        // came while the guest stood in another area - the host's world state had killed the
@@ -986,14 +1331,40 @@ index 6c278c3..7d06cac 100644
 -        const u32 here = GetCurrentPackedMap();
 -        if (BbscMapArea(here) != BbscMapArea(boss_map)) {
 -            {
--                std::scoped_lock lock{bbsc_boss_reward_mutex};
++        if (BbscBossRewardOnce(pending.event)) {
++            const auto before = BbscBossRewardGivenBefore(pending.event, *owner);
++            if (!before) {
++                // Unknown: an earlier run's add without a recorded outcome (or an unreadable record).
++                // Its goods in the owner's inventory settle it as given; otherwise it waits rather
++                // than risk a second lot.
++                const auto row = std::ranges::find_if(
++                    BbscBossRewards, [&](const auto& r) { return r.event == pending.event; });
++                const auto goods =
++                    row == BbscBossRewards.end()
++                        ? BbscBossGoodsLots.end()
++                        : std::ranges::find_if(BbscBossGoodsLots,
++                                               [&](const auto& g) { return g.lot == row->first_lot; });
++                const u64 carried = goods == BbscBossGoodsLots.end() ? 0 : BbscCarriedInventory();
++                if (carried != 0 && BbscInventoryHas(carried, 0x40000000u | goods->goods) &&
++                    SetBbscBossRewardLine(*owner, pending.event, "given", 0)) {
++                    std::scoped_lock lock{bbsc_boss_reward_mutex};
++                    bbsc_boss_reward_given.push_back(pending);
++                    LOG_INFO(Debug, "BBSC boss drop: event {} - an earlier run's add is in the "
++                                    "inventory of user {} slot {}: given", pending.event,
++                             owner->user, owner->slot);
++                    continue;
++                }
++                defer();
++                continue;
++            }
++            if (*before) {
+                 std::scoped_lock lock{bbsc_boss_reward_mutex};
 -                bbsc_boss_reward_given.push_back(event);
-+        const auto defer = [&] {
-+            std::scoped_lock lock{bbsc_boss_reward_mutex};
-+            if (std::ranges::none_of(bbsc_boss_reward_queue, [&](const auto& entry) {
-+                    return SameBbscBossReward(entry, pending.event, pending.owner);
-+                })) {
-+                bbsc_boss_reward_queue.push_back(pending);
++                bbsc_boss_reward_given.push_back(pending);
++                LOG_INFO(Debug, "BBSC boss drop: event {} was already given to user {} slot {} in "
++                                "an earlier run - not again",
++                         pending.event, owner->user, owner->slot);
++                continue;
              }
 -            LOG_WARNING(Debug,
 -                        "BBSC boss drop: event {} - not given: the boss is in map {:#x}, we are in "
@@ -1002,10 +1373,6 @@ index 6c278c3..7d06cac 100644
 -            BBSC_TIMELINE("BOSS", "boss drop: event {} - not given: the boss is in map {:#x}, we are in "
 -                        "{:#x} (our copy of a boss we did not fight died - the host's world state)",
 -                        event, boss_map, here);
-+        };
-+        if (!SameBbscBossReward(pending, pending.event, *owner)) {
-+            defer();
-+            continue;
 +        }
 +        const auto it = std::ranges::find_if(BbscBossRewards, [&](const auto& r) {
 +            return r.event == pending.event;
@@ -1015,27 +1382,14 @@ index 6c278c3..7d06cac 100644
          }
          const bool taken = it->flag != 0 && BbscEventFlag(it->flag);
 -        const s32 lot = taken ? it->repeat_lot : it->first_lot;
+-        {
 +        if (pending.lot < 0) {
 +            pending.lot = taken ? it->repeat_lot : it->first_lot;
 +        }
 +        const s32 lot = pending.lot;
-+        if (lot != 0) {
-+            const auto goods = std::ranges::find_if(BbscBossGoodsLots,
-+                                                    [lot](const auto& g) { return g.lot == lot; });
-+            if (goods != BbscBossGoodsLots.end()) {
-+                // A failed direct add stays pending; the popup fallback has no success signal.
-+                if (!GiveBbscBossGoods(*goods)) {
-+                    defer();
-+                    continue;
-+                }
-+                BbscAnnounce(u"Boss reward added to your items.", "boss reward");
-+            } else {
-+                // shortcut: native non-goods awards have no confirmation, verify before extending retries.
-+                using AwardItemLot = void PS4_SYSV_ABI (*)(u64 item_man, s32 lot, u32 forced);
-+                reinterpret_cast<AwardItemLot>(image_base + AwardItemLotOffset)(item_man, lot, 0);
-+            }
-+        }
-         {
++        const bool once = BbscBossRewardOnce(pending.event);
++        if (once) {
++            // No line, no item: an unwritable record defers the grant.
              std::scoped_lock lock{bbsc_boss_reward_mutex};
 -            bbsc_boss_reward_given.push_back(event);
 -        }
@@ -1047,7 +1401,17 @@ index 6c278c3..7d06cac 100644
 -                            "to give",
 -                     event, it->flag);
 -            continue;
--        }
++            std::erase_if(bbsc_boss_reward_unclaimed, [&](const auto& p) {
++                return SameBbscBossReward(p, pending.event, pending.owner);
++            });
++            const s64 at = std::filesystem::file_time_type::clock::now().time_since_epoch().count();
++            if (!SetBbscBossRewardLine(pending.owner, pending.event, "attempt", at)) {
++                LOG_WARNING(Debug, "BBSC boss drop: event {} - record not writable, waiting",
++                            pending.event);
++                bbsc_boss_reward_queue.push_back(pending);
++                continue;
++            }
+         }
 -        const auto goods = std::ranges::find_if(BbscBossGoodsLots,
 -                                                [lot](const auto& g) { return g.lot == lot; });
 -        if (goods != BbscBossGoodsLots.end() && GiveBbscBossGoods(*goods)) {
@@ -1057,7 +1421,29 @@ index 6c278c3..7d06cac 100644
 -            BBSC_TIMELINE("BOSS", "boss drop: event {} - item lot {} given to the guest directly ({})",
 -                     event, lot, taken ? "repeat lot, flag already set" : "first kill");
 -            continue;
-+            bbsc_boss_reward_given.push_back(pending);
++        if (lot != 0) {
++            const auto goods = std::ranges::find_if(BbscBossGoodsLots,
++                                                    [lot](const auto& g) { return g.lot == lot; });
++            if (goods != BbscBossGoodsLots.end()) {
++                // A failed direct add stays pending; the popup fallback has no success signal.
++                if (!GiveBbscBossGoods(*goods)) {
++                    if (once) {
++                        // The failure is written at once, like a success: only a record that breaks
++                        // between these two writes leaves an attempt without its outcome.
++                        std::scoped_lock lock{bbsc_boss_reward_mutex};
++                        if (!SetBbscBossRewardLine(pending.owner, pending.event, "", 0)) {
++                            bbsc_boss_reward_unclaimed.push_back(pending); // retried every second
++                        }
++                    }
++                    defer();
++                    continue;
++                }
++                BbscAnnounce(u"Boss reward added to your items.", "boss reward");
++            } else {
++                // shortcut: native non-goods awards have no confirmation, verify before extending retries.
++                using AwardItemLot = void PS4_SYSV_ABI (*)(u64 item_man, s32 lot, u32 forced);
++                reinterpret_cast<AwardItemLot>(image_base + AwardItemLotOffset)(item_man, lot, 0);
++            }
          }
 -        using AwardItemLot = void PS4_SYSV_ABI (*)(u64 item_man, s32 lot, u32 forced);
 -        reinterpret_cast<AwardItemLot>(image_base + AwardItemLotOffset)(item_man, lot, 0);
@@ -1065,6 +1451,20 @@ index 6c278c3..7d06cac 100644
 -                 taken ? "repeat lot, flag already set" : "first kill");
 -        BBSC_TIMELINE("BOSS", "boss drop: event {} - item lot {} given to the guest ({})", event, lot,
 -                 taken ? "repeat lot, flag already set" : "first kill");
++        {
++            std::scoped_lock lock{bbsc_boss_reward_mutex};
++            bbsc_boss_reward_given.push_back(pending);
++            if (once) {
++                const s64 since =
++                    std::filesystem::file_time_type::clock::now().time_since_epoch().count();
++                const bool recorded = SetBbscBossRewardLine(pending.owner, pending.event, "granted", since);
++                if (!recorded) {
++                    LOG_WARNING(Debug, "BBSC boss drop: event {} given, its granted line not written "
++                                       "yet (the attempt line holds it) - retrying", pending.event);
++                }
++                bbsc_boss_reward_unsaved.push_back({pending, since, recorded}); // final once saved
++            }
++        }
 +        LOG_INFO(Debug, "BBSC boss drop: event {} lot {} finished for user {} slot {}",
 +                 pending.event, lot, owner->user, owner->slot);
 +        BBSC_TIMELINE("BOSS", "boss drop: event {} lot {} finished for user {} slot {}",
@@ -1077,7 +1477,7 @@ index 6c278c3..7d06cac 100644
  // Reliable packets waiting for a member that does not take them (see SendBacklog.Limit in
  // bbsc_patch_tables.h): [SprjSessionManager]+0x188 is a list head, each node +0x10 -> queue, +0x30
  // its packet count; +0x1B0 one more count. Logged while it grows past 100 (at most every 30 s).
-@@ -10809,16 +11331,141 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
+@@ -10809,16 +11720,141 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
  std::mutex bbsc_progress_mutex;
  std::vector<u32> bbsc_progress_host_flags;                         // guest: host's boss flags seen
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_progress_groups; // guest: kind 1, OR-ed
@@ -1220,7 +1620,7 @@ index 6c278c3..7d06cac 100644
      std::vector<u32> flags;
      std::map<u32, std::array<u8, BbscWorldGroupBytes>> groups;
      {
-@@ -10827,11 +11474,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
+@@ -10827,11 +11863,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
          groups = bbsc_progress_groups;
      }
      if (flags.empty() && groups.empty()) {
@@ -1248,7 +1648,7 @@ index 6c278c3..7d06cac 100644
      using SetEventFlag = u64 PS4_SYSV_ABI (*)(u64 unused, u32 flag, u8 value);
      const auto set = reinterpret_cast<SetEventFlag>(image_base + 0x0132E5A0);
      s64 bosses = 0;
-@@ -10906,9 +11569,10 @@ void TickBbscProgressBroadcast() {
+@@ -10906,9 +11958,10 @@ void TickBbscProgressBroadcast() {
  // newest userdata00NN (0..9) of the user's CUSA00207\SPRJ0005 folder, written during this run.
  constexpr s64 BbscProgressFileMs = 10'000;
  constexpr s64 BbscProgressRecoverMs = 15'000;
@@ -1261,7 +1661,7 @@ index 6c278c3..7d06cac 100644
  
  std::filesystem::path BbscPendingProgressPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() /
-@@ -11033,6 +11697,14 @@ void TickBbscSharedProgress() {
+@@ -11033,6 +12086,14 @@ void TickBbscSharedProgress() {
      }
      last_ms = now;
      const s32 state = GetSessionState();
@@ -1276,7 +1676,7 @@ index 6c278c3..7d06cac 100644
      const u64 global = GetGlobalState();
      const bool own_world = ReadablePointer(global, 0x1598) && ReadValue<u8>(global, 0x1592) != 0;
      static s64 file_written_ms = 0;
-@@ -11054,6 +11726,11 @@ void TickBbscSharedProgress() {
+@@ -11054,6 +12115,11 @@ void TickBbscSharedProgress() {
          if (!bbsc_progress_slot.has_value()) {
              bbsc_progress_slot = BbscActiveSaveSlot();
              if (bbsc_progress_slot.has_value()) {
@@ -1288,7 +1688,7 @@ index 6c278c3..7d06cac 100644
                  LoadBbscPendingProgress(*bbsc_progress_slot);
              }
          }
-@@ -11077,6 +11754,17 @@ void TickBbscSharedProgress() {
+@@ -11077,6 +12143,17 @@ void TickBbscSharedProgress() {
              }
          }
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1306,7 +1706,7 @@ index 6c278c3..7d06cac 100644
          for (const BbscWorldSnapshot& snap : blocks) {
              // Not the Hunter's Dream (report 2026-10-07: "guest does not have the starter items in
              // the Hunter's Dream"): its groups hold the messengers' starter weapons, the Doll and
-@@ -11089,13 +11777,48 @@ void TickBbscSharedProgress() {
+@@ -11089,13 +12166,48 @@ void TickBbscSharedProgress() {
                  if ((snap.present & (u64{1} << i)) == 0) {
                      continue;
                  }
@@ -1358,7 +1758,7 @@ index 6c278c3..7d06cac 100644
      }
      if (!bbsc_progress_was_guest) {
          // A file an earlier session left (crash, quit while a guest): merged once this character
-@@ -11154,17 +11877,32 @@ void TickBbscSharedProgress() {
+@@ -11154,17 +12266,32 @@ void TickBbscSharedProgress() {
      if (now - bbsc_progress_home_ms < BbscProgressSettleMs) {
          return;
      }
@@ -1395,7 +1795,7 @@ index 6c278c3..7d06cac 100644
      bbsc_progress_slot.reset();
      if (bosses < 0) {
          LOG_INFO(Debug, "BBSC shared progress: home again, nothing from the host to merge");
-@@ -11201,7 +11939,9 @@ void ApplyBbscSharedProgressAtLoad() {
+@@ -11201,7 +12328,9 @@ void ApplyBbscSharedProgressAtLoad() {
          ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
          return; // not home yet, or our own Dream state still to be put back (the tick merges then)
      }
@@ -1406,7 +1806,7 @@ index 6c278c3..7d06cac 100644
      const auto [bosses, bits] = MergeBbscSharedProgress("during the home load");
      bbsc_progress_merged_at_load = bosses >= 0;
  }
-@@ -11235,6 +11975,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
+@@ -11235,6 +12364,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
      }
      const s64 event = ReadablePointer(registers->rdx, 0xC0) ? BbscEventIdOf(registers->rdx) : -1;
      if (event > 0) {
@@ -1414,7 +1814,7 @@ index 6c278c3..7d06cac 100644
          NoteBbscBossRewardEvent(event); // a boss reward event the guest's copy never finishes
      }
      if (type != 0) {
-@@ -14398,10 +15139,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -14398,10 +15528,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -1432,7 +1832,7 @@ index 6c278c3..7d06cac 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -15997,6 +16742,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -15997,6 +17131,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      }
  
      const auto& site = Sites[tag];
@@ -1443,7 +1843,7 @@ index 6c278c3..7d06cac 100644
      if (site.offset == ItemUsableResultOffset) {
          ApplyBbscBellsAnywhere(registers);
      }
-@@ -16012,6 +16761,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16012,6 +17150,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      if (summon_reload_state_hook_installed && site.offset == StageWarpDescriptorFinalizeOffset) {
          ApplySummonReloadStateAtDescriptor(*registers);
      }
@@ -1454,7 +1854,7 @@ index 6c278c3..7d06cac 100644
      if (site.offset == 0x0178D9C0) {
          BbscConnectFirstReloadFinished();
      }
-@@ -16024,6 +16777,8 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16024,6 +17166,8 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
@@ -1463,7 +1863,7 @@ index 6c278c3..7d06cac 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -16100,11 +16855,13 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16100,11 +17244,13 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
              TickBbscStateDiff();
              TickBbscJoinTeleport();
          }
@@ -1477,7 +1877,7 @@ index 6c278c3..7d06cac 100644
              static s64 last_shape_ms = 0;
              if (const s64 now = SteadyNowMs(); now - last_shape_ms > 1'000) {
                  last_shape_ms = now;
-@@ -16762,25 +17519,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
+@@ -16762,25 +17908,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
      s32 time_bits = 0; // the packet holds every listed flag the host has on, so absent = off
      {
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1518,7 +1918,7 @@ index 6c278c3..7d06cac 100644
      }
  }
  
-@@ -16866,7 +17632,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
+@@ -16866,7 +18021,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
  
  // Arrives on the signaling receive thread, so it does no game-memory work at all: it records the
  // message and TickBbscFollowHost decides, on the game thread, whether to act on it.
@@ -1527,7 +1927,7 @@ index 6c278c3..7d06cac 100644
      using Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
      if (!BbscWorldSyncEnabled() || data == nullptr || size != sizeof(SignalingBbscWorldFlags)) {
          return;
-@@ -16890,6 +17656,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16890,6 +18045,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
          std::scoped_lock lock{bbsc_world_mutex};
          BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
          BbscWorldSnapshot& ready = dream ? bbsc_dream_ready : bbsc_world_ready;
@@ -1548,7 +1948,7 @@ index 6c278c3..7d06cac 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -16920,6 +17700,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16920,6 +18089,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
      }
  }
  
@@ -1693,7 +2093,7 @@ index 6c278c3..7d06cac 100644
  void OnBbscHostFollowPacket(std::uint32_t packed_map, float x, float y, float z, float heading,
                              std::uint32_t sequence, std::int32_t lamp_point) {
      if (!BbscWarpTogetherEnabled()) {
-@@ -17791,7 +18709,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +19098,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,
@@ -1703,3 +2103,11 @@ index 6c278c3..7d06cac 100644
              LOG_ERROR(Debug, "Failed to install Bloodborne RE hook {} at {:#x}", site.name,
                        site.offset);
              continue;
+@@ -17812,6 +19120,7 @@ void InstallReverseEngineeringTrace() {
+     InstallBbscQuitHook();
+     InstallBbscDeathTraceHooks();
+     InstallBbscBannerHook();
++    SettleBbscBossRewardsAtStart(); // before the game can write a save (see "once per character")
+ }
+ 
+ BbscPresence GetBbscPresence() {
