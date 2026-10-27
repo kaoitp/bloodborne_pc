@@ -121,6 +121,23 @@ Quit, reload, and check that the character stays at the lamp with its own flags.
 
 **N4. Without the variable,** N1 behaves as in B16: no warp.
 
+### Checking the logs
+
+`tools/check_r03_native.py` reads the guest's `bbsc-mod-*.log` files and prints each expected line with its time, then a verdict. Pass the files **in process order**, one per guest process. It starts nothing and only reads; `--user-dir` (the mod's user folder, which holds `own-world/`) also checks the files on disk.
+
+```
+python tools/check_r03_native.py b17-n1 crash/bbsc-mod-A.log restart/bbsc-mod-B.log --user-dir <mod user folder>
+```
+
+| Verdict | Exit | Meaning |
+|---|---|---|
+| PASS | 0 | Every automatic check passed. |
+| FAIL | 1 | A line that must not appear did, or a count is wrong. |
+| INCOMPLETE | 2 | An expected line is missing: the run may have stopped early. |
+| MANUAL | 3 | The automatic checks passed; the rows marked `manual` are a person's check. |
+
+Defaults: user `sd1`, slot 3, map 0x18010000; `--map` changes it. Its patterns are tested against the actual log format strings (`tests/test_r03_native_check.py`), so a changed message fails that test instead of the run. It has only been run on synthetic logs and on the revision 1 logs here, not on a native run of this revision. Cases: `b17-n1` .. `b17-n3`. They end MANUAL at best, because the position, the flags and the reload are checked in the game. N4 is not covered.
+
 ## Limits
 
 - Fixture evidence only, as above.

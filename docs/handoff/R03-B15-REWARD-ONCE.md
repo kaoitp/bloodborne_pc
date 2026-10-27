@@ -167,6 +167,23 @@ The cases also need:
 4. **R4-N4, in-flight save boundary.** In R4-N1, compare the add's time with the first `userdata0003` write time after it. Record whether a save that began before the add could have finished after it.
 5. **Optional, Umbilical Cord.** Use the cord, restart, kill again: no second cord.
 
+### Checking the logs
+
+`tools/check_r03_native.py` reads the guest's `bbsc-mod-*.log` files and prints each expected line with its time, then a verdict. Pass the files **in process order**, one per guest process. It starts nothing and only reads; `--user-dir` (the mod's user folder, which holds `boss-rewards/`) also checks the files on disk.
+
+```
+python tools/check_r03_native.py b15-n3 p1/bbsc-mod-A.log p2/bbsc-mod-B.log --user-dir <mod user folder>
+```
+
+| Verdict | Exit | Meaning |
+|---|---|---|
+| PASS | 0 | Every automatic check passed. |
+| FAIL | 1 | A line that must not appear did, or a count is wrong. |
+| INCOMPLETE | 2 | An expected line is missing: the run may have stopped early. |
+| MANUAL | 3 | The automatic checks passed; the rows marked `manual` are a person's check. |
+
+Defaults: user `sd1`, slot 3, event 12401800 (Amelia), goods 4001 (Gold Pendant); `--event` and `--goods` change them. Its patterns are tested against the actual log format strings (`tests/test_r03_native_check.py`), so a changed message fails that test instead of the run. It has only been run on synthetic logs and on the revision 1 logs here, not on a native run of this revision. Cases: `b15-n0` .. `b15-n4`. R4-N4 always ends MANUAL: the log gives the add time and when the save was seen, and the in-flight question needs the `userdata` file times. Step 5 is not covered.
+
 ## Limits
 
 - A consumed reward is not given again. The record, not the inventory, decides. This is covered in the fixture, not natively.
