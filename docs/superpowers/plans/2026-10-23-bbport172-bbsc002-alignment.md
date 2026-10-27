@@ -333,3 +333,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] User-requested no-death test setup: existing cheat_no_death=1 in both fresh native03 copied profiles; compiled patch writes independently asserted.
 - [ ] Native03: verify both survive actual boss hits; then validate live boss target and complete joint kill/reward/reloads. No-death does not close death/recovery gates.
+
+- [x] Native03 both runtime no-death flags read1; host remained alive at1HP after aided staging.
+- [ ] Boss-hit survival on both, stable staging/actual join, validated boss target, kill/rewards/reloads remain open; bounded native03 checkpoint stopped near usage threshold.
