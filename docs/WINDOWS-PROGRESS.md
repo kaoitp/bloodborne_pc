@@ -721,3 +721,31 @@ Takeover handoff validation:8UTF8/noBOM documents,117 local links and whitespace
 
 - IN_PROGRESS exact approved head85e9e121044628a49be06f02e3070901e862a048, base72a3c8b; corrected provenance, bounded journal return/snapshot claims and takeover authority; stale PR body aligned, B15 link changed to PR12 URL. Approval5668217477. No CI/status/workflow or inline threads reported.
 - Normal no-commit merge; document byte-identical to reviewed head (line-ending normalization), UTF8/noBOM and local links PASS, whitespace checked. Documentation only; no runtime tests/build/native replay justified. Both parent histories preserved; no broad R03/native gate closure. Publication readback next. Initial merge lacked committer identity and made no changes; repeated with existing Codex identity.
+
+### B17 durable origin after a guest crash, owner-bound (2026-10-27, Claude)
+
+- **Source.** The journaled home-spot return (R02) now runs by default. Opt-out: `SHADPS4_BBSC_HOME_RECOVERY=0`. Guards:
+  - arming only from the owner-confirmed file recovery (PR11);
+  - a load from the title drops a pending return, and the file is kept for the owner;
+  - every recovery step checks that the active save slot is the owner's;
+  - bounded fallback: point, then lamp, then a single give-up with a notice after 5 unaccepted requests or no target.
+- **Fixture.** `test_bbsc_home_recovery.py` covers B16 case 2, A02 (with and without the title hook), a death, no way back, and opt-out. RED by source mutations (old gate; no owner guards; slot check removed; no try limit), GREEN. Union: 32 OK, 1 skip.
+- **Hashes.** Patch `520125e8...f34e`, LF source `53415c39...fb3e`, DLL `0a9ddf06...807a`.
+- **Native: NOT run.** It needs a guest kill within seconds of placement and Quit-to-title steering. The N1-N4 steps for the friend's side are in [B17](handoff/R03-B17-DURABLE-ORIGIN.md). `ProtectBbscNativeJoin` (A04) stays opt-in.
+- **Revision 2 (PR14 review P1).** Recovery is bounded per target (3 tries).
+  - An accepted request without a load times out after 30 s.
+  - A refused, timed-out or off-target point goes to a valid recorded lamp at once.
+  - The arrival is checked before the budget.
+  - An exhausted lamp, or a point without a lamp, ends once with the journal kept as `.unreturned`.
+  - The lamp request is now `RequestBbscLampReturn`, and the fixture exercises it.
+  - **Back to an opt-in candidate** (`SHADPS4_BBSC_HOME_RECOVERY=1`) until the native gate N1/N2/N3 has evidence.
+  - Fixture: 12 cases. RED by mutations: no timeout, lamp only after arrival, budget before arrival, default on, owner guards. Union 32 OK, 1 skip.
+  - Patch `59dd1451...9344`, LF source `19acf644...64ee`, DLL `99733756...7f73`.
+  - Native not run: a session limit set by the user (token cost, RAM), not an R03 rule. The help needed is in [B17](handoff/R03-B17-DURABLE-ORIGIN.md).
+
+### PR12-REV03 / PR14-REV02 INTEGRATION (2026-10-27, Codex)
+
+- IN_PROGRESS exact PR12 807da3c54c49a50045b75679ef6365cf31182396 and PR14 2e323f9d3e9e7d0233b7d4d50c83b7d73d5971fd; source bases72a3c8b, usage81%/63% remaining. PR13 normal merge8dd412b39681264ca8deef9c89908a5be5fe386c independently confirmed MERGED2026-10-27T13:58:10Z, completion comment posted. No open standalone issues.
+- PR12 `.superpowers/pr12-v3-review.py`:11 actual-function/header tests PASS/no skips28.265s; patchbe4bbcc8d37558e44a036e470b6f8263ef22e1e19310f5d888454181afb800b5, CRLF sourceb0181fba563bd5171ec97415064e7f1cb4ca0f345b43809135a5c86b29a37403. Failed grant corrected; new negative `.superpowers/pr12-v3-unrecorded.py` shows successful grant with initial record write blocked, save/consumption, exit before writable retry, fresh process repeats item. Actual-function ASan assert at generated638,exit3221226505; initial reused slot12 precondition corrected to untouched slot13. REQUEST_CHANGES5668258541; no merge/native attribution.
+- PR14 `.superpowers/pr14-v2-review.py`:11 actual-function/header tests PASS/no skips25.481s. Exact patch59dd1451d460a8c3f8b271ce73c3e42269c489bd43205e7d50bbcbaaa3ff9344 / CRLF586512e69c17632d553eee647a1fb3d950bef0942d96d38a3f1acc786d4f0c9c. Timeout/fallback/last-arrival tests exercise corrected source; default remains OFF, native N1/N2/N3 explicitly pending. Approved5668259763 as opt-in candidate only. No CI statuses/workflow runs/inline threads for either head.
+- Normal PR14 no-commit merge only tracker conflict; preserve exact HEAD tracker prefix and append authored B17 suffix from72a3c8b. Runtime patch/tests/B17 byte-identical to reviewed candidate normalized line endings; B16 retained, UTF8/noBOM/local links PASS. Whitespace checked before commit; no source conflict or unreviewed runtime change. No duplicate tests for identical tested source; no build/native/gameplay replay. Publication readback next; broad R03 stays open.

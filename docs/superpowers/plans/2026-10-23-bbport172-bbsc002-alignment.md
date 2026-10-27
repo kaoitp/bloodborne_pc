@@ -305,3 +305,10 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [ ] Matching-build native owner/return/fallback and settled reload before accepting new default. No R03 acceptance closure.
 
 - [x] PR13 exact85e9e12 approved and documentation integration verified; native/origin gates remain open.
+
+### PR12 revision3 / PR14 revision2 (2026-10-27)
+
+- [x] PR13 merged8dd412b and MERGED readback confirmed.
+- [ ] PR12 IN_PROGRESS / awaiting author: initial confirmation-write failure plus saved/consumed/restart still duplicates;11 standard tests pass, new actual-function negative fails; request5668258541.
+- [x] PR14 exact2e323f9 timeout/fallback/budget corrected and11 tests pass; default OFF candidate approved5668259763; integration source/docs verified.
+- [ ] PR14 native N1/N2/N3 and final same-build R03 acceptance remain open; no default enablement.
