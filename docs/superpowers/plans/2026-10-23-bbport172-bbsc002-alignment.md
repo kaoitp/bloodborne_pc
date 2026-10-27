@@ -336,3 +336,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Native03 both runtime no-death flags read1; host remained alive at1HP after aided staging.
 - [ ] Boss-hit survival on both, stable staging/actual join, validated boss target, kill/rewards/reloads remain open; bounded native03 checkpoint stopped near usage threshold.
+
+- [x] Read-only boss HUD handle-decoding preflight matches existing helper arithmetic (0x164c392..0x164c446); no unproved formula change.
+- [ ] Live pointer-state discriminator and pending native03 boss gates remain open. Mandatory usage stop at9% remaining; no native launch this continuation.
