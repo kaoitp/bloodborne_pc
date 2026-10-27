@@ -312,3 +312,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [ ] PR12 IN_PROGRESS / awaiting author: initial confirmation-write failure plus saved/consumed/restart still duplicates;11 standard tests pass, new actual-function negative fails; request5668258541.
 - [x] PR14 exact2e323f9 timeout/fallback/budget corrected and11 tests pass; default OFF candidate approved5668259763; integration source/docs verified.
 - [ ] PR14 native N1/N2/N3 and final same-build R03 acceptance remain open; no default enablement.
+
+- [x] PR12 rev4 exact e77f1a6:12 fixture/header checks PASS; initial-write deferral verified.
+- [ ] IN_PROGRESS / awaiting author: failed add plus failed removal/save/restart is held forever; actual-function negative reproduced. Resolve safely or keep default-OFF candidate with remaining protocol/native gates.
