@@ -320,3 +320,11 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Exact976c13b default-OFF record candidate reviewed;12 actual-function/header tests PASS, normal existing default retained; approved and integration verified.
 - [ ] Failed-outcome protocol ambiguity, in-flight-save and matching-build native reward gates remain open. No R03 gate completion/default enablement.
+
+
+### R03 final native acceptance (2026-10-27)
+
+- [ ] IN_PROGRESS R03-FINAL-NATIVE-01: isolated final-source build, copied-profile native join/return/reloads and bounded pending gates; record actual evidence before closing any acceptance.
+
+- [x] R03-FINAL-NATIVE-01 bounded Clinic/Cathedral join, normal guest return,1250-group preservation through title and fresh-process reload on current composition. Source/build/fixture/native evidence recorded separately.
+- [ ] IN_PROGRESS R03-FINAL-NATIVE-02: same-composition positive boss/reward and saved progress, command-assisted boss HP-0 on fresh test copies. Broad R03 and remaining native gates stay open.
