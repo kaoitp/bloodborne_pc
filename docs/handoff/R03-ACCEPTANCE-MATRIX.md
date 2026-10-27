@@ -57,3 +57,7 @@ No DLL/EXE/ZIP packaging, live-server redeployment, server outage or message to 
 ## 2026-10-27 PR13/14 integration addendum
 
 [B16](R03-B16-LIFECYCLE-NEGATIVES.md) is merged as bounded pre-PR11 native evidence only: journaled return approximately4m from early S0; interrupted guest own flags restored but locked-map origin gap remains. [B17](R03-B17-DURABLE-ORIGIN.md) candidate merged1957a62 preserves default-OFF recovery and adds owner guards, accepted-load timeout, point-to-lamp fallback and bounded failure evidence. Its11 actual-function/header checks pass; N1/N2/N3 matching-build native return, other-character isolation and lamp fallback/save-reload remain open. This is not native acceptance or authorization to enable defaults. PR12 reward durability remains under REQUEST_CHANGES; no deduplication gate is closed by its fixtures.
+
+## PR12 gated reward-record integration (2026-10-27)
+
+[B15](R03-B15-REWARD-ONCE.md) candidate merged8333130, exact reviewed976c13b, with12 actual-function/header tests passing. SHADPS4_BBSC_REWARD_ONCE remains default OFF: normal behavior still has the existing cross-process reward-duplication gap. Under opt-in, initial record failure defers delivery; ambiguous failed/successful outcome can remain held and require manual resolution. This protocol gate and the in-flight-save/native R4-N0..N4 gates remain open. No reward/native/R03 acceptance checkbox is closed by the merge. B17 recovery also remains default OFF with native gates pending.
