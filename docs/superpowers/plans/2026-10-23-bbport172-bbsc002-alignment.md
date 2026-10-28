@@ -379,3 +379,8 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 - [ ] Matching-build B19 native point return and remaining B15/B17/R03 gates open; fixtures are not native acceptance.
 
 - [ ] PR17 revision2 exact20513cb IN_PROGRESS:12 focused checks PASS; complete owed-ledger/protocol review after mandatory quota stop (primary2% remaining). No approval/merge/native acceptance.
+
+- [ ] PR17 B18 matching-build native repeat-kill, consumption/reload and never-beaten control: IN_PROGRESS; 2026-10-29 preconditions verified but inventory labels unresolved, no kill; see WINDOWS-PROGRESS checkpoint and PR comment 6476702825.
+
+- [x] PR17 revision3 exact5e70926: focused12 checks, DLL build and copied-profile repeated-Amelia guard/consumption/fresh-process Pendant0 validation PASS; [evidence](../../handoff/R03-PR17-NATIVE-VALIDATION.md).
+- [x] PR17 revision3 never-beaten native control: first Pendant x1, one confirmed grant, no owed entry after delivery and exact origin return PASS. Deferred-delivery/fault gates and broad R03 acceptance remain open.
