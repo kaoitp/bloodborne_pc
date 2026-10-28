@@ -377,3 +377,5 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 - [x] PR18 exact815feef synchronous recovery guard fix reviewed;12 actual-function/header tests PASS/no skips; merge preserves defaultOFF.
 - [ ] PR17 exact22ea102 own-boss suppression blocks never-delivered reward after saved progress/restart; negative reproduced, review5684981623 requests fix/regression and patch regeneration after PR18.
 - [ ] Matching-build B19 native point return and remaining B15/B17/R03 gates open; fixtures are not native acceptance.
+
+- [ ] PR17 revision2 exact20513cb IN_PROGRESS:12 focused checks PASS; complete owed-ledger/protocol review after mandatory quota stop (primary2% remaining). No approval/merge/native acceptance.
