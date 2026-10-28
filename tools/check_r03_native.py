@@ -18,6 +18,7 @@ CASES = ('b15-n0', 'b15-n1', 'b15-n2', 'b15-n3', 'b15-n4', 'b17-n1', 'b17-n2', '
 @dataclass
 class Entry:
     process: int  # index of the log file, 1-based in the report
+    line: int     # index within the process: the order, since consecutive lines can share a millisecond
     seconds: float
     text: str
 
@@ -33,7 +34,7 @@ def parse(text, process):
         match = LINE.match(raw)
         if match:
             h, m, s, ms, _, message = match.groups()
-            entries.append(Entry(process, int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000,
+            entries.append(Entry(process, len(entries), int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000,
                                  message))
     return entries
 
@@ -81,7 +82,12 @@ def every(entries, pattern):
 
 
 def _order(entry):
-    return entry.process, entry.seconds
+    return entry.process, entry.line
+
+
+def elapsed(earlier, later):
+    """Seconds from earlier to later in one process; the log has only the time of day, so past midnight wraps."""
+    return (later.seconds - earlier.seconds) % 86400
 
 
 class B15:
@@ -112,9 +118,11 @@ class B15:
 def check_b15(case, logs, args, report):
     b = B15(args)
     flat = [entry for log in logs for entry in log]
-    minimum = {'b15-n0': 2, 'b15-n2': 2, 'b15-n3': 2}.get(case, 1)
-    if len(logs) < minimum:
-        report.add('missing', 'processes', f'{minimum} guest logs (one per process) are needed, got {len(logs)}')
+    # (fewest, most) guest processes each case is written for; evidence in other processes is never ignored.
+    fewest, most = {'b15-n0': (2, 2), 'b15-n1': (1, 1), 'b15-n4': (1, 1)}.get(case, (2, None))
+    if len(logs) < fewest or (most is not None and len(logs) > most):
+        wanted = f'{fewest}' if fewest == most else f'at least {fewest}'
+        report.add('missing', 'processes', f'{wanted} guest log(s) (one per process) for this case, got {len(logs)}')
         return
     held = first(flat, b.held)
     if case != 'b15-n0' and held:
@@ -142,7 +150,7 @@ def check_b15(case, logs, args, report):
                             'final after the save', 'no "- final": did the game save before the exit?')
         report.expect(first(flat, b.unwritable) is None, 'record was writable')
         if add and final:
-            delta = final.seconds - add.seconds
+            delta = elapsed(add, final)
             note = f'save seen {delta:.1f} s after the add (checked once a second)'
             if case == 'b15-n4':
                 report.add('manual', 'in-flight save boundary',
@@ -191,10 +199,11 @@ def check_b15(case, logs, args, report):
             report.expect(len(given) == 1 and len(adds) == 1, 'p1: given exactly once',
                           f'{len(given)} "finished", {len(adds)} add line(s)')
             report.need(first(p, b.final, after=given[0]), 'p1: final after the save')
-        last = logs[-1]
-        report.need(first(last, b.not_again), f'p{len(logs)}: not again after the restart')
-        again = every(last, b.finished)
-        report.expect(not again, f'p{len(logs)}: no second lot', f'{len(again)} "finished" line(s)')
+        report.need(first(logs[-1], b.not_again), f'p{len(logs)}: not again after the restart')
+        for index in range(1, len(logs)):
+            again = every(logs[index], rf'{b.finished}|{b.add}')
+            report.expect(not again, f'p{index + 1}: no second lot after the restart',
+                          again[0].show() if again else '')
         return
 
 

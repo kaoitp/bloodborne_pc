@@ -35,12 +35,12 @@ def say(fragment, *values):
 
 
 class Log:
-    def __init__(self):
-        self.lines, self.t = [], 0
+    def __init__(self, start=20 * 3600):
+        self.lines, self.t = [], start
 
     def __call__(self, fragment, *values, after=1):
         self.t += after
-        h, rest = divmod(self.t + 20 * 3600, 3600)
+        h, rest = divmod(self.t % 86400, 3600)
         self.lines.append(f'[{h:02}:{rest // 60:02}:{rest % 60:02}.000] I Debug: ' + say(fragment, *values))
         return self
 
@@ -93,6 +93,9 @@ class R03NativeCheckTests(unittest.TestCase):
         self.assertVerdict('INCOMPLETE', 'b15-n1', finished(Log()))  # exit before the save
         self.assertVerdict('FAIL', 'b15-n1', finished(finished(Log()))(FINAL, E, U, S))
         self.assertVerdict('FAIL', 'b15-n1', finished(Log())(FINAL, E, U, S, after=90))
+        late = finished(Log(start=24 * 3600 - 10))(FINAL, E, U, S, after=26)   # the save past midnight
+        self.assertVerdict('PASS', 'b15-n1', late)
+        self.assertVerdict('INCOMPLETE', 'b15-n1', good, Log())   # one process only, a second is not ignored
         with tempfile.TemporaryDirectory() as user_dir:
             (Path(user_dir) / 'boss-rewards').mkdir()
             record = Path(user_dir) / 'boss-rewards' / f'given-{U}-{S}.txt'
@@ -117,6 +120,9 @@ class R03NativeCheckTests(unittest.TestCase):
         twice = finished(finished(Log()(WAITING, E)))(FINAL, E, U, S)
         self.assertVerdict('FAIL', 'b15-n3', twice, again)             # two Pendants
         self.assertVerdict('FAIL', 'b15-n3', first, finished(Log()))   # a second lot after the restart
+        self.assertVerdict('PASS', 'b15-n3', first, again, Log()(AGAIN, E, U, S))
+        self.assertVerdict('FAIL', 'b15-n3', first, finished(Log()), again)   # a duplicate in a middle process
+        self.assertVerdict('FAIL', 'b15-n3', first, Log()(ADDED, GOODS, 1, True, 0, True, 0), again)
 
     def test_b15_n4_is_left_to_a_person(self):
         self.assertVerdict('MANUAL', 'b15-n4', finished(Log())(FINAL, E, U, S, after=26))
@@ -124,6 +130,9 @@ class R03NativeCheckTests(unittest.TestCase):
     def test_b17_n1_locked_map_return(self):
         good = point(recovered(Log()))(SETTLED, after=3)
         self.assertVerdict('MANUAL', 'b17-n1', Log(), good)  # the position is a person's check
+        same_ms = point(Log()(LEFT, U, S)(BACK, U, S, MAP, 'where it joined', after=0))(SETTLED, after=3)
+        self.assertVerdict('MANUAL', 'b17-n1', same_ms)    # consecutive lines in one millisecond keep their order
+        self.assertVerdict('MANUAL', 'b17-n1', point(recovered(Log(start=24 * 3600 - 1)))(SETTLED, after=3))
         self.assertVerdict('INCOMPLETE', 'b17-n1', point(recovered(Log())))
         self.assertVerdict('FAIL', 'b17-n1', point(recovered(Log()))(GAVE_UP))
         with tempfile.TemporaryDirectory() as user_dir:

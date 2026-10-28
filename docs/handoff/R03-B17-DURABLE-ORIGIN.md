@@ -123,7 +123,7 @@ Quit, reload, and check that the character stays at the lamp with its own flags.
 
 ### Checking the logs
 
-`tools/check_r03_native.py` reads the guest's `bbsc-mod-*.log` files and prints each expected line with its time, then a verdict. Pass the files **in process order**, one per guest process. It starts nothing and only reads; `--user-dir` (the mod's user folder, which holds `own-world/`) also checks the files on disk.
+`tools/check_r03_native.py` reads the guest's `bbsc-mod-*.log` files and prints each expected line with its time, then a verdict. Pass the files **in process order**, one per guest process. It starts nothing and only reads; `--user-dir` (the mod's user folder, which holds `own-world/`) also checks the files on disk. Lines are ordered by their place in each file, not by their time, since consecutive lines often share a millisecond; times are only used for durations (wrapping past midnight). Every process's log is checked: for `b15-n3` a lot or an add in any process after the first fails; `b15-n0` takes exactly two logs and `b15-n1`/`b15-n4` exactly one, and another count is INCOMPLETE instead of ignored. A log PASS is not native acceptance: the position, flag and reload checks stay a person's.
 
 ```
 python tools/check_r03_native.py b17-n1 crash/bbsc-mod-A.log restart/bbsc-mod-B.log --user-dir <mod user folder>
