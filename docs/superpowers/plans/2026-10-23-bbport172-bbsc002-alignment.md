@@ -371,3 +371,9 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 - [ ] N3 full save/reload: lamp position persists; six group12705 bits unclassified.
 - [ ] N2 full in-flight cancellation/other-character flags/owner retry: bounded disk-journal isolation only.
 - [ ] N4 optional OFF control: prepared, not run. Defaults OFF; quota checkpoint, no product change.
+
+### PR17/18 monitor review (2026-10-28)
+
+- [x] PR18 exact815feef synchronous recovery guard fix reviewed;12 actual-function/header tests PASS/no skips; merge preserves defaultOFF.
+- [ ] PR17 exact22ea102 own-boss suppression blocks never-delivered reward after saved progress/restart; negative reproduced, review5684981623 requests fix/regression and patch regeneration after PR18.
+- [ ] Matching-build B19 native point return and remaining B15/B17/R03 gates open; fixtures are not native acceptance.
