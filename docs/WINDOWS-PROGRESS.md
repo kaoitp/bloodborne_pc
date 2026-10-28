@@ -4,6 +4,8 @@ Updated: 2026-10-28 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
+Latest B17 checkpoint2026-10-28: [native interruption/recovery evidence](handoff/R03-B17-NATIVE-01.md). Guest interrupted0.004162s after placement; owner recovery misses original point and uses lamp16.086579m away (N1 FAIL). Lamp survives normal save/restart, but six group12705 flag bits remain unclassified, so full N3 is open. Loading EiEi with owner3 journal pending causes no recovery request and preserves that journal exactly; full in-flight N2 cancellation/flags/owner retry remains unproved. Original3171 hashes exact, test games closed. No product/default change; quota checkpoint, broad acceptance open.
+
 Latest follow-up2026-10-28: [B15 ordinary replay](handoff/R03-B15-NORMAL-REPLAY.md) reproduces default reward duplication on the unchanged native04 composition. A repeated Amelia kill queues another Pendant; capacity hides it until the old Pendant is used, then a new one arrives and survives restart. No fix/default change. Rare write/save-race tests deferred by the owner; B15-ON and broad R03 gates remain open.
 
 Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [native04 evidence and reproduction](handoff/R03-FINAL-NATIVE-04.md). This is a documentation/evidence checkpoint; tested runtime artifacts are unchanged. Preserve the active implementer's unrelated work when integrating.
@@ -20,6 +22,10 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### B17 matching-build native recovery — CHECKPOINT / acceptance open (2026-10-28, Codex)
+
+User requests B17 after the B15 duplicate reproduction; prior authorization for copied-profile command-assisted control persists. Dependencies: unchanged integrated native01 DLL/source/probe, clean copied Clinic guest/Cathedral host and existing distinct accounts. Enable HOME_RECOVERY=1 only on copied guest, old experimental admission stays OFF. Scope: N1 crash within10s of placement and owner return/save-reload; N2 pending-return title/other-character isolation with owner's later retry; N3 point failure -> recorded lamp/save-reload (naturally exercised after a valid point missed; synthetic copy not launched). Capture per-case effective configuration, exact artifact hashes, timing, journals, own flags/positions and original3171 integrity. Default-OFF and broad R03 gates unchanged; no product implementation/server/packaging changes.
 
 ### B15 normal replay reward check — REPRODUCED-GAP (2026-10-28, Codex)
 
