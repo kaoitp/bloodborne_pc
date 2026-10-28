@@ -64,6 +64,10 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
+2026-10-28 B15 normal replay check: IN_PROGRESS at the user's request. Rare write-failure/save-race cases are deferred. Use native04's saved guest with Pendant x1 and a copied live-Amelia host; verify a fresh-process repeated eligible kill, item/log counts, normal return and independent reload on the unchanged native composition. Command-assisted gameplay is authorized while the user is away. No broad checkbox is closed by this scope reduction.
+
+- [x] B15 ordinary replay test completed: default-OFF deduplication gap reproduced; full capacity defers the second reward, using the old Pendant allows a new one, and the duplicate survives independent restart. Exact origin/stable1250/original3171 checks pass. [Native evidence](../../handoff/R03-B15-NORMAL-REPLAY.md). No product fix, B15-ON acceptance or broad R03 closure; rare fault cases deferred.
+
 Owner: Codex. Dependency: R02 composition VERIFIED. Status: IN_PROGRESS. Native same-map and Cathedral Ward -> Dream join/adjacent placement succeeded. [R04-J01](../../handoff/R04-JOIN-RELOAD.md) verified the existing-flag fix for a second-load guest-role/return gap. The earlier pre-claim failure remains unexplained; full G1/G2/G3 remain open. [Progress evidence](../../WINDOWS-PROGRESS.md), [resume](../../handoff/R03-RESUME.md).
 
 - [x] Initialize only required pinned dependencies and build using the baseline's `bash build.sh`; record actual waited exit and source/diff state. Exit 0; hashes/dependency inventory in R02 evidence.

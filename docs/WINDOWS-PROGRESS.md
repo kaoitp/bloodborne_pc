@@ -4,6 +4,8 @@ Updated: 2026-10-28 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
+Latest follow-up2026-10-28: [B15 ordinary replay](handoff/R03-B15-NORMAL-REPLAY.md) reproduces default reward duplication on the unchanged native04 composition. A repeated Amelia kill queues another Pendant; capacity hides it until the old Pendant is used, then a new one arrives and survives restart. No fix/default change. Rare write/save-race tests deferred by the owner; B15-ON and broad R03 gates remain open.
+
 Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [native04 evidence and reproduction](handoff/R03-FINAL-NATIVE-04.md). This is a documentation/evidence checkpoint; tested runtime artifacts are unchanged. Preserve the active implementer's unrelated work when integrating.
 
 | Latest check | Result | Boundary / next action |
@@ -18,6 +20,12 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### B15 normal replay reward check — REPRODUCED-GAP (2026-10-28, Codex)
+
+User narrows B15 to duplicate rewards during ordinary restart/repeated joint kills; rare write-failure/save-race testing is deferred. User is away and authorizes command-assisted character control. Dependencies: native04's protected guest save+journal (Pendant x1), a copied pre-Amelia host, unchanged final native DLL/probe and existing distinct authorized accounts. Scope: private copied profiles/helpers, native evidence and shared tracker/plan only. Acceptance: verify guest item count before the repeated kill, actual eligible Amelia kill after a fresh process, reward log/count afterwards, normal return and independent reload; disclose effective reward-once switch and any duplicate. No production switch/source/server change. Original profile hashes must remain exact. Broad B15/R03 gates remain open.
+
+Completed bounded test: [normal replay evidence](handoff/R03-B15-NORMAL-REPLAY.md). Reward-once OFF: native04 guest Pendant x1/AmeliaON, copied host AmeliaOFF; actual joined party/guarded boss HP8051->0. Repeat event queued20:38:57; full one-item capacity initially rejects delivery. At home, ordinary use of the old Pendant produces Gold Blood Gem x1, then20:40:21 new Pendant is inserted in slot85 (old84), lot finished. Both save/title; independent guest PID15248 retains new Pendant x1 with zero fresh grants, exact Clinic origin and stable1250-group repeat. Actual assert script exit0; originals3171 exact. Games closed. Test task complete with reproduced default duplicate; no fix or opt-in B15 acceptance. Rare faults remain deferred; next implementation decision is bounded reward deduplication, preserving B15's unresolved protocol limits.
 
 The user authorized R02 baseline composition on 2026-10-23. Work is on `seamless`, created directly from BBport 1.7.2 `e5d04e2ba4864ccf40de6c3cf6aa532855320b0d`. Existing `windows` stays unchanged. No old source patches/worktrees/builds/profiles are imported; no previous PASS result qualifies this checkout.
 
