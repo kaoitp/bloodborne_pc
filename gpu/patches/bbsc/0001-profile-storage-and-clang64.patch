@@ -40,7 +40,7 @@ index cc92167..7c87bfc 100644
      text << in.rdbuf();
      return text.str();
 diff --git a/emulator/src/core/bloodborne_re.cpp b/emulator/src/core/bloodborne_re.cpp
-index 6c278c3..61dee92 100644
+index 6c278c3..160e417 100644
 --- a/emulator/src/core/bloodborne_re.cpp
 +++ b/emulator/src/core/bloodborne_re.cpp
 @@ -1,6 +1,7 @@
@@ -926,7 +926,7 @@ index 6c278c3..61dee92 100644
  bool BbscEventFlag(u32 flag) {
      // 0x01399BF0 panics when SprjEventFlagMan does not exist.
      if (ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
-@@ -10292,26 +10819,486 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
+@@ -10292,26 +10819,507 @@ constexpr std::array<BbscBossReward, 19> BbscBossRewards{{
  constexpr u64 ItemManPointerOffset = 0x0553D6E0;
  constexpr u64 AwardItemLotOffset = 0x017DDC50; // (item man, lot, 0) as the 2003[04] handler calls it
  std::mutex bbsc_boss_reward_mutex;
@@ -1013,8 +1013,20 @@ index 6c278c3..61dee92 100644
 +// guard would refuse the next kill, and the in-memory queue ends with the process. So every queued
 +// reward is also a line in <mod>/boss-rewards/owed-<user>-<slot>.txt, written when it is queued and
 +// removed only after the delivery (or after B15's record says it was given). At the next start every
-+// owed line is queued again for its owner. Default ON, independent of SHADPS4_BBSC_REWARD_ONCE.
-+// A write that fails is retried every second; the reward is delivered from memory meanwhile.
++// owed line is queued again for its owner. A write that fails is retried every second; the reward is
++// delivered from memory meanwhile.
++// OPEN protocol gates (PR #17 review 2), so the guard and this ledger are an experimental opt-in,
++// SHADPS4_BBSC_REWARD_DEDUP=1, default OFF (the existing behaviour, duplicates included): an owed
++// line that cannot be written until the game closes, while the shared progress saves the boss's
++// flag, loses the obligation (the next start has no line, the guard refuses the next kill); a
++// removal that fails until the game closes queues an already delivered - maybe used up - reward
++// again at the next start. The boss flag reaches the own world through the shared progress, not
++// through this ledger, so the two cannot be written together.
++bool BbscBossRewardDedupEnabled() {
++    const char* value = std::getenv("SHADPS4_BBSC_REWARD_DEDUP");
++    return value != nullptr && value[0] == '1' && value[1] == '\0';
++}
++
 +std::filesystem::path BbscBossRewardOwedPath(const BbscSaveSlot& slot) {
 +    return BbscBossRewardFolder() / fmt::format("owed-{}-{}.txt", slot.user, slot.slot);
 +}
@@ -1091,6 +1103,9 @@ index 6c278c3..61dee92 100644
 +
 +// Under bbsc_boss_reward_mutex.
 +void WriteBbscBossRewardOwed(const BbscBossRewardPending& reward, bool owed) {
++    if (!BbscBossRewardDedupEnabled()) {
++        return; // opt-in only (see "Owed rewards")
++    }
 +    std::erase_if(bbsc_boss_reward_owed_writes, [&](const BbscBossRewardOwedWrite& w) {
 +        return SameBbscBossReward(w.reward, reward.event, reward.owner);
 +    });
@@ -1109,6 +1124,9 @@ index 6c278c3..61dee92 100644
 +
 +// At start: every owed line an earlier run left is queued again for its owner.
 +void QueueBbscBossRewardsOwedAtStart() {
++    if (!BbscBossRewardDedupEnabled()) {
++        return; // opt-in only: the files of an earlier opt-in run stay as they are
++    }
 +    std::error_code ec;
 +    std::filesystem::directory_iterator it(BbscBossRewardFolder(), ec);
 +    if (ec) {
@@ -1354,6 +1372,7 @@ index 6c278c3..61dee92 100644
 +// guest whose own world already has the boss's event flag gets nothing for it again. Own world =
 +// the journal's copy kept before the join (CaptureBbscOwnWorldBeforeJoin), not the live table,
 +// which holds the host's flags now. nullopt when the journal has no copy of the flag's group.
++// Used only with SHADPS4_BBSC_REWARD_DEDUP=1 (see "Owed rewards": the guard needs the owed ledger).
 +std::optional<bool> BbscOwnWorldHasFlag(u32 flag) {
 +    const auto it = bbsc_own_world.find(flag / 1000);
 +    if (it == bbsc_own_world.end()) {
@@ -1394,7 +1413,9 @@ index 6c278c3..61dee92 100644
 +                      event);
 +        return;
 +    }
-+    if (const auto beaten = BbscOwnWorldHasFlag(static_cast<u32>(event)); beaten == true) {
++    if (const auto beaten = BbscBossRewardDedupEnabled() ? BbscOwnWorldHasFlag(static_cast<u32>(event))
++                                                         : std::optional<bool>{false};
++        beaten == true) {
 +        LOG_INFO(Debug, "BBSC boss drop: event {} - user {} slot {} has beaten this boss in its own "
 +                        "world - not again",
 +                 event, owner->user, owner->slot);
@@ -1424,7 +1445,7 @@ index 6c278c3..61dee92 100644
      }
  }
  
-@@ -10414,76 +11401,165 @@ void TickBbscBossGoodsCheck() {
+@@ -10414,76 +11422,165 @@ void TickBbscBossGoodsCheck() {
  
  // Game tick: award the queued boss lots, once each.
  void TickBbscBossRewards() {
@@ -1642,7 +1663,7 @@ index 6c278c3..61dee92 100644
  // Reliable packets waiting for a member that does not take them (see SendBacklog.Limit in
  // bbsc_patch_tables.h): [SprjSessionManager]+0x188 is a list head, each node +0x10 -> queue, +0x30
  // its packet count; +0x1B0 one more count. Logged while it grows past 100 (at most every 30 s).
-@@ -10809,16 +11885,141 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
+@@ -10809,16 +11906,141 @@ bool BackupBbscSaves(); // see "The BBSC hunter's kit"
  std::mutex bbsc_progress_mutex;
  std::vector<u32> bbsc_progress_host_flags;                         // guest: host's boss flags seen
  std::map<u32, std::array<u8, BbscWorldGroupBytes>> bbsc_progress_groups; // guest: kind 1, OR-ed
@@ -1785,7 +1806,7 @@ index 6c278c3..61dee92 100644
      std::vector<u32> flags;
      std::map<u32, std::array<u8, BbscWorldGroupBytes>> groups;
      {
-@@ -10827,11 +12028,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
+@@ -10827,11 +12049,27 @@ std::pair<s64, size_t> MergeBbscSharedProgress(std::string_view when) {
          groups = bbsc_progress_groups;
      }
      if (flags.empty() && groups.empty()) {
@@ -1813,7 +1834,7 @@ index 6c278c3..61dee92 100644
      using SetEventFlag = u64 PS4_SYSV_ABI (*)(u64 unused, u32 flag, u8 value);
      const auto set = reinterpret_cast<SetEventFlag>(image_base + 0x0132E5A0);
      s64 bosses = 0;
-@@ -10906,9 +12123,10 @@ void TickBbscProgressBroadcast() {
+@@ -10906,9 +12144,10 @@ void TickBbscProgressBroadcast() {
  // newest userdata00NN (0..9) of the user's CUSA00207\SPRJ0005 folder, written during this run.
  constexpr s64 BbscProgressFileMs = 10'000;
  constexpr s64 BbscProgressRecoverMs = 15'000;
@@ -1826,7 +1847,7 @@ index 6c278c3..61dee92 100644
  
  std::filesystem::path BbscPendingProgressPath(const BbscSaveSlot& slot) {
      return Common::FS::GetUserPath(Common::FS::PathType::CapturesDir).parent_path() /
-@@ -11033,6 +12251,14 @@ void TickBbscSharedProgress() {
+@@ -11033,6 +12272,14 @@ void TickBbscSharedProgress() {
      }
      last_ms = now;
      const s32 state = GetSessionState();
@@ -1841,7 +1862,7 @@ index 6c278c3..61dee92 100644
      const u64 global = GetGlobalState();
      const bool own_world = ReadablePointer(global, 0x1598) && ReadValue<u8>(global, 0x1592) != 0;
      static s64 file_written_ms = 0;
-@@ -11054,6 +12280,11 @@ void TickBbscSharedProgress() {
+@@ -11054,6 +12301,11 @@ void TickBbscSharedProgress() {
          if (!bbsc_progress_slot.has_value()) {
              bbsc_progress_slot = BbscActiveSaveSlot();
              if (bbsc_progress_slot.has_value()) {
@@ -1853,7 +1874,7 @@ index 6c278c3..61dee92 100644
                  LoadBbscPendingProgress(*bbsc_progress_slot);
              }
          }
-@@ -11077,6 +12308,17 @@ void TickBbscSharedProgress() {
+@@ -11077,6 +12329,17 @@ void TickBbscSharedProgress() {
              }
          }
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -1871,7 +1892,7 @@ index 6c278c3..61dee92 100644
          for (const BbscWorldSnapshot& snap : blocks) {
              // Not the Hunter's Dream (report 2026-10-07: "guest does not have the starter items in
              // the Hunter's Dream"): its groups hold the messengers' starter weapons, the Doll and
-@@ -11089,13 +12331,48 @@ void TickBbscSharedProgress() {
+@@ -11089,13 +12352,48 @@ void TickBbscSharedProgress() {
                  if ((snap.present & (u64{1} << i)) == 0) {
                      continue;
                  }
@@ -1923,7 +1944,7 @@ index 6c278c3..61dee92 100644
      }
      if (!bbsc_progress_was_guest) {
          // A file an earlier session left (crash, quit while a guest): merged once this character
-@@ -11154,17 +12431,32 @@ void TickBbscSharedProgress() {
+@@ -11154,17 +12452,32 @@ void TickBbscSharedProgress() {
      if (now - bbsc_progress_home_ms < BbscProgressSettleMs) {
          return;
      }
@@ -1960,7 +1981,7 @@ index 6c278c3..61dee92 100644
      bbsc_progress_slot.reset();
      if (bosses < 0) {
          LOG_INFO(Debug, "BBSC shared progress: home again, nothing from the host to merge");
-@@ -11201,7 +12493,9 @@ void ApplyBbscSharedProgressAtLoad() {
+@@ -11201,7 +12514,9 @@ void ApplyBbscSharedProgressAtLoad() {
          ReadValue<u64>(image_base + EventFlagManPointerOffset, 0) == 0) {
          return; // not home yet, or our own Dream state still to be put back (the tick merges then)
      }
@@ -1971,7 +1992,7 @@ index 6c278c3..61dee92 100644
      const auto [bosses, bits] = MergeBbscSharedProgress("during the home load");
      bbsc_progress_merged_at_load = bosses >= 0;
  }
-@@ -11235,6 +12529,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
+@@ -11235,6 +12550,7 @@ void PS4_SYSV_ABI BbscDreamTypeCheckHook(u64 /*tag*/, const GuestRegisterSnapsho
      }
      const s64 event = ReadablePointer(registers->rdx, 0xC0) ? BbscEventIdOf(registers->rdx) : -1;
      if (event > 0) {
@@ -1979,7 +2000,7 @@ index 6c278c3..61dee92 100644
          NoteBbscBossRewardEvent(event); // a boss reward event the guest's copy never finishes
      }
      if (type != 0) {
-@@ -14398,10 +15693,14 @@ bool BackupBbscSavesUnchecked() {
+@@ -14398,10 +15714,14 @@ bool BackupBbscSavesUnchecked() {
      namespace fs = std::filesystem;
      std::vector<fs::path> bases;
      std::error_code ec;
@@ -1997,7 +2018,7 @@ index 6c278c3..61dee92 100644
      }
  #endif
      const auto stamp = std::chrono::system_clock::now().time_since_epoch();
-@@ -15997,6 +17296,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -15997,6 +17317,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      }
  
      const auto& site = Sites[tag];
@@ -2008,7 +2029,7 @@ index 6c278c3..61dee92 100644
      if (site.offset == ItemUsableResultOffset) {
          ApplyBbscBellsAnywhere(registers);
      }
-@@ -16012,6 +17315,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16012,6 +17336,10 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
      if (summon_reload_state_hook_installed && site.offset == StageWarpDescriptorFinalizeOffset) {
          ApplySummonReloadStateAtDescriptor(*registers);
      }
@@ -2019,7 +2040,7 @@ index 6c278c3..61dee92 100644
      if (site.offset == 0x0178D9C0) {
          BbscConnectFirstReloadFinished();
      }
-@@ -16024,6 +17331,8 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16024,6 +17352,8 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
          ApplyBbscGuestLootViewAtLoad();
      }
      if (site.offset == 0x01938F65) { // Warp.RespawnPoint.Resolve: a load picks its spawn point
@@ -2028,7 +2049,7 @@ index 6c278c3..61dee92 100644
          RestoreBbscOwnWorldAtLoad();
          ApplyBbscSharedProgressAtLoad();
      }
-@@ -16100,11 +17409,13 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
+@@ -16100,11 +17430,13 @@ void PS4_SYSV_ABI TraceEntry(u64 tag, const GuestRegisterSnapshot* registers) {
              TickBbscStateDiff();
              TickBbscJoinTeleport();
          }
@@ -2042,7 +2063,7 @@ index 6c278c3..61dee92 100644
              static s64 last_shape_ms = 0;
              if (const s64 now = SteadyNowMs(); now - last_shape_ms > 1'000) {
                  last_shape_ms = now;
-@@ -16762,25 +18073,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
+@@ -16762,25 +18094,34 @@ void OnBbscProgressPacket(const std::uint32_t* flags, std::size_t count) {
      s32 time_bits = 0; // the packet holds every listed flag the host has on, so absent = off
      {
          std::scoped_lock lock{bbsc_progress_mutex};
@@ -2083,7 +2104,7 @@ index 6c278c3..61dee92 100644
      }
  }
  
-@@ -16866,7 +18186,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
+@@ -16866,7 +18207,7 @@ void OnBbscPvpPacket(std::uint8_t kind, std::uint8_t on) {
  
  // Arrives on the signaling receive thread, so it does no game-memory work at all: it records the
  // message and TickBbscFollowHost decides, on the game thread, whether to act on it.
@@ -2092,7 +2113,7 @@ index 6c278c3..61dee92 100644
      using Libraries::Np::NpSignaling::SignalingBbscWorldFlags;
      if (!BbscWorldSyncEnabled() || data == nullptr || size != sizeof(SignalingBbscWorldFlags)) {
          return;
-@@ -16890,6 +18210,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16890,6 +18231,20 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
          std::scoped_lock lock{bbsc_world_mutex};
          BbscWorldSnapshot& snap = dream ? bbsc_dream_assembling : bbsc_world_assembling;
          BbscWorldSnapshot& ready = dream ? bbsc_dream_ready : bbsc_world_ready;
@@ -2113,7 +2134,7 @@ index 6c278c3..61dee92 100644
          if (snap.map != packet.packed_map || snap.snapshot != packet.snapshot) {
              snap = BbscWorldSnapshot{};
              snap.map = packet.packed_map;
-@@ -16920,6 +18254,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
+@@ -16920,6 +18275,144 @@ void OnBbscWorldFlagsPacket(const void* data, std::uint32_t size) {
      }
  }
  
@@ -2258,7 +2279,7 @@ index 6c278c3..61dee92 100644
  void OnBbscHostFollowPacket(std::uint32_t packed_map, float x, float y, float z, float heading,
                              std::uint32_t sequence, std::int32_t lamp_point) {
      if (!BbscWarpTogetherEnabled()) {
-@@ -17791,7 +19263,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17791,7 +19284,8 @@ void InstallReverseEngineeringTrace() {
          }
          const auto expected = std::span<const u8>{site.prologue.data(), site.prologue_size};
          if (!InstallGuestCodeHook(reinterpret_cast<void*>(image_base + site.offset), expected,
@@ -2268,7 +2289,7 @@ index 6c278c3..61dee92 100644
              LOG_ERROR(Debug, "Failed to install Bloodborne RE hook {} at {:#x}", site.name,
                        site.offset);
              continue;
-@@ -17812,6 +19285,8 @@ void InstallReverseEngineeringTrace() {
+@@ -17812,6 +19306,8 @@ void InstallReverseEngineeringTrace() {
      InstallBbscQuitHook();
      InstallBbscDeathTraceHooks();
      InstallBbscBannerHook();

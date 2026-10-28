@@ -149,6 +149,13 @@ void reward_once(const char* value) {
     setenv("SHADPS4_BBSC_REWARD_ONCE", value, 1);
 #endif
 }
+void dedup(const char* value) {
+#ifdef _WIN32
+    _putenv_s("SHADPS4_BBSC_REWARD_DEDUP", value);
+#else
+    setenv("SHADPS4_BBSC_REWARD_DEDUP", value, 1);
+#endif
+}
 std::string owed_line(const BbscSaveSlot& s) {
     std::ifstream f("user/boss-rewards/owed-" + s.user + "-" + std::to_string(s.slot) + ".txt");
     return std::string((std::istreambuf_iterator<char>(f)), {});
@@ -401,7 +408,22 @@ int main() {
     kill();
     assert(adds == before_off + 2); // a new process may give it again (the existing behaviour)
 
-    // R03 B18 (normal replay 2026-10-28, default OFF): the guest beat Amelia in its own world (its
+    // R03 B18 is an opt-in candidate (PR #17 review 2): without SHADPS4_BBSC_REWARD_DEDUP=1 a guest
+    // that beat Amelia at home still gets the lot (the existing behaviour) and nothing is owed on disk.
+    {
+        const BbscSaveSlot off{"sd1", 30};
+        current = off;
+        restart();
+        bbsc_boss_reward_queue.clear();
+        bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
+        const int before_off_dedup = adds;
+        kill();
+        assert(adds == before_off_dedup + 1 &&
+               !std::filesystem::exists("user/boss-rewards/owed-sd1-30.txt"));
+        bbsc_own_world.clear();
+    }
+    dedup("1");
+    // R03 B18 (normal replay 2026-10-28, record OFF): the guest beat Amelia in its own world (its
     // journal copy, kept before the join, has 12401800 ON) and helps a host who has not. Not queued,
     // in this process or a new one; the host's flags in the live table do not matter.
     const BbscSaveSlot seventeen{"sd1", 17};
@@ -503,6 +525,29 @@ int main() {
     for (int i = 0; i < 5; ++i) TickBbscBossRewards();
     assert(adds == before_replay && mine() == 0 && owed_line(replay).empty());
     bbsc_own_world.clear();
+
+    // OPEN gate pinned (PR #17 review 2), why this stays opt-in: the owed line cannot be written for
+    // the whole run (here a folder in its place), the add is refused, the merge saves the boss bit,
+    // the game closes. The next start has no line and the guard refuses the next kill: lost.
+    const BbscSaveSlot gate{"sd1", 25};
+    current = gate;
+    restart();
+    bbsc_boss_reward_queue.clear();
+    std::filesystem::create_directories("user/boss-rewards/owed-sd1-25.txt");
+    add_ok = false;
+    const int before_gate = adds;
+    kill();
+    for (int i = 0; i < 3; ++i) TickBbscBossRewards();   // retried, never written
+    game_saves(gate);
+    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
+    std::filesystem::remove("user/boss-rewards/owed-sd1-25.txt");
+    restart();
+    add_ok = true;
+    kill();
+    for (int i = 0; i < 3; ++i) TickBbscBossRewards();
+    assert(adds == before_gate && mine() == 0);         // the documented loss, not a fix
+    bbsc_own_world.clear();
+    dedup("0");
     std::cout << "PASS a boss reward without a taken flag is given once per character across runs, "
                  "final only once saved\n";
 }
