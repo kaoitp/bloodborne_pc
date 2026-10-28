@@ -346,3 +346,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [ ] IN_PROGRESS awaiting author: all-process duplicate checking and entry-sequence timing guards (review5679210406).
 - [x] PR16 exact2c59b0d source/table review; map-only journal premise contradicted by Dream keys5/50000.
 - [ ] IN_PROGRESS awaiting author: correct persistence claims, full hashes and reproducible static extraction (review5679210861). No native/R03 gates closed.
+
+- [x] Native04 bounded command-assisted Amelia co-op kill, guest reward4001x1, automatic exact-origin return and both fresh-process save+journal reload verified; originals3171 exact. See docs/handoff/R03-FINAL-NATIVE-04.md.
+- [ ] Actual boss-hit survival of both, raw-save/journal independence and wider interruption/party-boundary gates remain open. Earlier native02 staging failures preserved as history.
