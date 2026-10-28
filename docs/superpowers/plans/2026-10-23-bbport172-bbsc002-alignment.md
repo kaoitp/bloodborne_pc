@@ -384,4 +384,5 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 
 - [x] PR17 revision3 exact5e70926: focused12 checks, DLL build and copied-profile repeated-Amelia guard/consumption/fresh-process Pendant0 validation PASS; [evidence](../../handoff/R03-PR17-NATIVE-VALIDATION.md).
 - [x] PR17 revision3 never-beaten native control: first Pendant x1, one confirmed grant, no owed entry after delivery and exact origin return PASS. Deferred-delivery/fault gates and broad R03 acceptance remain open.
-`n- [ ] PR17 final owner requirement: dedup ON by default only after investigating/addressing lasting owed-write/removal failure loss/duplicate risks with fault/restart/owner regressions and targeted native evidence; PR comment6477809673. Default-OFF remains interim. Quota stop at8% remaining.
+
+- [ ] PR17 final owner requirement: dedup ON by default only after investigating/addressing lasting owed-write/removal failure loss/duplicate risks with fault/restart/owner regressions and targeted native evidence; PR comment6477809673. Default-OFF remains interim. Quota stop at8% remaining.
