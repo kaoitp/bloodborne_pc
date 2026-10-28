@@ -355,3 +355,6 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 - [x] PR15 exact3e3035e corrected all-process duplicate/line-order/midnight behavior;9 synthetic tests PASS, approved as read-only tooling.
 - [ ] PR16 c5d2dfa: source-policy correction accepted; malformed UTF16 archive EOF hang reproduced, parser bounds/test and stale PR description requested.
 - [ ] Broad R03/native and B15 protocol gates remain open; no default change or native replay by review.
+
+- [x] PR16 revision3 exact2200710 EOF/table/member guards and5 synthetic checks pass; static research/read-only reader approved.
+- [ ] Real-archive replay unavailable on review machine; native reward/protocol/R03 gates unchanged, defaults OFF.
