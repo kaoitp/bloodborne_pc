@@ -4,6 +4,8 @@ Updated: 2026-10-28 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
+Latest B17 checkpoint2026-10-28: [native interruption/recovery evidence](handoff/R03-B17-NATIVE-01.md). Guest interrupted0.004162s after placement; owner recovery misses original point and uses lamp16.086579m away (N1 FAIL). Lamp survives normal save/restart, but six group12705 flag bits remain unclassified, so full N3 is open. Loading EiEi with owner3 journal pending causes no recovery request and preserves that journal exactly; full in-flight N2 cancellation/flags/owner retry remains unproved. Original3171 hashes exact, test games closed. No product/default change; quota checkpoint, broad acceptance open.
+
 Latest follow-up2026-10-28: [B15 ordinary replay](handoff/R03-B15-NORMAL-REPLAY.md) reproduces default reward duplication on the unchanged native04 composition. A repeated Amelia kill queues another Pendant; capacity hides it until the old Pendant is used, then a new one arrives and survives restart. No fix/default change. Rare write/save-race tests deferred by the owner; B15-ON and broad R03 gates remain open.
 
 Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [native04 evidence and reproduction](handoff/R03-FINAL-NATIVE-04.md). This is a documentation/evidence checkpoint; tested runtime artifacts are unchanged. Preserve the active implementer's unrelated work when integrating.
@@ -20,6 +22,10 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### B17 matching-build native recovery — CHECKPOINT / acceptance open (2026-10-28, Codex)
+
+User requests B17 after the B15 duplicate reproduction; prior authorization for copied-profile command-assisted control persists. Dependencies: unchanged integrated native01 DLL/source/probe, clean copied Clinic guest/Cathedral host and existing distinct accounts. Enable HOME_RECOVERY=1 only on copied guest, old experimental admission stays OFF. Scope: N1 crash within10s of placement and owner return/save-reload; N2 pending-return title/other-character isolation with owner's later retry; N3 point failure -> recorded lamp/save-reload (naturally exercised after a valid point missed; synthetic copy not launched). Capture per-case effective configuration, exact artifact hashes, timing, journals, own flags/positions and original3171 integrity. Default-OFF and broad R03 gates unchanged; no product implementation/server/packaging changes.
 
 ### B15 normal replay reward check — REPRODUCED-GAP (2026-10-28, Codex)
 
@@ -862,6 +868,17 @@ R03-NATIVE04 checkpoint: user authorized native warp after manual walking was un
 
 - IN_PROGRESS exact2200710d2f6d60389cc92eee2193a114cb146bcc against seamless2f907dd. Review vs c5d2dfa: bounded UTF16/ShiftJIS names, table/member range rejection;5 synthetic tests PASS/no skips5.496s (`C:/msys64/clang64/bin/python.exe .superpowers/pr16-check-v3.py`). Original EOF-hang negative now rejected; valid members pass. Reader SHA256c98a89bc4d1e1a10e6f7be09cf529cf93e4f9e2a3465bdaeb9fc2023f0e3bdce; test4971ee56b5ac14df92ef830f7c6145d330d38051bb1b518cb380d537ece6547e. Approval5682832674; CI/status/threads empty, not a CI pass.
 - PR body corrected to conditional item-only research. Actual private dump absent here: full hashes/author extraction retained, no independent real-archive parse/native acceptance claim. No runtime/build/default/gameplay change; B15 in-flight-save/ambiguous outcome and native gates remain open. Native01..04/PR15 retained as entire HEAD prefix, only author tracker suffix appended. No open standalone issues. Usage94%/84% remaining. Next publish/read back merged state, continue monitoring native/protocol evidence; broad R03 remains IN_PROGRESS.
+
+### R03 B19 home recovery point (Claude, 2026-10-28)
+
+- Static cause of B17 native01 N1 (point "arrived elsewhere", lamp 16.09 m away): `bbsc_home_recovery_requested` was set after `RequestBbscSessionWarp`, whose own map choice runs `GuardBbscStrayForcedWarp`; the guard took the forced-warp byte off and the selector used the lamp just written to +0x1528. Fix: set it before the request. [B19 handoff](handoff/R03-B19-HOME-POINT.md), with the log line that confirms the cause from the existing native01 log.
+- Fixture now runs the actual guard in the request stub; RED without the fix, GREEN with it. Full suite equal to the baseline. DLL `8b51860a...` local. **Native not run.**
+
+### PR17/18 review checkpoint (2026-10-28, monitor)
+
+- IN_PROGRESS fixed seamless0066d0c; inline standards/spec review, latest native B15 normal replay/B17 native01 read. PR17 exact22ea102f09e72e0701e678438fcfa40662da7232 reconstructed sourcee15dc1c7ba08e388e0f0a28e0899400a366b0d23b5711de81153f9aa1dece298, patcha7e935b07fff264393824ec657258726f98efd3bf3c9cc9bc64a1cc4e75e1543.12 focused actual-function/header checks PASS/no skips33.856s (`.superpowers/pr17-review.py`, CLANG64/workspaceTEMP). Extra `.superpowers/pr17-pending-check.py` FAIL: legitimate queued/failed add + saved own boss bit + restart + healthy eligible kill receives nothing, also reward-onceON. Failed attempts are removed/no record, so B15 does not preserve this undelivered obligation. REQUEST_CHANGES5684981623; require owner-bound obligation/dedup distinction or explicit default-OFF candidate, regression and fresh patch after PR18.
+- PR18 exact815feef4a2f254f551550634a0a30b8c49956133: requested flag before synchronous selector preserves GuardBbscStrayForcedWarp bypass; refused assignment resets; lamp unchanged.12 focused actual-function/header checks PASS/no skips25.768s (`.superpowers/pr18-review.py`), source464a21d71a212d5c64201c352571f2756b935f95aa7be59e87bf7d3c77ff7d39, patch082bc6e9d2f526bc5f567efbf99d1518eacf4f1359f1ab8437e57f7860ed5169. Approval5684982836. Integrated patch/test/doc equal candidate after newline normalization. Normal merge no conflicts.
+- CI statuses/workflow runs/inline threads empty for both exact heads, not CI PASS. Author DLL builds retained separately; no local DLL build/gameplay replay/managed switches/default enablement. Existing private stdout search did not locate predicted guard line; native cause confirmation remains static/fixture plus historical N1 miss, not newly confirmed native log proof. Matching-build exact-point replay, six12705 bits, N2/N3 and broad R03 remain open. No standalone issues. Next publish PR18/readback, notify PR17 author to regenerate on new base, await corrections.
 
 ### R03 B18 reward dedup (Claude, 2026-10-28)
 

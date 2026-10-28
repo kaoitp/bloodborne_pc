@@ -64,6 +64,8 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
+2026-10-28 B17 matching-build native recovery: IN_PROGRESS, user requested N1 early guest interruption/locked-map return, N2 pending-return title/other-character isolation and original-owner retry, N3 journal-point failure/lamp fallback with own-save reload. Use copied profiles and current integrated artifacts; HOME_RECOVERY ON only for copied guests, experimental admission OFF. Keep broad acceptance and production defaults unchanged until actual evidence is recorded.
+
 2026-10-28 B15 normal replay check: IN_PROGRESS at the user's request. Rare write-failure/save-race cases are deferred. Use native04's saved guest with Pendant x1 and a copied live-Amelia host; verify a fresh-process repeated eligible kill, item/log counts, normal return and independent reload on the unchanged native composition. Command-assisted gameplay is authorized while the user is away. No broad checkbox is closed by this scope reduction.
 
 - [x] B15 ordinary replay test completed: default-OFF deduplication gap reproduced; full capacity defers the second reward, using the old Pendant allows a new one, and the duplicate survives independent restart. Exact origin/stable1250/original3171 checks pass. [Native evidence](../../handoff/R03-B15-NORMAL-REPLAY.md). No product fix, B15-ON acceptance or broad R03 closure; rare fault cases deferred.
@@ -362,3 +364,16 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] PR16 revision3 exact2200710 EOF/table/member guards and5 synthetic checks pass; static research/read-only reader approved.
 - [ ] Real-archive replay unavailable on review machine; native reward/protocol/R03 gates unchanged, defaults OFF.
+
+B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
+- [x] Actual guest interruption within10s, preserved journal, fresh owner recovery observed; originals3171 exact.
+- [ ] N1 exact point: FAIL,16.086579m miss followed by lamp fallback.
+- [ ] N3 full save/reload: lamp position persists; six group12705 bits unclassified.
+- [ ] N2 full in-flight cancellation/other-character flags/owner retry: bounded disk-journal isolation only.
+- [ ] N4 optional OFF control: prepared, not run. Defaults OFF; quota checkpoint, no product change.
+
+### PR17/18 monitor review (2026-10-28)
+
+- [x] PR18 exact815feef synchronous recovery guard fix reviewed;12 actual-function/header tests PASS/no skips; merge preserves defaultOFF.
+- [ ] PR17 exact22ea102 own-boss suppression blocks never-delivered reward after saved progress/restart; negative reproduced, review5684981623 requests fix/regression and patch regeneration after PR18.
+- [ ] Matching-build B19 native point return and remaining B15/B17/R03 gates open; fixtures are not native acceptance.
