@@ -349,3 +349,9 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Native04 bounded command-assisted Amelia co-op kill, guest reward4001x1, automatic exact-origin return and both fresh-process save+journal reload verified; originals3171 exact. See docs/handoff/R03-FINAL-NATIVE-04.md.
 - [ ] Actual boss-hit survival of both, raw-save/journal independence and wider interruption/party-boundary gates remain open. Earlier native02 staging failures preserved as history.
+
+### PR15/16 revision2 review (2026-10-28)
+
+- [x] PR15 exact3e3035e corrected all-process duplicate/line-order/midnight behavior;9 synthetic tests PASS, approved as read-only tooling.
+- [ ] PR16 c5d2dfa: source-policy correction accepted; malformed UTF16 archive EOF hang reproduced, parser bounds/test and stale PR description requested.
+- [ ] Broad R03/native and B15 protocol gates remain open; no default change or native replay by review.
