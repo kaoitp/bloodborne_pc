@@ -19,7 +19,7 @@ The question is whether anything in the game or the save tells the two apart, ro
 | `param/gameparam/gameparam.parambnd.dcx` | `581e28302a231a10ad333806dfc90f41425db4f9f146799dca625f8d83c760c3` |
 | `paramdef/paramdef.paramdefbnd.dcx` | `8a3f7ffed82c2c99903105ab151f51ad271017b291b37c721e10052e252b2296` |
 
-**Reproduce.** `python tools/r03_goods_rows.py <dump>/dvdroot_ps4` reads the two archives and prints the table's goods fields. It writes nothing. Its docstring gives every format offset it uses: DCX (DFLT/zlib), BND4, the paramdef field records and the param row table.
+**Reproduce.** `python tools/r03_goods_rows.py <dump>/dvdroot_ps4` reads the two archives and prints the table's goods fields. It writes nothing, and it rejects a malformed archive (a name or member past the end, a name without terminator, a short entry table) with an error instead of reading past it; `tests/test_r03_goods_rows.py` checks that on synthetic archives. Its docstring gives every format offset it uses: DCX (DFLT/zlib), BND4, the paramdef field records and the param row table.
 
 **Layout.** It is computed from the `EquipParamGoods.paramdef` field list (88 fields), not from spacing alone:
 - each field's type and internal name are read from the paramdef;

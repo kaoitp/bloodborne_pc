@@ -50,19 +50,33 @@ def dcx(data):
     return out
 
 
+def bnd4_name(data, at, wide):
+    """The zero-terminated name at `at`; ValueError when it starts or runs past the end of the archive."""
+    if at >= len(data):
+        raise ValueError(f'BND4 name offset {at:#x} past the end ({len(data):#x})')
+    if not wide:
+        end = data.find(b'\0', at)
+        if end < 0:
+            raise ValueError(f'BND4 name at {at:#x} has no terminator')
+        return data[at:end].decode('shift_jis', 'replace')
+    for end in range(at, len(data) - 1, 2):
+        if data[end:end + 2] == b'\0\0':
+            return data[at:end].decode('utf-16le', 'replace')
+    raise ValueError(f'BND4 name at {at:#x} has no terminator')
+
+
 def bnd4_file(data, wanted):
-    if data[:4] != b'BND4' or struct.unpack_from('<Q', data, 0x20)[0] != 0x24:
+    if len(data) < 0x40 or data[:4] != b'BND4' or struct.unpack_from('<Q', data, 0x20)[0] != 0x24:
         raise ValueError('unexpected BND4 layout')
-    for i in range(struct.unpack_from('<I', data, 0x0C)[0]):
+    count = struct.unpack_from('<I', data, 0x0C)[0]
+    if 0x40 + count * 0x24 > len(data):
+        raise ValueError(f'BND4 entry table ({count} entries) runs past the end')
+    for i in range(count):
         _, _, _, size, at, _, name_at = struct.unpack_from('<IiQQIiI', data, 0x40 + i * 0x24)
-        if data[0x30]:
-            end = name_at
-            while data[end:end + 2] != b'\0\0':
-                end += 2
-            name = data[name_at:end].decode('utf-16le')
-        else:
-            name = data[name_at:data.index(b'\0', name_at)].decode('shift_jis', 'replace')
+        name = bnd4_name(data, name_at, data[0x30] != 0)
         if name.replace('\\', '/').rsplit('/', 1)[-1] == wanted:
+            if at + size > len(data):
+                raise ValueError(f'{wanted} ({size} bytes at {at:#x}) runs past the end')
             return data[at:at + size]
     raise ValueError(f'{wanted} not in the archive')
 
