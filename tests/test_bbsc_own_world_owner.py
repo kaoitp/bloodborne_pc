@@ -49,6 +49,7 @@ using s32 = int32_t; using s64 = int64_t; using u8 = uint8_t; using u32 = uint32
 #define LOG_WARNING(...)
 #define BBSC_TIMELINE(...)
 struct BbscSaveSlot { std::string user; int slot = -1; };
+template <class F, class G> void HoldBbscUndurableRewardBits(const BbscSaveSlot&, F&, G&) {} // B18: no reward obligations in this fixture
 namespace Bbsc { constexpr u32 HomeSpotKey = 0xFFFF9900; bool DecodeHomeSpot(const std::array<u8, 128>&) { return true; } }
 constexpr size_t BbscWorldGroupBytes = 128;
 constexpr u32 BbscTimeGroupKey = 9; constexpr size_t BbscTimeByte = 100; constexpr u8 BbscTimeMask = 0xE0;

@@ -1,93 +1,112 @@
-# R03 B18: no second boss reward for a boss beaten in the guest's own world
+# R03 B18: no second boss reward for a boss the guest has beaten, ON by default
 
-2026-10-28/29, revision 3 after PR #17 review 2. Claude (R03 takeover). Source change, fixture-tested and built. **Native not run here** (steps below for the friend).
+2026-10-28/29. Claude (R03 takeover). Revision 4 follows the owner requirement on PR #17 (issuecomment-6477809673): dedup is ON by default, and the two persistence failures are addressed. Source change, fixture-tested and built. **Native: revision 3 (opt-in) passed the friend's repeat-kill and never-beaten runs ([R03-PR17-NATIVE-VALIDATION](R03-PR17-NATIVE-VALIDATION.md)). Revision 4 is not run natively.**
 
 ## Gap
 
-[B15 normal replay](R03-B15-NORMAL-REPLAY.md) (Codex, native, default configuration, reward-once OFF):
-- The guest had already beaten Amelia and held a Gold Pendant. It helped a host that had not beaten Amelia.
-- After the kill, the guest got another reward obligation. Delivery retried while the old Pendant filled the one-item capacity.
-- Once the old Pendant was used, a new one was inserted, and it survived a restart.
-- The capacity only delayed the duplicate; it did not prevent it.
+[B15 normal replay](R03-B15-NORMAL-REPLAY.md), native, default configuration:
+- A guest that had beaten Amelia and held her Gold Pendant helped a host that had not beaten her. It got a second reward obligation.
+- The one-item capacity held the obligation back. Once the first Pendant was used, a new one arrived, and it survived a restart.
 
-## Status: opt-in candidate (revision 3)
+## Design
 
-Review 2 kept two persistent owed-ledger I/O failures as release blockers for a default-ON protocol. So the guard and the ledger now run only with **`SHADPS4_BBSC_REWARD_DEDUP=1`**. The default is OFF, which is the existing behaviour, duplicates included, with nothing written. The two open gates are:
+### The guard
 
-1. **The owed line cannot be written until the game closes.** The add was refused, and the shared progress saved the boss flag. The next start has no line, and the guard refuses the next kill, so the obligation is lost. This is pinned in the fixture as the documented loss, not as a fix.
-2. **The removal fails until the game closes.** The next start queues an already delivered, maybe used-up, reward again.
+`NoteBbscBossRewardEvent` does not queue a new reward when either of these holds:
+- the boss's event flag is ON in the guest's **own** world. That means the own-world journal's copy kept before the join (`BbscOwnWorldHasFlag`), not the live table, which holds the host's flags;
+- the character's ledger has a `done` line for the event.
 
-Neither can be closed inside the ledger alone. The boss flag reaches the own world through the shared progress (its collection, the pending progress file, and the merge at home), not through this ledger, so the two are never written together. Closing gate 1 needs the shared progress to hold the boss event until its obligation is durable. Closing gate 2 needs a delivery claim that tells a failed add from a used-up item. That is B15's unresolved protocol question.
+With no journal copy of the group, the reward is queued as before.
 
-## Change
+### The ledger
 
-`NoteBbscBossRewardEvent`, the producer that queues a guest's boss reward:
-- **Before** the B15 record check and the queue, it now asks `BbscOwnWorldHasFlag(event)`: is the boss's own event flag ON in the guest's **own** world?
-- "Own world" is the own-world journal's copy of the flag's group (`bbsc_own_world`). It is kept before the join load (`CaptureBbscOwnWorldBeforeJoin`, map groups of kinds 1/5/6/7, areas 21–99, which covers every boss event group).
-- The live table is not used: in the host's world it holds the host's flags.
+`<mod>/boss-rewards/owed-<user>-<slot>.txt` holds one line per event:
 
-| Journal copy of the group | Result | Log line |
+| Line | Meaning | Written |
 |---|---|---|
-| boss flag ON | not queued | `BBSC boss drop: event E - user U slot S has beaten this boss in its own world - not again` |
-| boss flag OFF | unchanged (queued as before) | — |
-| no copy of the group | unchanged (queued as before) | `BBSC boss drop: event E - own world unknown (no journal copy of group G)` |
+| `owed <event>` | earned, not delivered | when the reward is queued; at every start it is queued again for its owner |
+| `done <event> <time>` | claimed for delivery | **before** the item is added, after a fit check (`BbscBossGoodsFit`, the add's own check `0x014D9A80`) |
+| (no line) | nothing pending | a `done` line goes once the boss flag is in the own world and the owner's save was written after it; from then on, the flag is the guard |
 
-This mirrors the game, which drops a boss reward once per world. The guard runs only with `SHADPS4_BBSC_REWARD_DEDUP=1`. It cannot add a grant; it can only skip one. It applies to every row in `BbscBossRewards`, with or without a taken flag, and independently of `SHADPS4_BBSC_REWARD_ONCE`.
+A bare `<event>` line (a revision 2 file) reads as owed.
 
-### Owed ledger (revision 2)
+### The ordering
 
-Review 1 (P1): the guard alone loses a real obligation. A legitimate joint kill queues the reward while the add is refused (capacity); the shared-progress merge saves the boss bit; the game closes before delivery. The in-memory queue ends with the process, and the guard then refuses the next kill. B15's opt-in record does not hold it either: a failed add removes its attempt line, and a reward not attempted yet has no line at all.
+The boss flag reaches the guest's own world through the **shared progress**: the collection at the kill, the pending progress file, and the merge at home. It does not go through the ledger, so the ordering is what keeps the two consistent:
 
-So a queued reward is now also **owed on disk**, kept apart from the dedup decision:
-- `<mod>/boss-rewards/owed-<user>-<slot>.txt`, one event per line. It is written when the reward is queued (`NoteBbscBossRewardEvent`).
-- The line is removed only when the reward counts as given in `TickBbscBossRewards`: after the add or award, or when B15's record or the inventory says it was given (`NoteBbscBossRewardDelivered`, the only place that fills the given list).
-- At start (`QueueBbscBossRewardsOwedAtStart`, right after B15's start settle), every owed line is queued again for its owner. Delivery stays owner-bound: another character's entry waits in the queue.
-- A write or removal that fails is retried every second (`TickBbscBossRewardSaves`). The reward is delivered from memory meanwhile.
-- With `SHADPS4_BBSC_REWARD_DEDUP=1` only (revision 3), independent of `SHADPS4_BBSC_REWARD_ONCE`. Delivery is never inferred from boss progress: the guard only stops a **new** obligation.
+1. **No line on disk, no boss flag.** An earned obligation whose line (`owed` or `done`) is not on disk keeps its boss flag out of the pending progress file **and** out of the merge (`HoldBbscUndurableRewardBits`, called by `WriteBbscPendingProgress` and `MergeBbscSharedProgress`).
+2. **No claim, no item.** The `done` line must be written before the add. A claim that cannot be written means no add, and the line stays `owed`.
+3. **An add refused after its claim reopens the line.** The `done` line goes back to `owed`, and a failed write is retried every second.
+4. **The `done` line survives until the flag is saved.** A consumed item is never given again, even when the boss flag has not reached a save yet.
 
-Flag bit layout: the same as the other readers of the flag group bytes in the source (`0x80 >> (bit % 8)` in byte `bit / 8`, as in `AdmitBbscRewardEvent`, whose merges were confirmed natively in B09/native04).
+### The two owner cases
+
+| Case | Old (rev 2/3) | Revision 4 |
+|---|---|---|
+| 1. The owed line cannot be written until exit, while the shared progress saves the boss flag | the obligation is lost (the guard refuses the next kill) | Nothing is delivered (no claim possible), and the boss flag is held out of the pending file and the merge. The run ends with neither the item nor the flag, so the next joint kill earns it again: **not lost** |
+| 2. The line cannot be rewritten until exit after it became owed (the removal or claim fails) | the reward is delivered, then queued again at the next start: **duplicate** | The claim fails, so there is no add. The reward is delivered once after the restart, and its `done` line refuses it after that, consumed or not: **not duplicated** |
+
+`SHADPS4_BBSC_REWARD_DEDUP=0` turns all of it off, restoring the earlier behaviour. It is independent of `SHADPS4_BBSC_REWARD_ONCE`.
 
 ## Evidence
 
-- Fixtures, in `tests/test_bbsc_reward_once.py`. They reuse the actual `NoteBbscBossRewardEvent` and `TickBbscBossRewards` source:
-  - default OFF: with the guest's journal holding 12401800 ON, two kills across a restart give nothing;
-  - another bit of the same group ON with the boss bit OFF: given once;
-  - no journal copy: given (existing behaviour);
-  - reward-once ON with the boss bit ON: nothing given and no record line;
-  - **review 1 sequence, both record modes:** add refused, kill (queued, owed line written), save, boss bit ON in the journal, restart (queued again from the owed line), add OK, kill: given **once**, owed line gone, nothing after a further restart;
-  - **owner isolation:** A's owed reward is not given while B is loaded (B beaten, nothing for B); it is given to A once A is active;
-  - **normal replay:** delivered at the first kill (no owed line left), used up, boss bit ON, restart, another kill: nothing, nothing owed.
-  - **revision 3, default OFF:** the beaten guest still gets the lot, and no owed file is written;
-  - **revision 3, gate 1 pinned:** the owed path is unwritable for the whole run, the add is refused, the boss bit is saved, then a restart and another kill: nothing (the documented loss).
-- Queue checks in that fixture now count only the current character's entries: other characters' owed rewards wait in the queue too. The delivery fixture only gains the journal stub.
-- RED, mutated sources in `.superpowers/claude-r03/b18/` (revision 1) and `b18/v2/` (revision 2):
-  - check removed: fails ("adds == before_beaten");
-  - LSB-first bit order: fails;
-  - unknown own world treated as beaten: fails on the earliest grant;
-  - no owed line written at the queue: fails the review 1 sequence;
-  - owed lines not queued again at start: fails it too;
-  - owed line kept after delivery: the reward is given again after a restart, which fails;
-  - revision 3 (`b18/v3/`): the switch always ON fails the default-OFF control, and always OFF fails the guard cases.
-- All three fixtures pass on the change. The full Python suite gives the same result as on `seamless` 56bed5e (with B19) before the change: 181 ran, 48 skipped, 5 failures and 11 errors, all in the Linux-only `test_mods`, `test_packaged_vulkan`, `test_run_settings` and `test_cpu_compat`, identical on both.
-- Patch regenerated from the reference tree (`git diff` equal to the tracked patch). DLL built locally with `tools/build_bbsc_mod.py`, revision 3 on 56bed5e (B19 included): `bbsc.dll` SHA256 `74880819b989337e6459bbafed52157644a056ae9d4782880809c98b6122cf51` (revision 2 was `2d47822d…`). Not packaged.
+**Fixtures.** `tests/test_bbsc_reward_once.py`, on the actual producer, consumer, ledger and hold functions. These cases run in **both** `REWARD_ONCE` settings, each character in its own save slot:
+- default (variable unset) is ON: a guest beaten at home gets nothing, and nothing is owed. `=0` gives the old behaviour with no ledger;
+- never beaten: given once. The `owed` line becomes `done` (claimed). There is no second grant in the same process or after a restart, even before the flag is saved. Once the flag is in the own world and saved after, the `done` line goes, and the flag guards from then on;
+- no journal copy of the group: given once;
+- beaten at home: nothing, no record line, nothing owed;
+- **case 1:** the ledger is unwritable for the whole run. No delivery, and the boss bit is held out of the progress. Restart with storage back, kill: given once. The bit is no longer held once the line is durable;
+- **review 1:** delivery refused (fit), the owed line on disk keeps the bit in the progress, the bit is saved, restart (queued again), kill: given once, and never again;
+- **case 2:** owed, then every rewrite fails for the whole run. No delivery. Restart: delivered once. Used up, restart, kill: nothing;
+- add refused after its claim: the `owed` line is reopened, and the next try gives it once;
+- **owner isolation:** A's owed reward waits while B (beaten at home) plays, and goes to A once A is active.
 
-## Limits
+A structural test asserts that the real `WriteBbscPendingProgress` and `MergeBbscSharedProgress` call the hold **before** they write or set anything. The progress fixtures only stub it.
 
-- **The journal must hold the guest's own copy.** The join capture runs from the `JoinSession_White` Lua event in the trace pipeline. If it were skipped, the group's first copy would come from another keeper (for example the host flag write). That copy is taken before the host's bits are written, but it is not proved natively for this guard.
-- **Owed ledger write failures:** the two open gates above, which are why this is opt-in.
-- **An obligation from before this build** (queued by an older DLL) has no owed line.
-- **The host's own drop** and a guest that never beat the boss are unchanged.
-- **Other bosses:** covered by the same table and fixture logic. Natively, only Amelia is planned.
+**RED.** Mutated sources in `.superpowers/claude-r03/b18/v4/`. Each fails the fixture:
 
-## Native check (friend's side, not run here)
+| Mutation | Fails at |
+|---|---|
+| default OFF | the default-ON case |
+| no hold | case 1's hold |
+| no claim before the add | case 1's "no delivery" |
+| no reopen after a refused add | the reopened owed line |
+| done line ignored by the guard | the "not again" check |
+| done line never dropped | the dropped-line check |
+| claim without fit check | review 1's owed line |
 
-This session does not run two instances (the user's session limit: token cost and RAM). Use the B15 normal replay setup unchanged, with this DLL:
+Earlier revisions' mutations are in `b18/`, `b18/v2/` and `b18/v3/`.
 
-1. Guest = native04's saved guest (Amelia ON, Pendant x1). Host = a copied pre-Amelia host. Reward-once OFF, **`SHADPS4_BBSC_REWARD_DEDUP=1` on the guest** (without it the old duplicate is expected).
-2. Join, then the guarded Amelia HP-zero as before.
-3. **Expect** in the guest log, at the kill: `has beaten this boss in its own world - not again`. There must be no `queued for user`, no add line and no `finished` line.
-4. At home, use the old Pendant: no new Pendant arrives (wait at least 60 s; read the inventory). Restart: Pendant count 0, Gold Blood Gem x1.
-5. Control: a guest that never beat Amelia (native04's before-save guest) gets exactly one Pendant, as in native04. Its `owed-sd1-3.txt` appears at the kill and is gone after the `finished` line.
-6. Optional, for the review 1 case: the control guest with the one-item capacity already full (holding a Pendant from a copied save of another run). Kill, then check that the owed line is there and the add is refused. Exit at the title after the save. Restart: `owed ... from an earlier run - queued again`. Use the Pendant: given once, the owed file is gone.
+**Other suites.**
+- The reward-delivery fixture runs with `=0`, the legacy behaviour; B18 has its own cases.
+- The home-recovery, own-world-owner, party-progress, progress-backup and reorder fixtures pass.
+- Full Python suite: 182 ran, 48 skipped, 5 failures and 11 errors. The failures and errors are the same Linux-only tests as on the `seamless` baseline.
 
-`tools/check_r03_native.py` has no case for this yet; grep the log lines above.
+**Build.** Patch regenerated from the reference tree (on `seamless` 56bed5e, B19 kept). DLL `bbsc.dll` SHA256 `44391ea0a61fbb22a3d089ec2bc977074499baca075603ccb86f50861747a5a5`, local, not packaged.
+
+## Remaining limits (explicit)
+
+- **A refused add after a positive fit check, then a reopen that cannot be written until exit, after the boss flag reached a save.** The `done` line stays on disk, and it refuses the reward, so it is lost. The fit check and the add run back to back on the game thread, so this needs the game to refuse an add its own fit check accepted a moment earlier, **and** lasting storage failure.
+- **A `done` line whose boss flag never reached the own world.** For example, the shared progress pending file could not be written, or was lost, until exit. That line is never dropped, so it refuses that boss's reward in a later cycle of the same character (NG+). Nothing is duplicated or lost in the current cycle.
+- **Storage failing from the start.** An obligation held out by case 1 also holds that boss's flag out of the shared progress for that party. It comes back with the next joint kill.
+- **The journal must hold the guest's own copy** (the join capture), as before.
+- **Obligations queued by a DLL older than revision 2** have no ledger line.
+- **Non-goods award lots** (the two `12601850` / `13601800` rows) have no success signal and no fit check. They are claimed and then awarded.
+
+## Native checks (friend's side, not run here)
+
+This session does not run two instances (the user's session limit: token cost and RAM). Run revision 4's DLL with **no** `SHADPS4_BBSC_REWARD_DEDUP` set (the default):
+
+1. Repeat the revision 3 cases unchanged. Expect the same results as [R03-PR17-NATIVE-VALIDATION](R03-PR17-NATIVE-VALIDATION.md):
+   - repeated Amelia kill with the guest beaten: `has beaten this boss in its own world - not again`, consume the old Pendant, no replacement, Pendant 0 after a restart;
+   - never-beaten control: one Pendant.
+2. In the never-beaten control:
+   - the ledger reads `done 12401800 <time>` right after the `finished` line;
+   - after the trip home, the merge, and a save, it is gone (`boss flag saved ... done line dropped`).
+3. **Persistence change, case 2 (optional, copied profiles):**
+   - Kill with the never-beaten guest while its one-item capacity is full. The ledger reads `owed 12401800`.
+   - Exit normally, restart, then free the slot: given once, and the line reads `done`.
+   - Use the item, restart, kill again: nothing.
+4. **Case 1 (optional):**
+   - Make `boss-rewards/owed-<user>-<slot>.txt` a folder before the kill. Expect no delivery, and the merge log shows the boss flag not newly set.
+   - Exit, remove the folder, restart: a later joint kill gives it once.

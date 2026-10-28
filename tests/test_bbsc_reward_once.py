@@ -78,6 +78,7 @@ bool bbsc_party_placed = true;
 BbscSaveSlot current{"sd1", 3};
 bool EnvFlagEnabled(const char*) { return true; }
 std::optional<BbscSaveSlot> bbsc_own_world_slot;
+constexpr size_t BbscWorldGroupBytes = 125;
 std::map<u32, std::array<u8, 125>> bbsc_own_world; // the own-world journal (B18)
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() { return current; }
 u64 GetGlobalState() { return 9; }
@@ -86,11 +87,17 @@ int GetCharacterHp(u64) { return 100; }
 bool ReadablePointer(u64 p, size_t) { return p != 0; }
 u32 GetCurrentPackedMap() { return here; }
 u32 BbscMapArea(u32 m) { return m >> 24; }
-bool BbscEventFlag(u32) { return false; }
+std::vector<u32> live_flags;            // the live flag table (own world when home)
+bool BbscEventFlag(u32 f) { return std::ranges::find(live_flags, f) != live_flags.end(); }
+bool home = false;                      // in our own world, not a guest
+u64 GetGlobalState();
+bool BbscOwnWorldNonGuest(u64) { return home; }
 void BbscAnnounce(const char16_t*, const char*) {}
 bool add_ok = true;
 bool break_record_after_add = false; // the record breaks between the attempt and the outcome write
 bool in_inventory = false;           // the lot's goods in the owner's carried items
+bool fit_ok = true;                     // the add's fit check (the one-item capacity)
+bool BbscBossGoodsFit(const BbscBossGoodsLot&) { return fit_ok; }
 bool GiveBbscBossGoods(const BbscBossGoodsLot&) {
     if (break_record_after_add) {
         std::filesystem::create_directories(std::filesystem::path("user/boss-rewards") /
@@ -135,6 +142,10 @@ void restart() { // a fresh process: nothing in memory, the start settle runs be
     bbsc_boss_reward_given.clear();
     bbsc_boss_reward_unsaved.clear();
     bbsc_boss_reward_unclaimed.clear();
+    bbsc_boss_reward_owed.clear();
+    bbsc_boss_reward_durable.clear();
+    bbsc_boss_reward_done.clear();
+    bbsc_boss_reward_ledger_writes.clear();
     SettleBbscBossRewardsAtStart();
     QueueBbscBossRewardsOwedAtStart();
 }
@@ -156,6 +167,16 @@ void dedup(const char* value) {
     setenv("SHADPS4_BBSC_REWARD_DEDUP", value, 1);
 #endif
 }
+void dedup_unset() {
+#ifdef _WIN32
+    _putenv_s("SHADPS4_BBSC_REWARD_DEDUP", "");
+#else
+    unsetenv("SHADPS4_BBSC_REWARD_DEDUP");
+#endif
+}
+std::filesystem::path owed_path(const BbscSaveSlot& s) {
+    return "user/boss-rewards/owed-" + s.user + "-" + std::to_string(s.slot) + ".txt";
+}
 std::string owed_line(const BbscSaveSlot& s) {
     std::ifstream f("user/boss-rewards/owed-" + s.user + "-" + std::to_string(s.slot) + ".txt");
     return std::string((std::istreambuf_iterator<char>(f)), {});
@@ -166,6 +187,7 @@ size_t mine() { // queued for the current character (owed rewards of others wait
     });
 }
 int main() {
+    dedup("0");       // B18 is ON by default; its own section at the end
     reward_once("1"); // the experimental opt-in; default OFF is checked at the end
     const BbscSaveSlot u_i_ahh{"sd1", 3}, six{"sd1", 2}, other{"sd1", 5}, seven{"sd1", 7},
         eight{"sd1", 8};
@@ -408,145 +430,168 @@ int main() {
     kill();
     assert(adds == before_off + 2); // a new process may give it again (the existing behaviour)
 
-    // R03 B18 is an opt-in candidate (PR #17 review 2): without SHADPS4_BBSC_REWARD_DEDUP=1 a guest
-    // that beat Amelia at home still gets the lot (the existing behaviour) and nothing is owed on disk.
-    {
-        const BbscSaveSlot off{"sd1", 30};
-        current = off;
-        restart();
-        bbsc_boss_reward_queue.clear();
-        bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
-        const int before_off_dedup = adds;
-        kill();
-        assert(adds == before_off_dedup + 1 &&
-               !std::filesystem::exists("user/boss-rewards/owed-sd1-30.txt"));
+    // ---- R03 B18: no second reward for a boss beaten in the own world, ON by default ----------
+    const u32 amelia_flag = 12401800;
+    const auto beaten_at_home = [] { bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8); };
+    const auto fresh = [&](const BbscSaveSlot& slot) {
+        current = slot;
+        restart();                                      // the queue keeps other owners' owed rewards
         bbsc_own_world.clear();
-    }
-    dedup("1");
-    // R03 B18 (normal replay 2026-10-28, record OFF): the guest beat Amelia in its own world (its
-    // journal copy, kept before the join, has 12401800 ON) and helps a host who has not. Not queued,
-    // in this process or a new one; the host's flags in the live table do not matter.
-    const BbscSaveSlot seventeen{"sd1", 17};
-    current = seventeen;
-    restart();
-    bbsc_boss_reward_queue.clear();
-    auto& amelia = bbsc_own_world[12401];
-    amelia[800 / 8] |= 0x80u >> (800 % 8);
-    const int before_beaten = adds;
-    kill();
-    restart();
-    kill();
-    assert(adds == before_beaten && (mine() == 0));
-    // Another flag of the same group set does not count; with the boss's own bit clear it is given.
-    amelia[800 / 8] = 0;
-    amelia[801 / 8] |= 0x80u >> (801 % 8);
-    kill();
-    assert(adds == before_beaten + 1);
-    // No journal copy of the group (own world unknown): the existing behaviour.
-    restart();
-    bbsc_own_world.clear();
-    kill();
-    assert(adds == before_beaten + 2);
-    // The same with the opt-in record on.
-    reward_once("1");
-    const BbscSaveSlot eighteen{"sd1", 18};
-    current = eighteen;
-    restart();
-    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
-    kill();
-    assert(adds == before_beaten + 2 && record(eighteen).empty());
-    bbsc_own_world.clear();
-
-    // PR #17 review 1: a legitimate joint kill whose delivery is refused (capacity), the progress
-    // merge saves the boss bit, the process ends before delivery. The obligation is owed on disk and
-    // the next start delivers it once, although the guard refuses the next kill. Both record modes.
-    for (const char* mode : {"1", "0"}) {
-        reward_once(mode);
-        const BbscSaveSlot owed{"sd1", mode[0] == '1' ? 20 : 21};
-        current = owed;
-        restart();
-        bbsc_boss_reward_queue.clear();
-        bbsc_own_world.clear();
-        add_ok = false;
-        const int before_pending = adds;
-        kill();
-        assert(adds == before_pending && mine() == 1 && owed_line(owed) == "12401800\n");
-        game_saves(owed);
-        bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8); // the merge saved the boss bit
-        restart();
-        assert(mine() == 1);                       // queued again from the owed line
-        add_ok = true;
-        kill();
-        assert(adds == before_pending + 1 && mine() == 0 && owed_line(owed).empty());
-        game_saves(owed);
-        TickBbscBossRewards();
-        restart();
-        kill();
-        assert(adds == before_pending + 1 && mine() == 0); // delivered: never again
-        bbsc_own_world.clear();
-    }
-
-    // Owner isolation: A's owed reward is not given to B, and waits for A.
+        add_ok = fit_ok = true;
+        home = false;
+        live_flags.clear();
+    };
+    const auto held = [&](const BbscSaveSlot& slot) { // the bit the shared progress would save
+        std::vector<u32> flags{amelia_flag};
+        std::map<u32, std::array<u8, 125>> groups;
+        groups[12401][800 / 8] = 0x80u >> (800 % 8);
+        HoldBbscUndurableRewardBits(slot, flags, groups);
+        return flags.empty() && groups[12401][800 / 8] == 0;
+    };
     reward_once("0");
-    const BbscSaveSlot a{"sd1", 22}, b{"sd1", 23};
-    current = a;
-    restart();
-    bbsc_boss_reward_queue.clear();
-    add_ok = false;
-    const int before_isolated = adds;
-    kill();
-    assert(owed_line(a) == "12401800\n");
-    add_ok = true;
-    current = b;                                   // another character loaded, beaten at home
-    restart();
-    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
-    kill();
-    for (int i = 0; i < 5; ++i) TickBbscBossRewards();
-    assert(adds == before_isolated && mine() == 0 && owed_line(b).empty());
-    current = a;
-    bbsc_own_world.clear();
-    TickBbscBossRewards();
-    assert(adds == before_isolated + 1 && owed_line(a).empty());
 
-    // Normal replay (B15 normal replay): delivered at the first kill, used up, beaten at home, another
-    // host's kill after a restart - nothing, and nothing owed.
-    const BbscSaveSlot replay{"sd1", 24};
-    current = replay;
-    restart();
-    bbsc_boss_reward_queue.clear();
-    const int before_replay = adds;
-    kill();
-    assert(adds == before_replay + 1 && owed_line(replay).empty());
-    adds = before_replay;                          // the Pendant used up
-    game_saves(replay);
-    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
-    restart();
-    kill();
-    for (int i = 0; i < 5; ++i) TickBbscBossRewards();
-    assert(adds == before_replay && mine() == 0 && owed_line(replay).empty());
-    bbsc_own_world.clear();
+    // Default (variable unset) is ON: a guest that beat Amelia at home gets nothing, nothing owed.
+    dedup_unset();
+    {
+        const BbscSaveSlot on{"sd1", 30};
+        fresh(on);
+        beaten_at_home();
+        const int before = adds;
+        kill();
+        assert(adds == before && mine() == 0 && owed_line(on).empty());
+    }
+    // "0" turns it off: the existing behaviour, no ledger.
+    dedup("0");
+    {
+        const BbscSaveSlot off{"sd1", 31};
+        fresh(off);
+        beaten_at_home();
+        const int before = adds;
+        kill();
+        assert(adds == before + 1 && !std::filesystem::exists("user/boss-rewards/owed-sd1-31.txt"));
+    }
+    dedup_unset();
 
-    // OPEN gate pinned (PR #17 review 2), why this stays opt-in: the owed line cannot be written for
-    // the whole run (here a folder in its place), the add is refused, the merge saves the boss bit,
-    // the game closes. The next start has no line and the guard refuses the next kill: lost.
-    const BbscSaveSlot gate{"sd1", 25};
-    current = gate;
-    restart();
-    bbsc_boss_reward_queue.clear();
-    std::filesystem::create_directories("user/boss-rewards/owed-sd1-25.txt");
-    add_ok = false;
-    const int before_gate = adds;
-    kill();
-    for (int i = 0; i < 3; ++i) TickBbscBossRewards();   // retried, never written
-    game_saves(gate);
-    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
-    std::filesystem::remove("user/boss-rewards/owed-sd1-25.txt");
-    restart();
-    add_ok = true;
-    kill();
-    for (int i = 0; i < 3; ++i) TickBbscBossRewards();
-    assert(adds == before_gate && mine() == 0);         // the documented loss, not a fix
-    bbsc_own_world.clear();
+    for (const char* mode : {"0", "1"}) {
+        reward_once(mode);
+        const int base = mode[0] == '1' ? 60 : 40;
+        const auto slot = [&](int i) { return BbscSaveSlot{"sd1", base + i}; };
+
+        // Never beaten: given once; the owed line becomes a done line, claimed before the add.
+        fresh(slot(0));
+        bbsc_own_world[12401][801 / 8] |= 0x80u >> (801 % 8); // another bit of the group
+        int before = adds;
+        kill();
+        assert(adds == before + 1 && owed_line(slot(0)).find("done 12401800 ") == 0);
+        kill();
+        restart();
+        kill();                                               // done line: not again, even before
+        assert(adds == before + 1 && mine() == 0);            // the boss flag reaches the save
+        // Its flag in the own world and a save after it: the done line goes, the flag is the guard.
+        bbsc_own_world.clear();                               // home: the journal is back
+        home = true;
+        live_flags = {amelia_flag};
+        TickBbscBossRewards();
+        game_saves(slot(0));
+        TickBbscBossRewards();
+        assert(owed_line(slot(0)).empty());
+        beaten_at_home();
+        restart();
+        kill();
+        assert(adds == before + 1);
+
+        // No journal copy of the group: given (once).
+        fresh(slot(1));
+        before = adds;
+        kill();
+        assert(adds == before + 1);
+
+        // Beaten at home: nothing, no record line, nothing owed.
+        fresh(slot(2));
+        beaten_at_home();
+        before = adds;
+        kill();
+        assert(adds == before && mine() == 0 && owed_line(slot(2)).empty() && record(slot(2)).empty());
+
+        // Gate 1 (owner requirement 1): the owed line cannot be written for the whole run. Nothing is
+        // delivered and the shared progress leaves the boss flag out; the run ends; the next joint
+        // kill earns it again: given once, nothing lost.
+        fresh(slot(3));
+        std::filesystem::create_directories(owed_path(slot(3)));  // unwritable ledger
+        before = adds;
+        kill();
+        for (int i = 0; i < 3; ++i) TickBbscBossRewards();
+        assert(adds == before && mine() == 1);
+        assert(held(slot(3)));                                   // not in the progress
+        std::filesystem::remove(owed_path(slot(3)));             // the game closes; storage back
+        restart();                                               // journal bit stays OFF
+        kill();
+        assert(adds == before + 1 && owed_line(slot(3)).find("done ") == 0);
+        assert(!held(slot(3)));                                  // durable now: in the progress
+
+        // Owed on disk: the progress keeps the bit (review 1: refused delivery, bit saved, restart).
+        fresh(slot(4));
+        fit_ok = false;                                          // the one-item capacity is full
+        before = adds;
+        kill();
+        assert(adds == before && owed_line(slot(4)) == "owed 12401800\n" && !held(slot(4)));
+        game_saves(slot(4));
+        beaten_at_home();                                        // the merge saved the boss bit
+        restart();
+        assert(mine() == 1);                                     // queued again from the owed line
+        fit_ok = true;
+        kill();
+        assert(adds == before + 1 && mine() == 0 && owed_line(slot(4)).find("done ") == 0);
+        restart();
+        kill();
+        assert(adds == before + 1);
+
+        // Gate 2 (owner requirement 2): the line cannot be rewritten for the whole run after it was
+        // owed. The claim fails, so nothing is delivered; after the restart it is delivered once,
+        // then used up: never again.
+        fresh(slot(5));
+        before = adds;
+        NoteBbscBossRewardEvent(12401800);                       // owed line written
+        std::filesystem::create_directories(owed_path(slot(5)).string() + ".tmp"); // rewrites fail
+        for (int i = 0; i < 3; ++i) TickBbscBossRewards();
+        assert(adds == before && owed_line(slot(5)) == "owed 12401800\n");
+        std::filesystem::remove(owed_path(slot(5)).string() + ".tmp");
+        restart();
+        TickBbscBossRewards();
+        assert(adds == before + 1 && owed_line(slot(5)).find("done ") == 0);
+        adds = before;                                           // used up
+        restart();
+        kill();
+        for (int i = 0; i < 3; ++i) TickBbscBossRewards();
+        assert(adds == before && mine() == 0);
+
+        // An add refused right after its claim reopens the owed line; the next try gives it once.
+        fresh(slot(6));
+        add_ok = false;
+        before = adds;
+        kill();
+        assert(adds == before && owed_line(slot(6)) == "owed 12401800\n" && mine() == 1);
+        add_ok = true;
+        TickBbscBossRewards();
+        assert(adds == before + 1 && owed_line(slot(6)).find("done ") == 0);
+
+        // Owner isolation: A's owed reward waits while B (beaten at home) plays, then goes to A.
+        const BbscSaveSlot owner_a = slot(7), owner_b = slot(8);
+        fresh(owner_a);
+        fit_ok = false;
+        before = adds;
+        kill();
+        fresh(owner_b);
+        beaten_at_home();
+        kill();
+        for (int i = 0; i < 3; ++i) TickBbscBossRewards();
+        assert(adds == before && owed_line(owner_b).empty() && owed_line(owner_a) == "owed 12401800\n");
+        current = owner_a;
+        bbsc_own_world.clear();
+        TickBbscBossRewards();
+        assert(adds == before + 1 && owed_line(owner_a).find("done ") == 0);
+    }
+    reward_once("0");
     dedup("0");
     std::cout << "PASS a boss reward without a taken flag is given once per character across runs, "
                  "final only once saved\n";
@@ -566,6 +611,17 @@ class RewardOnceTests(unittest.TestCase):
     def test_flagless_reward_once_per_character(self):
         with tempfile.TemporaryDirectory() as directory:
             run_once_fixture(SOURCE, Path(directory))
+
+    def test_shared_progress_holds_undurable_reward_bits(self):
+        """R03 B18: the boss bit of an obligation without its ledger line stays out of both the
+        pending progress file and the merge (structural: those functions are fixture-stubbed)."""
+        src = SOURCE.read_text(encoding='utf-8')
+        for head in ('void WriteBbscPendingProgress() {', 'std::pair<s64, size_t> MergeBbscSharedProgress('):
+            start = src.index(head)
+            body = src[start:src.index('\n}\n', start)]
+            hold = body.find('HoldBbscUndurableRewardBits(')
+            self.assertGreater(hold, 0, head)
+            self.assertLess(hold, body.find('put32(' if 'Pending' in head else 'set(0, flag, 1)'), head)
 
 
 if __name__ == '__main__':

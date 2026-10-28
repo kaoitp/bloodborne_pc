@@ -50,6 +50,7 @@ using u32 = uint32_t; using u8 = uint8_t;
 #define LOG_WARNING(...)
 #define BBSC_TIMELINE(...)
 struct BbscSaveSlot { std::string user; int slot = -1; };
+template <class F, class G> void HoldBbscUndurableRewardBits(const BbscSaveSlot&, F&, G&) {} // B18: no reward obligations in this fixture
 struct BbscWorldSnapshot {
     s64 complete_ms = 0; u32 map = 0; u64 present = 0;
     std::array<std::array<u8, 125>, 10> groups{};
