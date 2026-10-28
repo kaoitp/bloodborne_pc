@@ -65,7 +65,7 @@ struct BbscTransform { std::array<float, 4> position{}; std::array<float, 4> rot
 struct SummonPlacementDescriptor { u32 packed_region{}; float x{}, y{}, z{}, heading{}; s32 area{}; };
 constexpr u64 SelectSummonedPlacementOffset = 0x01332BC0, StageTransitionOffset = 0x013CDE30;
 alignas(16) u8 global_block[0x1600] = {};
-u64 image_base = 0;
+u64 image_base = 0x1000;                         // loaded (the guard does nothing before)
 u64 GetGlobalState() { return reinterpret_cast<u64>(global_block); }
 bool ReadablePointer(u64 p, size_t) { return p != 0; }
 template <class T> T ReadValue(u64 base, u64 off) { T v{}; std::memcpy(&v, reinterpret_cast<const void*>(base + off), sizeof(T)); return v; }
@@ -95,9 +95,19 @@ u32 BbscLampPointMap(s32 lamp) {
     return lamp < 1000000 ? 0u : (static_cast<u32>(lamp / 100000) << 24) | (static_cast<u32>((lamp / 10000) % 10) << 16);
 }
 std::vector<u32> warps;                           // maps the return asked for
+std::vector<bool> forced_kept;                    // the forced warp survived the request's map choice
 bool warp_ok = true;
-bool RequestBbscSessionWarp(u64, const SummonPlacementDescriptor& to, std::string_view, bool) {
+struct GuestRegisterSnapshot { u64 rcx{}, rsi{}, rbp{}; };
+s32 GetSessionState() { return 0; }                // own world, no session
+bool PutBbscHomeSpot(u64) { return false; }
+void GuardBbscStrayForcedWarp(const GuestRegisterSnapshot& registers);
+bool RequestBbscSessionWarp(u64 global, const SummonPlacementDescriptor& to, std::string_view, bool) {
     warps.push_back(to.packed_region);
+    // As the real request: SetForcedSummonWarp raises +0x1520, then the selector 0x01332BC0 runs and
+    // its map choice (0x01332C1B) calls the guard. With +0x1520 off the selector takes the last lamp.
+    WriteValue<u8>(global, 0x1520, 1);
+    GuardBbscStrayForcedWarp({global, 0xFFFFFFFF, 0});
+    forced_kept.push_back(ReadValue<u8>(global, 0x1520) != 0);
     return warp_ok;
 }
 std::vector<u32> lamp_targets;                    // lamp loads the return asked for
@@ -115,6 +125,7 @@ void SuspendBbscHomeRecovery();
     start = src.index('struct BbscHomeSpot {')
     code += src[start:src.index('// Game tick: forget the spot', start)]
     code += function('void NoteBbscOwnWorldCharacterLoad(') + '\n'
+    code += function('bool BbscOwnWorldNonGuest(') + '\n' + function('void GuardBbscStrayForcedWarp(') + '\n'
     code += r'''
 const BbscSaveSlot u_i_ahh{"sd1", 3}, kaori{"sd1", 0};
 const u32 clinic = 0x18010000;
@@ -164,6 +175,8 @@ void fresh() {
     current_map = 0x18000000;
     here.position = {19.77f, -9.51f, 101.51f, 1.f};
     warps.clear();
+    forced_kept.clear();
+    global_block[0x1592] = 1;                     // in our own world
     lamp_targets.clear();
     warp_ok = lamp_ok = true;
     announced = 0;
@@ -182,6 +195,8 @@ int main() {
     assert(bbsc_home_recovery_slot.has_value());
     tick(3);
     assert(warps.size() == 1 && warps[0] == clinic);
+    // B17 native01: the guard must keep the forced warp for the point, or the load goes to the lamp.
+    assert(forced_kept.size() == 1 && forced_kept[0]);
     arrive(clinic, -190.19f);
     tick(3);
     assert(!bbsc_home_recovery_slot && settled(u_i_ahh) && !kept(u_i_ahh));
