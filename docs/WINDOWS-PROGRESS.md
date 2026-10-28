@@ -1,6 +1,21 @@
 # BBSC progress: new fork / seamless
 
-Updated: 2026-10-24 (Asia/Bangkok).
+Updated: 2026-10-28 (Asia/Bangkok).
+
+## Latest handoff for the active implementer
+
+Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [native04 evidence and reproduction](handoff/R03-FINAL-NATIVE-04.md). This is a documentation/evidence checkpoint; tested runtime artifacts are unchanged. Preserve the active implementer's unrelated work when integrating.
+
+| Latest check | Result | Boundary / next action |
+|---|---|---|
+| Amelia joint earning | PASS, bounded command-assisted test | Same-map party established; verified live boss HP8051 → 0 using the authorized test aid. Both boss flags changed OFF → ON. |
+| Boss reward | PASS | Both have Gold Pendant4001 x1 after fresh-process reload; guest recorded one grant before restart and zero fresh grants. |
+| Boss-clear return | PASS | Guest automatically returned to exact original Clinic map/lamp/position/rotation, own-world role restored. |
+| Restart persistence | PASS for configured save + journal | Both fresh processes retained the earned event/item. Guest replayed its shared-progress journal; raw savedata without that journal is not proved. Preserve both when resuming. |
+| Host history / original data | Bounded preservation check PASS | No newly ON settled guest flag was ON in the host pre-party snapshot; original3171 paths/hashes exact. Auxiliary flag semantics are not all proved. |
+| No-death | Configured on both; partial evidence | Both runtime flags1; actual boss-hit survival of both remains open. |
+
+Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
 
@@ -14,7 +29,7 @@ Read [the handoff](handoff/WINDOWS-RESUME.md), [active plan](superpowers/plans/2
 | F02 new-session handoff | Codex | VERIFIED | Self-contained startup/R02 prompt and documentation checks PASS; cb9fcab pushed and remote SHA verified. |
 | R01 pins/ownership | Codex | VERIFIED | Approved pins/scope/ownership and shared instructions published in F01. |
 | R02 composition | Codex | VERIFIED | Exact pinned patch applied; complete release DLL/loader/notices assembled privately; fresh source build and copied-profile native module/image/hooks/override startup PASS. [Detailed evidence](handoff/BBSC-BASELINE.md). Gameplay gates remain open. |
-| R03 baseline reproduction | Codex | IN_PROGRESS | Representative same-map/Dream and fresh locked-map join/adjacent placement/return/reload pass bounded checkpoints. B03 backup retry corrected; principal G2 earned-event/history admission and explicit remaining recovery/candidate cases stay open. Latest B06 receiver ordering checkpoint below; actual earning remains open. |
+| R03 baseline reproduction | External Claude (active implementation), Codex (requested native checks) | IN_PROGRESS | Representative join/return/reload checks and native04 command-assisted Amelia earning/reward/save+journal restart pass bounded checkpoints. Remaining party/character ownership and recovery cases stay open; see latest handoff above. |
 | R04 demonstrated gaps | Codex | IN_PROGRESS | Bounded J01/A02-A04/B01-B03 fixes and evidence recorded. Remaining progress/admission fixes require actual native producer proof; no speculative framework or unrelated changes. |
 | CL01 audit | External Claude / Codex integration | VERIFIED / MERGED | Accepted audit head 108bf28, PR #1 merged/closed at 7a0a015; four documents integrated with history preserved. [Child tracker](collaboration/claude/PROGRESS.md). Source/document acceptance only; gameplay gates stay open. |
 | CL02-P01 contract | External Claude / Codex integration | VERIFIED / MERGED | Accepted head c4cc3c8 integrated by [PR #2](https://github.com/kaoitp/bloodborne_pc/pull/2), merge c5018fb; PR closed, all four audit commits retained. Source/document handback only; runtime/G2 gates remain open. |
@@ -25,7 +40,7 @@ Read [the handoff](handoff/WINDOWS-RESUME.md), [active plan](superpowers/plans/2
 | Gate | Status | Required evidence |
 |---|---|---|
 | G1 join | IN_PROGRESS | Native same-map and Cathedral to Dream join/adjacent placement pass in bounded checkpoints. Fresh locked-map visit/return/reload and bounded self-hosted flow now pass C01; remaining failed/stale candidate and unobserved route cases remain explicit. |
-| G2 progress | IN_PROGRESS / REPRODUCED-GAP | B01 personal flags and B03 backup retry bounded evidence pass; older-host-history/earned-event admission and native relevant rewards/save-reload remain open. |
+| G2 progress | IN_PROGRESS / PARTIAL NATIVE PASS | Native04 Amelia jointly earned event, pendant x1 on both and fresh-process save+journal reload PASS. Wider historical/party/character ownership, delayed-delivery and journal-independence cases remain open. |
 | G3 exit/return | IN_PROGRESS | Bounded normal/interrupted own-state recovery improved in A02-A04/B01; remaining recovery enablement and affected persistence cases remain explicit. |
 
 Custom managed admission/progress application remains OFF until relevant native gates pass. Chalice unsupported. No packaging or live-server redeployment.
