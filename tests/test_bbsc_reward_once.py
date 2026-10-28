@@ -78,6 +78,7 @@ bool bbsc_party_placed = true;
 BbscSaveSlot current{"sd1", 3};
 bool EnvFlagEnabled(const char*) { return true; }
 std::optional<BbscSaveSlot> bbsc_own_world_slot;
+std::map<u32, std::array<u8, 125>> bbsc_own_world; // the own-world journal (B18)
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() { return current; }
 u64 GetGlobalState() { return 9; }
 u64 GetLocalPlayerCharacter() { return 7; }
@@ -389,6 +390,40 @@ int main() {
     restart();
     kill();
     assert(adds == before_off + 2); // a new process may give it again (the existing behaviour)
+
+    // R03 B18 (normal replay 2026-10-28, default OFF): the guest beat Amelia in its own world (its
+    // journal copy, kept before the join, has 12401800 ON) and helps a host who has not. Not queued,
+    // in this process or a new one; the host's flags in the live table do not matter.
+    const BbscSaveSlot seventeen{"sd1", 17};
+    current = seventeen;
+    restart();
+    bbsc_boss_reward_queue.clear();
+    auto& amelia = bbsc_own_world[12401];
+    amelia[800 / 8] |= 0x80u >> (800 % 8);
+    const int before_beaten = adds;
+    kill();
+    restart();
+    kill();
+    assert(adds == before_beaten && bbsc_boss_reward_queue.empty());
+    // Another flag of the same group set does not count; with the boss's own bit clear it is given.
+    amelia[800 / 8] = 0;
+    amelia[801 / 8] |= 0x80u >> (801 % 8);
+    kill();
+    assert(adds == before_beaten + 1);
+    // No journal copy of the group (own world unknown): the existing behaviour.
+    restart();
+    bbsc_own_world.clear();
+    kill();
+    assert(adds == before_beaten + 2);
+    // The same with the opt-in record on.
+    reward_once("1");
+    const BbscSaveSlot eighteen{"sd1", 18};
+    current = eighteen;
+    restart();
+    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
+    kill();
+    assert(adds == before_beaten + 2 && record(eighteen).empty());
+    bbsc_own_world.clear();
     std::cout << "PASS a boss reward without a taken flag is given once per character across runs, "
                  "final only once saved\n";
 }

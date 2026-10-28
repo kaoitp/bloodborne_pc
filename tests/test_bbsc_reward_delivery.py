@@ -33,6 +33,7 @@ def run_delivery_fixture(source, directory):
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
@@ -107,6 +108,7 @@ s32 GetLocalCharacterType() { return character_type; }
 BbscSaveSlot current{"sd1", 1};
 bool EnvFlagEnabled(const char *) { return true; }
 std::optional<BbscSaveSlot> bbsc_own_world_slot;
+std::map<u32, std::array<u8, 125>> bbsc_own_world; // the own-world journal (B18)
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() {
   if (!slot_ready)
     return {};
