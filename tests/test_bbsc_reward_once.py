@@ -136,6 +136,7 @@ void restart() { // a fresh process: nothing in memory, the start settle runs be
     bbsc_boss_reward_unsaved.clear();
     bbsc_boss_reward_unclaimed.clear();
     SettleBbscBossRewardsAtStart();
+    QueueBbscBossRewardsOwedAtStart();
 }
 void kill() { // a joint Amelia kill, then the reward tick
     NoteBbscBossRewardEvent(12401800);
@@ -147,6 +148,15 @@ void reward_once(const char* value) {
 #else
     setenv("SHADPS4_BBSC_REWARD_ONCE", value, 1);
 #endif
+}
+std::string owed_line(const BbscSaveSlot& s) {
+    std::ifstream f("user/boss-rewards/owed-" + s.user + "-" + std::to_string(s.slot) + ".txt");
+    return std::string((std::istreambuf_iterator<char>(f)), {});
+}
+size_t mine() { // queued for the current character (owed rewards of others wait in the queue too)
+    return std::ranges::count_if(bbsc_boss_reward_queue, [](const auto& q) {
+        return q.owner.user == current.user && q.owner.slot == current.slot;
+    });
 }
 int main() {
     reward_once("1"); // the experimental opt-in; default OFF is checked at the end
@@ -167,10 +177,10 @@ int main() {
     bbsc_boss_reward_queue.clear();
     bbsc_boss_reward_queue.push_back({12401800, u_i_ahh});
     TickBbscBossRewards();
-    assert(adds == 1 && bbsc_boss_reward_queue.empty()); // no second Gold Pendant
+    assert(adds == 1 && (mine() == 0)); // no second Gold Pendant
     restart();
     NoteBbscBossRewardEvent(12401800);
-    assert(bbsc_boss_reward_queue.empty()); // not even queued
+    assert((mine() == 0)); // not even queued
     // A second kill in the same process before the save: no second lot either.
     current = six;
     kill();
@@ -190,12 +200,12 @@ int main() {
     current = other;
     std::filesystem::create_directories("user/boss-rewards/given-sd1-5.txt");
     NoteBbscBossRewardEvent(12401800);
-    assert(bbsc_boss_reward_queue.size() == 1);
+    assert(mine() == 1);
     TickBbscBossRewards();
-    assert(adds == 3 && bbsc_boss_reward_queue.size() == 1);
+    assert(adds == 3 && mine() == 1);
     std::filesystem::remove("user/boss-rewards/given-sd1-5.txt");
     TickBbscBossRewards(); // readable again: given once
-    assert(adds == 4 && bbsc_boss_reward_queue.empty());
+    assert(adds == 4 && (mine() == 0));
     game_saves(other);
     TickBbscBossRewards();
 
@@ -231,7 +241,7 @@ int main() {
     restart();                 // start settle: saved after the grant -> final
     assert(record(eight) == "12401800\n");
     kill();
-    assert(adds == 5 && bbsc_boss_reward_queue.empty()); // not again
+    assert(adds == 5 && (mine() == 0)); // not again
 
     // The same with the write still failing at the next start: the line stays pending and the
     // event waits (no second lot); a save that cannot be read is the same.
@@ -244,7 +254,7 @@ int main() {
     restart();
     assert(record(nine).find("granted 12401800 ") == 0);
     kill();
-    assert(adds == 6 && bbsc_boss_reward_queue.size() == 1); // waits, no second lot
+    assert(adds == 6 && mine() == 1); // waits, no second lot
 
     // PR #12 review 2: a failed grant, then a save WITHOUT the item, then an exit. Nothing may be
     // recorded for it: the next healthy kill gives it once.
@@ -310,11 +320,11 @@ int main() {
     restart();                                   // attempt + save after it: held
     assert(record(fourteen).find("attempt 12401800 ") == 0);
     kill();
-    assert(adds == before_broken && bbsc_boss_reward_queue.size() == 1); // no second lot
+    assert(adds == before_broken && mine() == 1); // no second lot
     in_inventory = true;                         // (the case where it was kept, not used)
     TickBbscBossRewards();
     in_inventory = false;
-    assert(adds == before_broken && bbsc_boss_reward_queue.empty() && record(fourteen) == "12401800\n");
+    assert(adds == before_broken && (mine() == 0) && record(fourteen) == "12401800\n");
 
     // The same break with no save before the exit: nothing reached a save, the line goes, given again.
     restart();
@@ -342,7 +352,7 @@ int main() {
     add_ok = false;
     const int before_ten = adds;
     kill();
-    assert(adds == before_ten && bbsc_boss_reward_queue.size() == 1);
+    assert(adds == before_ten && mine() == 1);
     assert(record(ten).empty());                 // the failed add's attempt line went at once
     add_ok = true;
     TickBbscBossRewards();
@@ -369,7 +379,7 @@ int main() {
     kill();
     for (int i = 0; i < 50; ++i) TickBbscBossRewards();
     assert(adds == before_failed_outcome);       // held: neither given nor dropped
-    assert(record(fifteen).find("attempt 12401800 ") == 0 && bbsc_boss_reward_queue.size() == 1);
+    assert(record(fifteen).find("attempt 12401800 ") == 0 && mine() == 1);
     std::filesystem::remove("user/boss-rewards/given-sd1-15.txt"); // the logged manual release
     TickBbscBossRewards();
     assert(adds == before_failed_outcome + 1);   // the debt is paid once
@@ -404,7 +414,7 @@ int main() {
     kill();
     restart();
     kill();
-    assert(adds == before_beaten && bbsc_boss_reward_queue.empty());
+    assert(adds == before_beaten && (mine() == 0));
     // Another flag of the same group set does not count; with the boss's own bit clear it is given.
     amelia[800 / 8] = 0;
     amelia[801 / 8] |= 0x80u >> (801 % 8);
@@ -423,6 +433,75 @@ int main() {
     bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
     kill();
     assert(adds == before_beaten + 2 && record(eighteen).empty());
+    bbsc_own_world.clear();
+
+    // PR #17 review 1: a legitimate joint kill whose delivery is refused (capacity), the progress
+    // merge saves the boss bit, the process ends before delivery. The obligation is owed on disk and
+    // the next start delivers it once, although the guard refuses the next kill. Both record modes.
+    for (const char* mode : {"1", "0"}) {
+        reward_once(mode);
+        const BbscSaveSlot owed{"sd1", mode[0] == '1' ? 20 : 21};
+        current = owed;
+        restart();
+        bbsc_boss_reward_queue.clear();
+        bbsc_own_world.clear();
+        add_ok = false;
+        const int before_pending = adds;
+        kill();
+        assert(adds == before_pending && mine() == 1 && owed_line(owed) == "12401800\n");
+        game_saves(owed);
+        bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8); // the merge saved the boss bit
+        restart();
+        assert(mine() == 1);                       // queued again from the owed line
+        add_ok = true;
+        kill();
+        assert(adds == before_pending + 1 && mine() == 0 && owed_line(owed).empty());
+        game_saves(owed);
+        TickBbscBossRewards();
+        restart();
+        kill();
+        assert(adds == before_pending + 1 && mine() == 0); // delivered: never again
+        bbsc_own_world.clear();
+    }
+
+    // Owner isolation: A's owed reward is not given to B, and waits for A.
+    reward_once("0");
+    const BbscSaveSlot a{"sd1", 22}, b{"sd1", 23};
+    current = a;
+    restart();
+    bbsc_boss_reward_queue.clear();
+    add_ok = false;
+    const int before_isolated = adds;
+    kill();
+    assert(owed_line(a) == "12401800\n");
+    add_ok = true;
+    current = b;                                   // another character loaded, beaten at home
+    restart();
+    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
+    kill();
+    for (int i = 0; i < 5; ++i) TickBbscBossRewards();
+    assert(adds == before_isolated && mine() == 0 && owed_line(b).empty());
+    current = a;
+    bbsc_own_world.clear();
+    TickBbscBossRewards();
+    assert(adds == before_isolated + 1 && owed_line(a).empty());
+
+    // Normal replay (B15 normal replay): delivered at the first kill, used up, beaten at home, another
+    // host's kill after a restart - nothing, and nothing owed.
+    const BbscSaveSlot replay{"sd1", 24};
+    current = replay;
+    restart();
+    bbsc_boss_reward_queue.clear();
+    const int before_replay = adds;
+    kill();
+    assert(adds == before_replay + 1 && owed_line(replay).empty());
+    adds = before_replay;                          // the Pendant used up
+    game_saves(replay);
+    bbsc_own_world[12401][800 / 8] |= 0x80u >> (800 % 8);
+    restart();
+    kill();
+    for (int i = 0; i < 5; ++i) TickBbscBossRewards();
+    assert(adds == before_replay && mine() == 0 && owed_line(replay).empty());
     bbsc_own_world.clear();
     std::cout << "PASS a boss reward without a taken flag is given once per character across runs, "
                  "final only once saved\n";
