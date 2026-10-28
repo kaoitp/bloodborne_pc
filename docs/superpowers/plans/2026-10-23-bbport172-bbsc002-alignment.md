@@ -339,3 +339,10 @@ PR09-INTEGRATE (2026-10-26): VERIFIED / MERGED AND CLOSED at `1b2625c`. Integrat
 
 - [x] Read-only boss HUD handle-decoding preflight matches existing helper arithmetic (0x164c392..0x164c446); no unproved formula change.
 - [ ] Live pointer-state discriminator and pending native03 boss gates remain open. Mandatory usage stop at9% remaining; no native launch this continuation.
+
+### PR15/16 monitor review (2026-10-28)
+
+- [x] PR15 exact7e4d240 checker9 synthetic tests PASS; duplicate-middle-process false PASS and equal-ms false INCOMPLETE reproduced.
+- [ ] IN_PROGRESS awaiting author: all-process duplicate checking and entry-sequence timing guards (review5679210406).
+- [x] PR16 exact2c59b0d source/table review; map-only journal premise contradicted by Dream keys5/50000.
+- [ ] IN_PROGRESS awaiting author: correct persistence claims, full hashes and reproducible static extraction (review5679210861). No native/R03 gates closed.
