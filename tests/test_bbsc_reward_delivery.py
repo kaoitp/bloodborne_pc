@@ -33,6 +33,7 @@ def run_delivery_fixture(source, directory):
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
@@ -107,6 +108,10 @@ s32 GetLocalCharacterType() { return character_type; }
 BbscSaveSlot current{"sd1", 1};
 bool EnvFlagEnabled(const char *) { return true; }
 std::optional<BbscSaveSlot> bbsc_own_world_slot;
+constexpr size_t BbscWorldGroupBytes = 125;
+std::map<u32, std::array<u8, 125>> bbsc_own_world; // the own-world journal (B18)
+bool BbscOwnWorldNonGuest(u64) { return false; }
+bool BbscBossGoodsFit(const BbscBossGoodsLot &) { return true; }
 std::optional<BbscSaveSlot> BbscActiveSaveSlot() {
   if (!slot_ready)
     return {};
@@ -311,7 +316,8 @@ int main() {
     binary = p / ('delivery-fixture.exe' if os.name == 'nt' else 'delivery-fixture')
     subprocess.run([shutil.which('clang++'), '-std=c++23', '-O0', str(fixture),
                     '-o', str(binary)], check=True)
-    subprocess.run([str(binary)], check=True)
+    env = dict(os.environ, SHADPS4_BBSC_REWARD_DEDUP='0')  # B18's ledger has its own fixture
+    subprocess.run([str(binary)], check=True, env=env, cwd=p)
 
 
 @unittest.skipUnless(shutil.which('clang++') and SOURCE.is_file(),
