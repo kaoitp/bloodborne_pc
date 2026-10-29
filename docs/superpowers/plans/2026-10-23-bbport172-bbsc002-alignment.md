@@ -409,3 +409,5 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 ### Private two-player test bundle (2026-10-30)
 
 - [ ] TEST-RELEASE-01 PENDING: user-authorized local trial EXE/ZIP for owner and friend; no live-server redeployment. Mandatory quota stop at8% primary remaining before implementation. Reuse existing Windows packaging, exclude assets/saves/secrets/logs, verify current runtime composition/dependencies/notices and startup, record hashes and explain unfinished R03/reward/recovery gates. See WINDOWS-PROGRESS checkpoint; no build/package/publication produced yet.
+- [ ] TEST-RELEASE-01 IN_PROGRESS (2026-10-30): user explicitly authorizes GitHub pre-release and default branch change and overrides quota stop. GitHub default branch changed to seamless. Build/package current composition, exclude private data and validate before publication.
+- [ ] TEST-RELEASE-01: default branch switched to seamless. Base staging produced; archive step failed in MSYS2, BBSC composition and pre-release publication remain open.
