@@ -74,6 +74,8 @@ s64 SteadyNowMs() { static s64 now = 0; return now += 1000; }
 u32 current_map = 0x18000000;                     // Cathedral Ward: the host's spot
 BbscTransform here{{19.77f, -9.51f, 101.51f, 1.f}, {}};
 int hp = 100;
+bool grounded = true;
+bool BbscHomeRecoveryGrounded(u64) { return grounded; }
 u32 GetCurrentPackedMap() { return current_map; }
 bool IsUsablePackedMap(u32 m) { return m != 0; }
 u64 GetLocalPlayerCharacter() { return 7; }
@@ -179,6 +181,7 @@ void fresh() {
     global_block[0x1592] = 1;                     // in our own world
     lamp_targets.clear();
     warp_ok = lamp_ok = true;
+    grounded = true;
     announced = 0;
     active_slot = u_i_ahh;
 }
@@ -306,7 +309,81 @@ int main() {
     tick(3);
     assert(!bbsc_home_recovery_slot && settled(u_i_ahh));
 
-    // 11. Off again with =0.
+    // 11. T4: coordinates can match while there is no floor. Keep the journal, then use the lamp.
+    fresh();
+    journal(u_i_ahh);
+    tick(3);
+    arrive(clinic, -190.19f);
+    grounded = false;
+    tick(3);
+    assert(bbsc_home_recovery_slot && kept(u_i_ahh) && !settled(u_i_ahh));
+    tick(35);
+    assert(lamp_targets.size() == 1 && kept(u_i_ahh));
+    arrive(lamp_map, 300.f);
+    grounded = true;
+    tick(3);
+    assert(!bbsc_home_recovery_slot && settled(u_i_ahh));
+
+    // 12. A transient floor is not a completed arrival; losing it restarts the stability interval.
+    fresh();
+    journal(u_i_ahh);
+    tick(3);
+    arrive(clinic, -190.19f);
+    tick(1);
+    assert(kept(u_i_ahh) && !settled(u_i_ahh));
+    grounded = false;
+    tick(3);
+    grounded = true;
+    tick(2);
+    assert(kept(u_i_ahh));
+    tick(1);
+    assert(settled(u_i_ahh));
+
+    // 13. The game's second load before settlement must retain the owner's pending lamp fallback.
+    fresh();
+    journal(u_i_ahh);
+    tick(3);
+    arrive(clinic, -190.19f);
+    grounded = false;
+    tick(1);
+    NoteBbscHomeRecoveryLoad();
+    assert(bbsc_home_recovery_slot && kept(u_i_ahh));
+    current_map = 0x15000000;
+    tick(3);
+    assert(lamp_targets.size() == 1);
+    arrive(lamp_map, 300.f);
+    grounded = true;
+    tick(3);
+    assert(settled(u_i_ahh));
+
+    // 14. Time spent loading cannot count toward the continuous grounded interval.
+    fresh();
+    journal(u_i_ahh);
+    tick(3);
+    arrive(clinic, -190.19f);
+    tick(1);
+    global_block[0x08] = 1;
+    tick(5);
+    global_block[0x08] = 0;
+    tick(2);
+    assert(kept(u_i_ahh));
+    tick(1);
+    assert(settled(u_i_ahh));
+
+    // 15. A floor on the lamp's map is insufficient if the game selected a different lamp.
+    fresh();
+    warp_ok = false;
+    journal(u_i_ahh);
+    tick(5);
+    arrive(lamp_map, 300.f);
+    WriteValue<s32>(GetGlobalState(), 0x1528, lamp + 1);
+    tick(3);
+    assert(kept(u_i_ahh));
+    WriteValue<s32>(GetGlobalState(), 0x1528, lamp);
+    tick(3);
+    assert(settled(u_i_ahh));
+
+    // 16. Off again with =0.
     fresh();
     env("0");
     journal(u_i_ahh);

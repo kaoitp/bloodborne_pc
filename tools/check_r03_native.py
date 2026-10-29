@@ -217,7 +217,8 @@ class B17:
         self.point = rf'{home}requested original point into {args.map:#x}, lamp -?\d+, accepted true \(try 1\)'
         self.requested = rf'{home}requested '
         self.lamp = rf'{home}requested recorded lamp into 0x[0-9a-f]+, lamp -?\d+, accepted true'
-        self.point_failed = (rf'{home}(request refused|arrived elsewhere|the requested load did not come) '
+        self.point_failed = (rf'{home}(request refused|arrived elsewhere|the requested load did not come|'
+                             rf'another load before settlement|no stable ground at the return target) '
                              rf'\(point \d+ of \d+\)')
         self.settled = rf'{home}own world and return point settled'
         self.gave_up = rf'{home}no way back'

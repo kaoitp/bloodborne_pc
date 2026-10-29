@@ -152,9 +152,12 @@ class R03NativeCheckTests(unittest.TestCase):
         self.assertVerdict('FAIL', 'b17-n2', start()(SETTLED))   # or settled
 
     def test_b17_n3_lamp_fallback(self):
-        good = point(recovered(Log()))(FAILED, 'arrived elsewhere', 'point', 1, 3)
-        good(REQUESTED, 'recorded lamp', 0x18000000, LAMP, True, 1)(SETTLED)
-        self.assertVerdict('MANUAL', 'b17-n3', good)
+        for reason in ('arrived elsewhere', 'request refused', 'the requested load did not come',
+                       'another load before settlement', 'no stable ground at the return target'):
+            with self.subTest(reason=reason):
+                good = point(recovered(Log()))(FAILED, reason, 'point', 1, 3)
+                good(REQUESTED, 'recorded lamp', 0x18000000, LAMP, True, 1)(SETTLED)
+                self.assertVerdict('MANUAL', 'b17-n3', good)
         self.assertVerdict('INCOMPLETE', 'b17-n3', point(recovered(Log()))(SETTLED))  # the point did not fail
 
     def test_every_message_is_in_the_source(self):
