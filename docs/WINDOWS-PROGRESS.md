@@ -4,6 +4,8 @@ Updated: 2026-10-29 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
+Latest T4 checkpoint2026-10-29: [recorded-lamp fallback FAIL; side-by-side windows PASS](handoff/R03-T4-LAMP-FALLBACK.md). Unchanged T1 composition accepts the edited out-of-bounds point, logs settlement and archives the journal, then reaches Hunter's Dream instead of recorded lamp2412950. Independent normal save/restart persists Dream; three repeated1250-group snapshots per run differ17/16 bits from prejoin, not fully classified by T2. Originals3171/artifacts/protected journal exact; both T4 processes exit0. Separate opt-in BB_WINDOW_RECT display build opens two900x506 copied offline title windows side by side; invalid-height/default fallback verified. Those two title windows remain open for the user. T4/N3/broad recovery gates stay open, defaults unchanged.
+
 Latest T3 checkpoint2026-10-29: [pending-settlement cancellation/ownership PASS](handoff/R03-T3-CHARACTER-CANCEL.md). Copied rename blocker holds in-memory owner recovery after arrival; actual title/EiEi load logs cancellation, EiEi1250 groups/transform remain exact to independent baseline, journal stays byte-exact and original owner retries to exact0.0m origin/1250 groups. All12 snapshots verified, originals3171 exact, normal save/close exit0. Pre-arrival cancellation remains untested; T4/broad recovery gates open, defaults unchanged.
 
 Latest T2 checkpoint2026-10-29: [save/reload flags PASS](handoff/R03-T2-SAVE-RELOAD.md). T1 recovered owner reload and separate same-build no-party control before/after normal save yield12 repeated settled snapshots, all1250 groups exact to prejoin and exact0.0m origin/rotation. All six12705 suspect bits reproduce temporarily OFF during both no-party loads and settle back ON, resolving the observed flag concern. Originals3171 exact; all3 test processes closed/exit0. T3/T4 remain open; defaults unchanged.
@@ -28,6 +30,10 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### T4 recorded-lamp fallback — FAIL; smaller test windows — PASS (2026-10-29)
+
+Completed the user's T4 and display request; see the linked T4 checkpoint for inputs, exact commands/hashes, six native snapshots,17/16-bit differences, failure timeline and next action. T4 point-failure/lamp-fallback gate failed: settlement precedes a later Dream transition, and the wrong destination persists on independent restart. No recovery fix/default change was made. Window geometry alone now has a bounded opt-in BB_WINDOW_RECT override; separate probe build/native invalid-height control and two nonoverlapping900x506 offline title windows pass. Existing out/bb-probe.exe stays byte-exact to T1; layout scripts select out/gpu/bb-probe.exe. Originals3171 exact; T4 normal exits0, two copied offline layout titles deliberately remain open. Next investigate durable settlement/valid destination and rerun T4; personal flag integrity remains unqualified for this case.
 
 ### T3 pending-return cancellation / character ownership — BOUNDED PASS (2026-10-29)
 

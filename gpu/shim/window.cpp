@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <array>
+#include <sstream>
 #include <SDL3/SDL.h>
 #include "common/assert.h"
 #include "common/logging/log.h"
@@ -25,16 +26,34 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, const char* title) : width{width_}
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
         UNREACHABLE_MSG("Failed to initialize SDL video: {}", SDL_GetError());
     }
+    const char* fullscreen = std::getenv("BB_FULLSCREEN");
+    const bool wants_fullscreen = fullscreen && fullscreen[0] == '1';
+    int x = SDL_WINDOWPOS_CENTERED, y = SDL_WINDOWPOS_CENTERED;
+    if (const char* rect = std::getenv("BB_WINDOW_RECT"); rect && !wants_fullscreen) {
+        std::istringstream input{rect};
+        int rx, ry, rw, rh;
+        char c1, c2, c3;
+        if ((input >> rx >> c1 >> ry >> c2 >> rw >> c3 >> rh) &&
+            c1 == ',' && c2 == ',' && c3 == ',' && (input >> std::ws).eof() &&
+            rx >= -32768 && rx <= 32767 && ry >= -32768 && ry <= 32767 &&
+            rw >= 320 && rw <= 8192 && rh >= 180 && rh <= 8192) {
+            x = rx;
+            y = ry;
+            width_ = rw;
+            height_ = rh;
+        } else {
+            LOG_WARNING(Frontend, "Ignoring invalid BB_WINDOW_RECT; expected x,y,width,height");
+        }
+    }
     SDL_PropertiesID props = SDL_CreateProperties();
     SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title);
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED);
-    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_CENTERED);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, x);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, y);
     SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width_);
     SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height_);
     SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_VULKAN_BOOLEAN, true);
-    const char* fullscreen = std::getenv("BB_FULLSCREEN");
-    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, fullscreen && fullscreen[0] == '1');
+    SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, wants_fullscreen);
     base_title = title;
     window = SDL_CreateWindowWithProperties(props);
     SDL_DestroyProperties(props);
