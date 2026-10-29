@@ -405,3 +405,7 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 - [x] PR17 revision3 never-beaten native control: first Pendant x1, one confirmed grant, no owed entry after delivery and exact origin return PASS. Deferred-delivery/fault gates and broad R03 acceptance remain open.
 
 - [ ] PR17 final owner requirement: dedup ON by default only after investigating/addressing lasting owed-write/removal failure loss/duplicate risks with fault/restart/owner regressions and targeted native evidence; PR comment6477809673. Default-OFF remains interim. Quota stop at8% remaining.
+
+### Private two-player test bundle (2026-10-30)
+
+- [ ] TEST-RELEASE-01 PENDING: user-authorized local trial EXE/ZIP for owner and friend; no live-server redeployment. Mandatory quota stop at8% primary remaining before implementation. Reuse existing Windows packaging, exclude assets/saves/secrets/logs, verify current runtime composition/dependencies/notices and startup, record hashes and explain unfinished R03/reward/recovery gates. See WINDOWS-PROGRESS checkpoint; no build/package/publication produced yet.
