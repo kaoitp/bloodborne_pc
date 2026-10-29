@@ -74,6 +74,8 @@ s64 SteadyNowMs() { static s64 now = 0; return now += 1000; }
 u32 current_map = 0x18000000;                     // Cathedral Ward: the host's spot
 BbscTransform here{{19.77f, -9.51f, 101.51f, 1.f}, {}};
 int hp = 100;
+int echoes = 535, stain = 317;
+s32 GetBloodEchoes() { return echoes; }
 bool grounded = true;
 bool BbscHomeRecoveryGrounded(u64) { return grounded; }
 u32 GetCurrentPackedMap() { return current_map; }
@@ -99,7 +101,7 @@ u32 BbscLampPointMap(s32 lamp) {
 std::vector<u32> warps;                           // maps the return asked for
 std::vector<bool> forced_kept;                    // the forced warp survived the request's map choice
 bool warp_ok = true;
-struct GuestRegisterSnapshot { u64 rcx{}, rsi{}, rbp{}; };
+struct GuestRegisterSnapshot { u64 rcx{}, rsi{}, rbp{}, rdx{}; };
 s32 GetSessionState() { return 0; }                // own world, no session
 bool PutBbscHomeSpot(u64) { return false; }
 void GuardBbscStrayForcedWarp(const GuestRegisterSnapshot& registers);
@@ -126,6 +128,13 @@ void SuspendBbscHomeRecovery();
             raise AssertionError(f'source has no {name}: no owner-bound durable-origin return')
     start = src.index('struct BbscHomeSpot {')
     code += src[start:src.index('// Game tick: forget the spot', start)]
+    if 'void PS4_SYSV_ABI BbscHomeRecoveryDropHook(' not in src:
+        # Legacy composition installs no drop guard; its native void replay loses535 Echoes.
+        code += '''
+bool bbsc_home_recovery_echo_guard_ready = true;
+u8 bbsc_home_recovery_drop_skip = 0;
+void BbscHomeRecoveryDropHook(u64, const GuestRegisterSnapshot*) {}
+'''
     code += function('void NoteBbscOwnWorldCharacterLoad(') + '\n'
     code += function('bool BbscOwnWorldNonGuest(') + '\n' + function('void GuardBbscStrayForcedWarp(') + '\n'
     code += r'''
@@ -159,6 +168,14 @@ void journal(const BbscSaveSlot& s, s32 rec_lamp = lamp) { // a crash left this 
 void tick(int n) { // as TickBbscHomeSpot calls it
     for (int i = 0; i < n; ++i) if (bbsc_home_recovery_slot) TickBbscHomeRecovery();
 }
+void drop(u64 player = 7, u64 penalty = 1) {
+    GuestRegisterSnapshot registers{};
+    registers.rsi = player;
+    registers.rdx = penalty;
+    BbscHomeRecoveryDropHook(0, &registers);
+    if (!bbsc_home_recovery_drop_skip) { stain = echoes; echoes = 0; }
+    bbsc_home_recovery_drop_skip = 0; // the existing entry-hook trampoline clears it
+}
 void arrive(u32 map, float x) { // the requested load, then the game saves the slot
     NoteBbscHomeRecoveryLoad();
     active_slot.reset();
@@ -181,7 +198,11 @@ void fresh() {
     global_block[0x1592] = 1;                     // in our own world
     lamp_targets.clear();
     warp_ok = lamp_ok = true;
+    home = true;
     grounded = true;
+    bbsc_home_recovery_echo_guard_ready = true;
+    echoes = 535;
+    stain = 317;
     announced = 0;
     active_slot = u_i_ahh;
 }
@@ -383,7 +404,46 @@ int main() {
     tick(3);
     assert(settled(u_i_ahh));
 
-    // 16. Off again with =0.
+    // 16. Recovery death preserves the held Echoes AND a prior stain; no refund or duplication.
+    fresh();
+    journal(u_i_ahh);
+    tick(3);
+    drop();
+    assert(echoes == 535 && stain == 317);
+    drop();
+    assert(echoes == 535 && stain == 317);
+    arrive(clinic, -190.19f);
+    tick(3);
+    drop();
+    assert(echoes == 0 && stain == 535); // ordinary death after settlement still pays its penalty
+    fresh();
+    echoes = 0;
+    journal(u_i_ahh);
+    tick(3);
+    drop();
+    assert(echoes == 0 && stain == 317); // even a zero-value drop must not erase an older stain
+
+    // 17. Other/unknown owners, another player and non-penalty calls must never get protection.
+    for (int boundary = 0; boundary < 6; ++boundary) {
+        fresh();
+        journal(u_i_ahh);
+        tick(3);
+        if (boundary == 0) active_slot = kaori;
+        if (boundary == 1) active_slot.reset();
+        if (boundary == 2) NoteBbscOwnWorldCharacterLoad();
+        if (boundary == 5) home = false;
+        drop(boundary == 3 ? 8 : 7, boundary == 4 ? 0 : 1);
+        assert(echoes == 0 && stain == 535);
+    }
+
+    // 18. Without the verified hook, leave the journal pending on disk instead of warping unsafely.
+    fresh();
+    bbsc_home_recovery_echo_guard_ready = false;
+    journal(u_i_ahh);
+    tick(5);
+    assert(!bbsc_home_recovery_slot && kept(u_i_ahh) && warps.empty());
+
+    // 19. Off again with =0.
     fresh();
     env("0");
     journal(u_i_ahh);

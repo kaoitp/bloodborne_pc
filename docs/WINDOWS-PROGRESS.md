@@ -1,8 +1,10 @@
 # BBSC progress: new fork / seamless
 
-Updated: 2026-10-29 (Asia/Bangkok).
+Updated: 2026-10-30 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
+
+Latest Echoes checkpoint2026-10-30: [recovery-only death-drop protection PASS](handoff/R03-RECOVERY-ECHOES.md). Byte-verified existing skip hook prevents the confirmed local pending owner's death penalty before currency/stain writes; no refund/new journal format. The identical void replay with no-death OFF retains535 at the lamp and after independent save/restart, prior stain record unchanged. Ordinary death after recovery still transfers535 into a stain and leaves0 held. Six settled money snapshots,20-case actual-handler fixture and9 checker tests pass; original3171 exact. Positive prior-stain balance/native character-switch remain fixture-only; defaults stay OFF, broad R03 acceptance open.
 
 Latest T4 fix checkpoint2026-10-29: [corrected settlement and native destination/flags PASS](handoff/R03-T4-SETTLEMENT-FIX.md). Native calibration confirms false settlement while floor=0. Corrected DLL waits for continuous usable ground and retains pending fallback across an in-world second load. Recorded-lamp return survives independent normal save/restart; its six group12705 differences exactly match an independent ordinary Hunter's Mark control across all1250 groups. Valid-point native arrival/flags also pass. Twelve settled snapshots verified; original3171 exact; all test processes normally closed. The synthetic void fault still causes a death-style Dream transition/Echoes loss before fallback, so currency safety and broad recovery acceptance remain open; defaults stay OFF.
 
@@ -32,6 +34,10 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### Recovery Blood Echoes protection — PASS for prepared void/save-reload case (2026-10-30)
+
+User-requested Echoes correction complete. Native verified entry hook protects only a confirmed local pending recovery owner and refuses to arm unsafe recovery if unavailable. Actual-handler fixture RED/GREEN covers535, older stain317, zero held balance, owner/title/guest boundaries, normal death after settlement and unavailable-hook refusal;9 checker tests pass. On the matching DLL/probe, the exact edited-point replay with no-death OFF keeps535 through fallback and independent normal save/restart; six settled money snapshots and prior stain fields agree. Reload world flags match the established independent ordinary-respawn control across1250 groups. Ordinary HP0 death after recovery drops535 normally (50 native samples), with the successful535 save protected beforehand. Both processes normally saved/closed; originals3171 exact, journals/artifacts byte-exact. Limits and hashes in the linked checkpoint. Native positive-balance old stain and native character-change cancellation not repeated; defaults OFF, no server/package changes.
 
 ### T4 recovery settlement correction — destination/flags PASS (2026-10-29)
 
