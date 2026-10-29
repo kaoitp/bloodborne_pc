@@ -1,8 +1,10 @@
 # BBSC progress: new fork / seamless
 
-Updated: 2026-10-28 (Asia/Bangkok).
+Updated: 2026-10-29 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
+
+Latest T1 checkpoint2026-10-29: [B19 matching-build original-point recovery PASS](handoff/R03-T1-POINT-RECOVERY.md). Protected B17 crash replay: one accepted point request, no fallback, exact position/rotation (0.0m), own-world1/type0, immediate settled1250 groups exact and original3171 unchanged. Normal save/title/close, runner exit0. T2 independent save/reload/control, T3 cancellation/ownership and T4 fallback remain open. Defaults unchanged.
 
 Latest B17 checkpoint2026-10-28: [native interruption/recovery evidence](handoff/R03-B17-NATIVE-01.md). Guest interrupted0.004162s after placement; owner recovery misses original point and uses lamp16.086579m away (N1 FAIL). Lamp survives normal save/restart, but six group12705 flag bits remain unclassified, so full N3 is open. Loading EiEi with owner3 journal pending causes no recovery request and preserves that journal exactly; full in-flight N2 cancellation/flags/owner retry remains unproved. Original3171 hashes exact, test games closed. No product/default change; quota checkpoint, broad acceptance open.
 
@@ -22,6 +24,12 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### T1 original-point recovery — PASS (2026-10-29)
+
+User requests T1 from the T1–T4 plan prepared in chat สรุปสถานะและงานถัดไป. Imported that plan into this authoritative seamless checkout without altering the other worktree. Build current integrated B19 source in isolated `.superpowers/t1/source`, preserve mandatory notices, then replay a fresh copy of B17 protected crash savedata plus byte-identical owner journal. Acceptance: one accepted point request, no fallback/arrived-elsewhere, journaled map/rotation, distance <=5m and original3171 hashes unchanged. T2–T4 and PR17 persistence remain separate. No product/default/server change.
+
+Completed: [matching-build native evidence](handoff/R03-T1-POINT-RECOVERY.md). One point request19:19:55.231, settled19:20:06.777; exact map/rotation/position0.0m, no fallback, immediate1250 groups exact. Fixture1PASS, DLL build exit0, originals3171 exact, normal save/title/close exit0. Protected after-T1 save+journal ready for T2; no independent reload claim.
 
 ### B17 matching-build native recovery — CHECKPOINT / acceptance open (2026-10-28, Codex)
 
