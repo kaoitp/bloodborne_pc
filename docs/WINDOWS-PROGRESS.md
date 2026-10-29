@@ -4,6 +4,8 @@ Updated: 2026-10-29 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
+Latest T2 checkpoint2026-10-29: [save/reload flags PASS](handoff/R03-T2-SAVE-RELOAD.md). T1 recovered owner reload and separate same-build no-party control before/after normal save yield12 repeated settled snapshots, all1250 groups exact to prejoin and exact0.0m origin/rotation. All six12705 suspect bits reproduce temporarily OFF during both no-party loads and settle back ON, resolving the observed flag concern. Originals3171 exact; all3 test processes closed/exit0. T3/T4 remain open; defaults unchanged.
+
 Latest T1 checkpoint2026-10-29: [B19 matching-build original-point recovery PASS](handoff/R03-T1-POINT-RECOVERY.md). Protected B17 crash replay: one accepted point request, no fallback, exact position/rotation (0.0m), own-world1/type0, immediate settled1250 groups exact and original3171 unchanged. Normal save/title/close, runner exit0. T2 independent save/reload/control, T3 cancellation/ownership and T4 fallback remain open. Defaults unchanged.
 
 Latest B17 checkpoint2026-10-28: [native interruption/recovery evidence](handoff/R03-B17-NATIVE-01.md). Guest interrupted0.004162s after placement; owner recovery misses original point and uses lamp16.086579m away (N1 FAIL). Lamp survives normal save/restart, but six group12705 flag bits remain unclassified, so full N3 is open. Loading EiEi with owner3 journal pending causes no recovery request and preserves that journal exactly; full in-flight N2 cancellation/flags/owner retry remains unproved. Original3171 hashes exact, test games closed. No product/default change; quota checkpoint, broad acceptance open.
@@ -24,6 +26,12 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### T2 save/reload flag integrity — PASS (2026-10-29)
+
+User requests T2 after T1 PASS. Dependencies: unchanged T1 B19 DLL/source/probe, protected after-T1 save+journal and separate native01 pre-B17 copied baseline for a no-party save/reload control. Scope: private profiles/helpers/native evidence and tracker/plan. Acceptance: fresh-process owner reload, repeated settled1250-group snapshots exact to prejoin or fully classified differences using same-build no-party control, position/rotation preservation and originals3171 unchanged. No source/default/server change; T3/T4 separate.
+
+Completed: [T2 native evidence](handoff/R03-T2-SAVE-RELOAD.md). Recovered-owner fresh reload plus same-build no-party before/save/restart control:12 settled1250-group exact matches, exact map/lamp/position/rotation, six early12705 differences classified by independent control. Native assert exit0, originals3171 exact, runners0/0/0, games closed. No new fixture/build/product change. Next T3 pending-return cancellation and owner isolation.
 
 ### T1 original-point recovery — PASS (2026-10-29)
 
