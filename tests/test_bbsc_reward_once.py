@@ -187,7 +187,7 @@ size_t mine() { // queued for the current character (owed rewards of others wait
     });
 }
 int main() {
-    dedup("0");       // B18 is ON by default; its own section at the end
+    dedup("0");       // B18 (interim opt-in) has its own section at the end
     reward_once("1"); // the experimental opt-in; default OFF is checked at the end
     const BbscSaveSlot u_i_ahh{"sd1", 3}, six{"sd1", 2}, other{"sd1", 5}, seven{"sd1", 7},
         eight{"sd1", 8};
@@ -450,8 +450,19 @@ int main() {
     };
     reward_once("0");
 
-    // Default (variable unset) is ON: a guest that beat Amelia at home gets nothing, nothing owed.
-    dedup_unset();
+    // Interim opt-in (review of revision 4): unset and "0" are the existing behaviour, no ledger;
+    // "1" turns it on: a guest that beat Amelia at home gets nothing, nothing owed.
+    for (const int off_slot : {31, 32}) {
+        if (off_slot == 31) dedup_unset(); else dedup("0");
+        const BbscSaveSlot off{"sd1", off_slot};
+        fresh(off);
+        beaten_at_home();
+        const int before = adds;
+        kill();
+        assert(adds == before + 1 &&
+               !std::filesystem::exists("user/boss-rewards/owed-sd1-" + std::to_string(off_slot) + ".txt"));
+    }
+    dedup("1");
     {
         const BbscSaveSlot on{"sd1", 30};
         fresh(on);
@@ -460,17 +471,6 @@ int main() {
         kill();
         assert(adds == before && mine() == 0 && owed_line(on).empty());
     }
-    // "0" turns it off: the existing behaviour, no ledger.
-    dedup("0");
-    {
-        const BbscSaveSlot off{"sd1", 31};
-        fresh(off);
-        beaten_at_home();
-        const int before = adds;
-        kill();
-        assert(adds == before + 1 && !std::filesystem::exists("user/boss-rewards/owed-sd1-31.txt"));
-    }
-    dedup_unset();
 
     for (const char* mode : {"0", "1"}) {
         reward_once(mode);
@@ -513,9 +513,10 @@ int main() {
         kill();
         assert(adds == before && mine() == 0 && owed_line(slot(2)).empty() && record(slot(2)).empty());
 
-        // Gate 1 (owner requirement 1): the owed line cannot be written for the whole run. Nothing is
-        // delivered and the shared progress leaves the boss flag out; the run ends; the next joint
-        // kill earns it again: given once, nothing lost.
+        // Owner case 1, the OPEN gate (why this is opt-in): the owed line cannot be written for the
+        // whole run. Nothing is delivered and the shared progress leaves the boss flag out; the run
+        // ends and the original obligation is gone - only a new joint kill earns it again. Pinned as
+        // the documented behaviour, not as delivery of the original obligation.
         fresh(slot(3));
         std::filesystem::create_directories(owed_path(slot(3)));  // unwritable ledger
         before = adds;

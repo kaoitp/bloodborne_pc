@@ -1,6 +1,6 @@
-# R03 B18: no second boss reward for a boss the guest has beaten, ON by default
+# R03 B18: no second boss reward for a boss the guest has beaten (interim opt-in)
 
-2026-10-28/29. Claude (R03 takeover). Revision 4 follows the owner requirement on PR #17 (issuecomment-6477809673): dedup is ON by default, and the two persistence failures are addressed. Source change, fixture-tested and built. **Native: revision 3 (opt-in) passed the friend's repeat-kill and never-beaten runs ([R03-PR17-NATIVE-VALIDATION](R03-PR17-NATIVE-VALIDATION.md)). Revision 4 is not run natively.**
+2026-10-28/29. Claude (R03 takeover). Revision 4 followed the owner requirement on PR #17 (issuecomment-6477809673). **Revision 5** follows the review of revision 4: owner case 1 still loses the original obligation when the ledger stays unwritable until exit, so the protocol is an **interim opt-in again, `SHADPS4_BBSC_REWARD_DEDUP=1`, default OFF**, until the obligation is kept in a place the game itself saves (see "Path to default ON"). Source change, fixture-tested and built. **Native: revision 3 (opt-in) passed the friend's repeat-kill and never-beaten runs ([R03-PR17-NATIVE-VALIDATION](R03-PR17-NATIVE-VALIDATION.md)). Revision 4 is not run natively.**
 
 ## Gap
 
@@ -46,16 +46,30 @@ The boss flag reaches the guest's own world through the **shared progress**: the
 | 1. The owed line cannot be written until exit, while the shared progress saves the boss flag | the obligation is lost (the guard refuses the next kill) | Nothing is delivered (no claim possible), and the boss flag is held out of the pending file and the merge. The run ends with neither the item nor the flag, so the next joint kill earns it again: **not lost** |
 | 2. The line cannot be rewritten until exit after it became owed (the removal or claim fails) | the reward is delivered, then queued again at the next start: **duplicate** | The claim fails, so there is no add. The reward is delivered once after the restart, and its `done` line refuses it after that, consumed or not: **not duplicated** |
 
-`SHADPS4_BBSC_REWARD_DEDUP=0` turns all of it off, restoring the earlier behaviour. It is independent of `SHADPS4_BBSC_REWARD_ONCE`.
+Correction (review of revision 4): for case 1, "re-earned by a later joint kill" is **not** delivery of the original obligation. The player may never have that kill, and the jointly earned progress for that boss is lost too. So case 1 is an open gate, and so is the refused-add/reopen loss below. Revision 5 runs all of this only with `SHADPS4_BBSC_REWARD_DEDUP=1`. Unset or `0` keeps the earlier behaviour, duplicates included. The switch is independent of `SHADPS4_BBSC_REWARD_ONCE`.
+
+## Path to default ON (proposal, not implemented)
+
+A mod file cannot carry an obligation through storage that fails until exit. The only place the game is sure to write with the character is its **own save**.
+
+**Proposal.** One event flag per reward row marks it as owed, inside a flag group the character's save already holds.
+- At the kill, the flag is set in the guest's live table together with the shared progress. It is merged at home like the boss bit, so the boss bit and "owed" reach the same save in one write.
+- At delivery, the item add and the flag clear happen in the live table, and the next game save holds both or neither. A crash in between redelivers once, because the item was not saved either.
+
+This closes case 1 (nothing is ever written outside the save) and the reopen loss (no separate claim write). It needs:
+1. One unused flag per reward row, proven unused by the game's event scripts (`tools/gamedata` emevd/esd scan) and present in the save's flag groups.
+2. A native check that the flag survives the trip home, a save, and a reload.
+
+Until then, the ledger above stays opt-in.
 
 ## Evidence
 
 **Fixtures.** `tests/test_bbsc_reward_once.py`, on the actual producer, consumer, ledger and hold functions. These cases run in **both** `REWARD_ONCE` settings, each character in its own save slot:
-- default (variable unset) is ON: a guest beaten at home gets nothing, and nothing is owed. `=0` gives the old behaviour with no ledger;
+- revision 5: unset and `=0` give the old behaviour with no ledger; `=1` turns it on, and then a guest beaten at home gets nothing and nothing is owed;
 - never beaten: given once. The `owed` line becomes `done` (claimed). There is no second grant in the same process or after a restart, even before the flag is saved. Once the flag is in the own world and saved after, the `done` line goes, and the flag guards from then on;
 - no journal copy of the group: given once;
 - beaten at home: nothing, no record line, nothing owed;
-- **case 1:** the ledger is unwritable for the whole run. No delivery, and the boss bit is held out of the progress. Restart with storage back, kill: given once. The bit is no longer held once the line is durable;
+- **case 1 (open gate, pinned):** the ledger is unwritable for the whole run. No delivery, and the boss bit is held out of the progress. After the restart only a **new** kill gives it, which is the documented gap, not delivery of the original obligation;
 - **review 1:** delivery refused (fit), the owed line on disk keeps the bit in the progress, the bit is saved, restart (queued again), kill: given once, and never again;
 - **case 2:** owed, then every rewrite fails for the whole run. No delivery. Restart: delivered once. Used up, restart, kill: nothing;
 - add refused after its claim: the `owed` line is reopened, and the next try gives it once;
@@ -63,11 +77,11 @@ The boss flag reaches the guest's own world through the **shared progress**: the
 
 A structural test asserts that the real `WriteBbscPendingProgress` and `MergeBbscSharedProgress` call the hold **before** they write or set anything. The progress fixtures only stub it.
 
-**RED.** Mutated sources in `.superpowers/claude-r03/b18/v4/`. Each fails the fixture:
+**RED.** Mutated sources in `.superpowers/claude-r03/b18/v5/` (revision 5). Each fails the fixture:
 
 | Mutation | Fails at |
 |---|---|
-| default OFF | the default-ON case |
+| default ON | the unset/`0` cases |
 | no hold | case 1's hold |
 | no claim before the add | case 1's "no delivery" |
 | no reopen after a refused add | the reopened owed line |
@@ -82,7 +96,7 @@ Earlier revisions' mutations are in `b18/`, `b18/v2/` and `b18/v3/`.
 - The home-recovery, own-world-owner, party-progress, progress-backup and reorder fixtures pass.
 - Full Python suite: 182 ran, 48 skipped, 5 failures and 11 errors. The failures and errors are the same Linux-only tests as on the `seamless` baseline.
 
-**Build.** Patch regenerated from the reference tree (on `seamless` 56bed5e, B19 kept). DLL `bbsc.dll` SHA256 `44391ea0a61fbb22a3d089ec2bc977074499baca075603ccb86f50861747a5a5`, local, not packaged.
+**Build.** Patch regenerated from the reference tree (on `seamless`, B19 kept). DLL `bbsc.dll` revision 5 SHA256 `dec41869b0a4af7d4cc1cec064daaf96bbca00fb31b3a8ec50981dbee993ed76`, local, not packaged (revision 4 was `44391ea0…`).
 
 ## Remaining limits (explicit)
 
@@ -95,7 +109,7 @@ Earlier revisions' mutations are in `b18/`, `b18/v2/` and `b18/v3/`.
 
 ## Native checks (friend's side, not run here)
 
-This session does not run two instances (the user's session limit: token cost and RAM). Run revision 4's DLL with **no** `SHADPS4_BBSC_REWARD_DEDUP` set (the default):
+This session does not run two instances (the user's session limit: token cost and RAM). Run the DLL with **`SHADPS4_BBSC_REWARD_DEDUP=1`** on the guest (revision 5: without it, the old behaviour is expected):
 
 1. Repeat the revision 3 cases unchanged. Expect the same results as [R03-PR17-NATIVE-VALIDATION](R03-PR17-NATIVE-VALIDATION.md):
    - repeated Amelia kill with the guest beaten: `has beaten this boss in its own world - not again`, consume the old Pendant, no replacement, Pendant 0 after a restart;
