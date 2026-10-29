@@ -42,40 +42,62 @@ The group key is 60000: kind 6, area 00. `BbscIsMapFlagGroup` (areas 21–99) an
 - that the group is written into, and read back from, the character's save;
 - what NG+ does to it.
 
-## 2. A save boundary that changes the design
+## 2. The save writer takes the flags LIVE, also while away (correction)
 
-The source documents (5204, 5231) that while the character is a guest (`global+0x1592 == 0`), the game writes its save from the **own-world snapshot** (`0x0156AA50`), not from the live flag table, as in vanilla co-op. Flag changes made in the host's world do not reach a save; that is why the shared progress merges at home. Inventory and echoes behave differently: native04 saw the guest's echoes (+535) persist, which suggests player data is saved live.
+My first reading (PR #17 comment 6490479535) said the save writes the event flags from the own-world snapshot while the guest is away. **That was wrong.** I disassembled the 01.09 eboot with `tools/r03_flags/dis.py`; the fake SELF's text segment is entry 1, va 0 at file `0x28EB0`, checked against BBSC's known `0x01332C14 mov rcx,[rip+..]; cmp [rcx+0x1520]`.
 
-**Consequences for the proposal:**
-- **The owed flag cannot be set at the kill.** It must travel with the shared progress (collection, pending file) and be set **by the merge at home**, in the same live table as the boss bit, so one game save holds both.
-- **Delivery has to move home.** An item added in the host's world is saved, but the flag clear is not. Atomicity needs the add and the flag clear in the own world: owed flag ON, fit check, add, flag OFF, then the next game save holds both or neither. **Behaviour change:** the reward would arrive when the guest is back in its own world, not at the kill. This is for the owner to accept.
-- **Before home, nothing from the party is in the game's save.** The boss bit and the owed flag exist only in the shared progress pending file, a mod file. With storage unwritable until a crash before home, both are gone together, and the character's state equals "no kill". This boundary belongs to the shared progress itself; no ordering can keep the obligation without any durable write. It is not a loss of an obligation the save already holds.
-- **After home**, no mod file is involved:
-  - the merge sets both bits;
-  - a crash before the next save leaves the pending file (it is finished only after a save) and re-merges;
-  - a crash after the add, before the save, keeps the owed flag ON, so the item is redelivered once;
-  - after the save, the flag is OFF and the boss bit is ON, so there is no second reward, consumed or not.
+**`0x0156AA50`, the save writer:**
+- `0x0156AB75` tests `global+0x1592` only to choose the map id for the save header: `+0x14F0` while away.
+- `0x0156AC8C` then **always** calls `0x01399DE0`.
+- `0x01399DE0` reads `[0x0553B100]` (`0x01399DF5 lea rbx,[rip+0x41A1304]`, which is `EventFlagMan`) and serializes its `+0x28` data: the **live** flag table. The BBSC source already says the same in "Shared progress on disk".
+- The three snapshot swaps behind `global+0x1592 == 0` (`0x0156ACD6`, `0x0156AF66`, `0x0156B13B`) cover the objects `0x0131E5C0` builds:
+  - `+0x1698` from `0x0553E878` (WorldChrMan, a "CHR " block);
+  - `+0x16B8` from `0x0553B168`;
+  - `+0x16D8` from `0x0553E928` (a "DECL"/"LCED" block).
 
-## 3. What the requested acceptance would need
+  **None of them is the event flag manager.**
+- The inventory is written live (`bbsc_patch_tables.h`, GuestItems).
 
-**Fixtures** (actual functions):
-- the merge sets the owed flag with the boss bit;
-- delivery only at home with the flag ON;
-- add and clear in one step;
-- the guard on the journal boss bit and the owed flag;
-- restart before and after the save;
-- refused delivery (flag stays ON);
-- consumed delivery;
-- wrong character (each save holds its own flag);
-- both `REWARD_ONCE` modes.
+**So while the guest is in the host's world, its next game save holds its live inventory and its live flag table.** Group 60000 is never written by BBSC's host world sync, own-world journal or Dream state, so its live copy is the guest's own all the time.
 
-**Native, copied profiles:**
-1. **Persistence.** At home, set `60000000` in the live table. Save through Quit Game, reload, read: ON. Then a fresh process: ON. Clear it and repeat: OFF.
-2. **Away-save boundary.** As a guest, set the flag and add an item, save through Quit Game, reload: the flag is OFF and the item is present. This confirms that delivery must be at home.
-3. **NG+.** A character entering NG+ with the flag ON shows what the game does to group 60000. If it resets, a pending obligation at the NG+ transition is lost; if not, it carries over and is delivered once.
-4. **End to end.** The never-beaten guest kills, returns home and gets the item once. A crash after the add and before the save, then restart, gives it once. Then use the item, restart, rejoin and kill: nothing.
+## 3. Design: in-party delivery, atomic in the game's save
 
-## 4. Open questions for the owner
+Two bits per reward row in group 60000, both in the guest's live table:
+- **OWED** = `60000000 + row`;
+- **DONE** = `60000500 + row`.
 
-- Delivery at the return home instead of at the kill: acceptable?
-- Is the shared-progress boundary in section 2 (storage failing until a crash **before** home) acceptable as the remaining case, given that nothing in the game's save exists yet at that point?
+**At the kill** (eligible, guard passed): set **OWED**. The next game save holds the obligation. No mod file is involved.
+
+**In-party delivery**, in one game-thread step:
+1. fit check;
+2. add the item (live inventory);
+3. clear OWED;
+4. set DONE.
+
+The next game save holds both changes, or neither:
+- a crash before the save leaves OWED ON, so the item is delivered again once;
+- after the save, there is no second item.
+
+**Refused delivery** (capacity): OWED stays ON in the save. Delivery is retried in the party or at home until it fits, with the same single step.
+
+**Restart:** the tick scans the 19 OWED bits of the active character and queues those that are ON. That delivers the **original obligation without a second kill**, bound to the character whose save holds it.
+
+**Guard** for a new obligation: DONE ON, OWED ON (already owed), or the boss's own-world bit ON (journal copy), as in revision 1.
+
+**DONE and NG+:** DONE is cleared at home once the own-world boss bit is ON, which the shared progress merge provides. From then on the boss bit is the guard. NG+ then clears the boss bits as the game does, and nothing of ours blocks the next cycle.
+
+**Remaining boundaries (to verify, not assumed):**
+- **A crash before the first game save after the kill.** No save holds the party's kill yet, so the obligation is lost with it. That is how the game itself treats an unsaved kill.
+- **The save serialization thread.** If `0x01399DE0` and the inventory serializer could run between steps 2 and 4 on another thread, the step would not be atomic. The save writer's call path and thread are to be checked natively.
+- **A DONE bit whose boss bit never reached the own world** (shared progress pending file lost): it blocks that boss in the next NG+ cycle. The NG+ clear count could remove this residual; its offset is not known yet.
+- **Whether NG+ resets group 60000.** A pending OWED at the NG+ transition is kept or dropped accordingly.
+
+## 4. Evidence needed (native, copied profiles)
+
+1. **Persistence.** Set `60000000` while a guest, let the game save, Quit, reload: ON. In a fresh process: ON. Clear it: OFF after the next save.
+2. **Atomicity.** In one tick, add an item and set the bit, then kill the process before a save: neither is there. After a save: both are.
+3. **Trip home.** After the return home, the bit is still ON in the live table: no journal, Dream state or restore touches group 60000.
+4. **NG+**, as above.
+5. **End to end.** Never-beaten guest: delivered in the host's world. Restart: nothing more. Capacity full at the kill: OWED survives a restart, and is delivered once when it fits, without a second kill. Use the item, rejoin, kill: nothing. The other character of the same user sees no bit.
+
+The owner's question about home-only delivery is withdrawn: this design keeps delivery in the party.
