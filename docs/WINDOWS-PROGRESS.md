@@ -4,6 +4,8 @@ Updated: 2026-10-29 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
+Latest T3 checkpoint2026-10-29: [pending-settlement cancellation/ownership PASS](handoff/R03-T3-CHARACTER-CANCEL.md). Copied rename blocker holds in-memory owner recovery after arrival; actual title/EiEi load logs cancellation, EiEi1250 groups/transform remain exact to independent baseline, journal stays byte-exact and original owner retries to exact0.0m origin/1250 groups. All12 snapshots verified, originals3171 exact, normal save/close exit0. Pre-arrival cancellation remains untested; T4/broad recovery gates open, defaults unchanged.
+
 Latest T2 checkpoint2026-10-29: [save/reload flags PASS](handoff/R03-T2-SAVE-RELOAD.md). T1 recovered owner reload and separate same-build no-party control before/after normal save yield12 repeated settled snapshots, all1250 groups exact to prejoin and exact0.0m origin/rotation. All six12705 suspect bits reproduce temporarily OFF during both no-party loads and settle back ON, resolving the observed flag concern. Originals3171 exact; all3 test processes closed/exit0. T3/T4 remain open; defaults unchanged.
 
 Latest T1 checkpoint2026-10-29: [B19 matching-build original-point recovery PASS](handoff/R03-T1-POINT-RECOVERY.md). Protected B17 crash replay: one accepted point request, no fallback, exact position/rotation (0.0m), own-world1/type0, immediate settled1250 groups exact and original3171 unchanged. Normal save/title/close, runner exit0. T2 independent save/reload/control, T3 cancellation/ownership and T4 fallback remain open. Defaults unchanged.
@@ -26,6 +28,12 @@ Native gameplay checkpoint `38f8ab3` is published on `origin/seamless`. See [nat
 Next implementer action: use native04 as the positive earning/reward/restart evidence; do not repeat the failed raw-coordinate staging from native02/03. Continue remaining party-boundary, delayed-delivery/character ownership and interruption/death-recovery checks against the current implementation. Broad R03/G2/G3 acceptance is still open. Private copied profiles, after-saves, journal, scripts and logs are under `.superpowers/r03-final-native-04` on the original machine; they are not included in Git. No server redeployment, packaging or managed-switch change occurred. Both test games were saved and closed.
 
 ## Current state
+
+### T3 pending-return cancellation / character ownership — BOUNDED PASS (2026-10-29)
+
+User requests T3 after T2 PASS. Dependencies: unchanged T1 B19 build, new protected-B17-crash profile, original byte-exact owner3 journal and independent EiEi slot1 before/after snapshots. Collect EiEi baseline without an active owner journal, activate protected owner journal at title, resume owner3. A nonempty directory at the copied .restored destination holds recovery pending after point arrival; quit via the actual menu, load EiEi, require cancellation log/personal1250 preservation and original journal retention, then remove the blocker by moving it aside and retry owner3. This tests pending settlement after arrival, not menu input during the loading screen; report that boundary. No product/source/default/server change; T4 separate.
+
+Completed: [T3 evidence and timing boundary](handoff/R03-T3-CHARACTER-CANCEL.md). Actual cancellation20:08:32.734, no other-character recovery, EiEi baseline/after1250 and transform exact, original owner retry settled20:13:12.434 at exact origin; journal retained/restored byte-exact. Native assert exit0, checker MANUAL plus independent flag checks pass, originals3171 exact, normal final save/close exit0. This is pending settlement after arrival, not pre-arrival cancellation; broader B17 N2 timing remains open.
 
 ### T2 save/reload flag integrity — PASS (2026-10-29)
 
