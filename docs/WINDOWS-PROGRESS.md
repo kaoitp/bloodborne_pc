@@ -37,6 +37,12 @@ Next implementer action: use native04 as the positive earning/reward/restart evi
 
 ## Current state
 
+### Corrected playtest package — COMPLETE / LOCAL READY (2026-10-31)
+
+PK01 complete: [composition, validation and instructions](handoff/R03-PLAYTEST-PACKAGE.md). Local `dist/bbsc-seamless-test-20261031-playtestfix.zip`, 79,462,366 bytes, SHA256 `b3142878caefd4699b5d29c295081780fed4af140b0f0d37ddfeb16e374dfd18`. Verified base + corrected DLL/notices + revised instructions/manifest; all 1,186 entries pass CRC/hash/exact-content and private-path checks. No game launched or release uploaded; user playtest remains pending.
+
+User explicitly requests packaging the corrected version ready for playtest; this authorizes local ZIP assembly for this request. Reused the SHA-verified HTTP-fixed experimental archive, replaced only the tested gameplay DLL and its matching mandatory notices, updated test instructions and added a file manifest/source attribution. Acceptance checks above passed. No game launch, installed game/profile mutation, GitHub release upload or server deployment.
+
 ### Two-player playtest follow-up — IN_PROGRESS (2026-10-30)
 
 2026-10-31 source delivery COMPLETE / USER PLAYTEST PENDING: [changes, commands, results, hashes and limits](handoff/R03-PLAYTEST-SOURCE-FIX.md). PT00–PT07 done for bounded source/offline scope; PT08 user-owned gameplay and PT09 feedback review open. No agent-run game steps remain. Candidate DLL available privately; no automatic installation or packaging. Historical HOLD/investigation-only entries below are superseded by the user's implementation authorization.

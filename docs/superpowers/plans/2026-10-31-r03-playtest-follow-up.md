@@ -27,6 +27,8 @@ Updated 2026-10-31 (Asia/Bangkok). Owner: Codex for source/offline validation; u
 
 ## User playtest handoff
 
+Local package task PK01 DONE (2026-10-31): user separately authorizes packaging the corrected version. [Ready package and validation](../../handoff/R03-PLAYTEST-PACKAGE.md): verified base with new DLL/notices, revised instructions and manifest; 1,186 entries pass integrity/hash/content/private-path checks. ZIP remains local pending user distribution; no game launch or release upload.
+
 This is a compact observation list for the user's normal playtest, not a requirement to run staged automated game cases:
 
 - Both clients use the same new DLL. Check host -> guest after host death/respawn/session close: role, cooperator count, repeated bells, leave menu/animation and unexplained Insight gains.
@@ -36,7 +38,7 @@ This is a compact observation list for the user's normal playtest, not a require
 
 ## Evidence/checkpoint rules
 
-Record source commit, source/patch/DLL hashes, effective settings, exact offline commands/exits, fixture versus gameplay evidence and limitations. Raw logs/assets/saves/credentials stay private. Update this queue and the shared tracker at each source or user-playtest checkpoint and push normally to origin/seamless. No release EXE/ZIP packaging, live-server deployment or original-profile mutation is part of this plan.
+Record source commit, source/patch/DLL hashes, effective settings, exact offline commands/exits, fixture versus gameplay evidence and limitations. Raw logs/assets/saves/credentials stay private. Update this queue and the shared tracker at each source or user-playtest checkpoint and push normally to origin/seamless. The user-authorized local ZIP is recorded in PK01; release upload, live-server deployment and original-profile mutation remain outside this plan.
 
 | Date | Checkpoint | Result | Next action |
 | --- | --- | --- | --- |
