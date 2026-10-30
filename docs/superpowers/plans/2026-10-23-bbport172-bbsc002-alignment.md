@@ -66,6 +66,8 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ### Two-player playtest follow-up (2026-10-30)
 
+2026-10-31 source delivery: user authorizes code changes and takes over playtest; no agent-run game tests. [Revised PT00–PT09 plan](2026-10-31-r03-playtest-follow-up.md) supersedes HOLD and pending investigation wording below. PT00–PT07 bounded source/offline tasks DONE, 12 BBSC + 2 native-header tests PASS, DLL built; [evidence/limits](../../handoff/R03-PLAYTEST-SOURCE-FIX.md). The three gameplay acceptance boxes below remain open for user feedback.
+
 2026-10-31: use the [step-by-step PT00–PT09 execution plan](2026-10-31-r03-playtest-follow-up.md) as the authoritative detailed queue for these three issues. It includes per-task status/dependencies, case acceptance and a result ledger. Current next action PT01; code changes remain on hold, with a concrete proposal at PT05 before any later implementation.
 
 Read-only investigation complete for this checkpoint: [evidence, ranked leads and proposed discriminators](../../handoff/R03-PLAYTEST-LEADS.md). No implementation authorized in this request. Pending-role producer/cleanup and transient combat bits in durable progress are the leading targets; all acceptance boxes below remain open.

@@ -7,7 +7,8 @@ import subprocess
 import tempfile
 import unittest
 
-SOURCE = ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp'
+SOURCE = Path(os.environ.get('BBSC_FIXTURE_SOURCE') or
+              ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp')
 
 
 def run_backup_fixture(source, directory):
@@ -173,6 +174,15 @@ int main() {
     assert(sets == 1 && live[0] == 0x80 && finishes == 0 && pending_file);
     saved(); now_ms += 1000; TickBbscSharedProgress();
     assert(finishes == 1 && !pending_file);
+    // Old pending journals also contain combat bits: actual merge must not replay them.
+    seed(); backup_ok=true; bbsc_progress_host_flags.clear(); bbsc_progress_groups.clear();
+    bbsc_progress_groups[12414][100]=0xFF;
+    auto filtered=MergeBbscSharedProgress("old combat journal");
+    assert(filtered.second==5 && live[100]==0x5E);
+    // Filtering incoming progress must never clear live state belonging to this world.
+    live[100]=0xA1;
+    MergeBbscSharedProgress("existing own combat");
+    assert(live[100]==0xFF);
     std::cout << "PASS no mutation/finalization after failed backup; load and settled retry; once-only merge\n";
 }
 '''

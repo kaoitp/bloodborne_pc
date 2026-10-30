@@ -1,5 +1,7 @@
 # R03 two-player playtest: investigation leads
 
+2026-10-31 update: user subsequently authorized source fixes and took over playtest. [Source delivery](R03-PLAYTEST-SOURCE-FIX.md) records the bounded changes and offline checks; the no-code restrictions below describe the earlier investigation phase and are superseded. Gameplay conclusions in this evidence record remain unproved unless later user evidence establishes them.
+
 2026-10-31: [execution/tracking plan PT00–PT09](../superpowers/plans/2026-10-31-r03-playtest-follow-up.md) now organizes these findings into ordered investigation, proposal and later implementation/validation tasks. This document remains the evidence record; no-code instruction remains active.
 
 2026-10-30 (Asia/Bangkok). User requests investigation and possible remedies only: **do not change code yet**. Status: investigation checkpoint complete; all three gameplay issues remain open. No game launched, save changed, runtime setting changed, build or fixture run. Read-only source, captured native traces, event data and journal inspection provide the evidence below; these are not successful native reproductions or verified fixes.

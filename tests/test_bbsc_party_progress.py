@@ -68,7 +68,9 @@ s64 SteadyNowMs() { return now_ms; }
 bool BackupBbscSaves() { return true; }
 bool BbscEventFlag(u32) { return false; }
 u64 BbscFlagGroupStorage(u32) { return 0; }
-u32 BbscWorldGroupKey(u32 map, size_t index) { return (map >> 16) * 10 + static_cast<u32>(index); }
+u32 BbscWorldGroupKey(u32 map, size_t index) {
+    return 10000 + ((map >> 24) & 0xFF) * 100 + ((map >> 16) & 0xFF) * 10 + index;
+}
 s32 session_state = 6;
 s32 GetSessionState() { return session_state; }
 s32 GetLocalPlayerType() { return 1; }
@@ -119,11 +121,11 @@ bool bit(u32 key, u32 n) {
     return it != bbsc_progress_groups.end() && (it->second[n / 8] & (0x80u >> (n % 8))) != 0;
 }
 void packet(std::vector<u32> flags) { OnBbscProgressPacket(flags.data(), flags.size()); }
-void snapshot(u32 map, u32 key_bit, bool on) {
+void snapshot(u32 map, u32 key_bit, bool on, size_t group = 0) {
     std::scoped_lock lock{bbsc_world_mutex};
     auto& s = bbsc_world_blocks[map];
-    s.complete_ms = 1; s.map = map; s.present = 1;
-    if (on) s.groups[0][key_bit / 8] |= static_cast<u8>(0x80u >> (key_bit % 8));
+    s.complete_ms = 1; s.map = map; s.present |= u64{1} << group;
+    if (on) s.groups[group][key_bit / 8] |= static_cast<u8>(0x80u >> (key_bit % 8));
 }
 void tick() { now_ms += 1500; TickBbscSharedProgress(); }
 int main() {
@@ -193,6 +195,13 @@ int main() {
     packet({2401, 2700, 2800});
     tick();
     assert(!has(2700) && has(2800));
+    // New combat state is not durable progress, but an adjacent bit still is.
+    snapshot(0x18010000, 0, false, 4); tick();
+    snapshot(0x18010000, 700, true, 4);
+    snapshot(0x18010000, 701, true, 4);
+    snapshot(0x18010000, 800, true, 4);
+    snapshot(0x18010000, 807, true, 4); tick();
+    assert(!bit(12414,700) && bit(12414,701) && !bit(12414,800) && !bit(12414,807));
     std::cout << "PASS party baseline, earned flags/bits, first-sight blocks, reward event, "
                  "death/load continuity, new party, rejoin and new host\n";
 }

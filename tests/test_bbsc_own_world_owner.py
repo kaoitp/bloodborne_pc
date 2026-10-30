@@ -126,6 +126,7 @@ BbscFileState BbscOwnWorldFileState(const std::filesystem::path& path) {
 }
 #define HAS_FILE_STATE
 '''
+    code += function('u8 BbscDurableProgressByte(') + '\n'
     for head in ('std::u16string BbscLocalCharacterName(', 'std::string BbscNameForLog(',
                  'const u8* KeepBbscOwnWorldGroup(', 'void WriteBbscOwnWorldFile(',
                  'bool LoadBbscOwnWorldFile(', 'bool BbscOwnWorldOwnerConfirmed(',

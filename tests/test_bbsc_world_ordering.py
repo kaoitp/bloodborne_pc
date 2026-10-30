@@ -7,7 +7,8 @@ import subprocess
 import tempfile
 import unittest
 
-SOURCE = ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp'
+SOURCE = Path(os.environ.get('BBSC_FIXTURE_SOURCE') or
+              ROOT / '.superpowers/reference/BBSC/emulator/src/core/bloodborne_re.cpp')
 
 
 def run_ordering_fixture(source, directory):
