@@ -413,3 +413,5 @@ B17 native checkpoint2026-10-28: [evidence](../../handoff/R03-B17-NATIVE-01.md).
 - [ ] TEST-RELEASE-01: default branch switched to seamless. Base staging produced; archive step failed in MSYS2, BBSC composition and pre-release publication remain open.
 
 - [ ] Investigate/fix packaged launcher Test connection HTTP Errno 2 despite independent endpoint HTTP 200; reproduce and verify a rebuilt package. See WINDOWS-PROGRESS 2026-10-30.
+- [ ] IN_PROGRESS LAUNCHER-HTTP-01 / TEST-RELEASE-01: reproduce packaged HTTP Errno 2, fix root cause, regression-test the frozen launcher and package, then publish user-authorized pre-release; preserve copied profiles and R03 default gates.
+- [x] LAUNCHER-HTTP-01: missing custom Python SSL certificate bundled; frozen HTTP probes 200 for both endpoints and closed-port negative passes. GUI and full multiplayer package flow remain unverified; see WINDOWS-PROGRESS.

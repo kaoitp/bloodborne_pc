@@ -29,9 +29,13 @@ for module in argparse base64 bisect collections contextlib hashlib json re shut
               xml.etree.ElementTree urllib.request ctypes.wintypes; do
     hidden+=(--hidden-import "$module")
 done
+extra_data=()
+# Some Python distributions require an additional certificate file when creating SSL contexts.
+ssl_cert=$(out/pyenv/Scripts/python.exe -c "import os, ssl; print(os.path.join(os.path.dirname(ssl.__file__), 'codex-rejected-cas.pem'))" | tr -d '\r')
+if [[ -f "$(cygpath -u "$ssl_cert")" ]]; then extra_data+=(--add-data "$ssl_cert:."); fi
 out/pyenv/Scripts/python.exe -m PyInstaller --noconfirm --clean --log-level WARN --windowed \
     --name Bloodborne --icon "$(cygpath -w "$PWD/launcher/bloodborne.ico")" --distpath out/pyi-dist \
-    --workpath out/pyi-work --specpath out/pyi-work --paths "$(cygpath -w "$PWD/scripts")" "${hidden[@]}" \
+    --workpath out/pyi-work --specpath out/pyi-work --paths "$(cygpath -w "$PWD/scripts")" "${hidden[@]}" "${extra_data[@]}" \
     "$(cygpath -w "$PWD/launcher/bbport_launcher_win.py")"
 
 # The package is assembled in a fresh staging folder and zipped from there; dist/bbport-windows
