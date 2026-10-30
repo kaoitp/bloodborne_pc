@@ -37,6 +37,14 @@ Next implementer action: use native04 as the positive earning/reward/restart evi
 
 ## Current state
 
+### BBport 1.9.6 migration plan — PLAN READY / IMPLEMENTATION NOT STARTED (2026-10-31)
+
+User requests a saved migration plan only. Dependencies: the inspected 1.7.2/current/1.9.6 source pins, current R03 source delivery and existing self-hosted service sources. Acceptance: one ordered plan with exact affected paths, dependencies, offline versus user-gameplay gates, save/journal preservation and rollback; links from this tracker and the active plan; documentation-only diff and valid local links. Runtime migration remains NOT STARTED; user owns gameplay under the current playtest plan.
+
+MG00 planning progressed from IN_PROGRESS to complete: [saved MG00-MG06 plan](superpowers/plans/2026-10-31-bbport196-migration.md). Pinned current `4605c9b57a8e51e371ad81006d149aa22b717c84`, original 1.7.2 `e5d04e2ba4864ccf40de6c3cf6aa532855320b0d`, target 1.9.6 `41fa92047006ed5c78b833c3f68a8ecfdc601361`; normalized current patch SHA256 `c4a3f65839affd1ab8224d32e3a3a3b491770623f2cd5c535be724beb4df2c8e` rechecked. Source review identified launcher/profile alignment, replaced network paths, BBR1/SMRL relay mismatch and expanded client commands; DLL wrappers may cover HTTP compatibility, which remains untested on 1.9.6. Actual static comparison/apply-check commands and limits are in the plan.
+
+Documentation checks: inline CLANG64 Python local-link/scope/status/ownership/pin assertions PASS for all three changed Markdown files and 118 local links; `git diff --check` exit0. New plan normalized LF SHA256 `67e77ad1d072a448a2a597e8ec181d6a1dd2e5b52be75a7724a47a81661214c8`. No runtime/build/configuration changes or fixture/native/gameplay runs. Retained current 1.7.2 baseline and PT08/PT09 user-playtest queue; MG01 starts only when the owner requests implementation. Other primary-checkout dirt (FSR patch state and private untracked inputs) remains outside this checkpoint.
+
 ### Corrected playtest package — COMPLETE / LOCAL READY (2026-10-31)
 
 PK01 complete: [composition, validation and instructions](handoff/R03-PLAYTEST-PACKAGE.md). Local `dist/bbsc-seamless-test-20261031-playtestfix.zip`, 79,462,366 bytes, SHA256 `b3142878caefd4699b5d29c295081780fed4af140b0f0d37ddfeb16e374dfd18`. Verified base + corrected DLL/notices + revised instructions/manifest; all 1,186 entries pass CRC/hash/exact-content and private-path checks. No game launched or release uploaded; user playtest remains pending.

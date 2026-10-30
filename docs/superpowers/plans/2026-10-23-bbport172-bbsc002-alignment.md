@@ -6,6 +6,13 @@ Active R03 ownership2026-10-25: [Claude implementation takeover](../../handoff/R
 
 Updated: 2026-10-24. Migrated to the new fork's `seamless` branch. This is the authoritative implementation plan; [progress](../../WINDOWS-PROGRESS.md) records evidence, and [the product specification](../specs/2026-10-18-bbsc-anywhere-coop-design.md) defines required outcomes.
 
+## BBport 1.9.6 migration preparation (2026-10-31)
+
+User requests the [MG00-MG06 migration plan](2026-10-31-bbport196-migration.md) in advance. MG00 planning is complete; runtime migration is NOT STARTED. The current 1.7.2 + BBSC0.0.2 baseline and open R03/user-playtest gates remain active. The migration plan pins target `41fa92047006ed5c78b833c3f68a8ecfdc601361`, orders launcher/save ownership, DLL, network/relay and build checks, and leaves gameplay to the user. Start MG01 only when the owner starts migration; this preparation does not authorize packaging or server deployment.
+
+- [x] MG00: save the source-backed migration plan, dependencies, affected files, acceptance/rollback and tracker links.
+- [ ] MG01-MG06: implement and qualify migration after the owner starts it; maintain per-task status in the linked plan.
+
 ## Scope contract
 
 | Goal | Required behavior |
