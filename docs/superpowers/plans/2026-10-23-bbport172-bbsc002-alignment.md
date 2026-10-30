@@ -64,6 +64,16 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ## R03 — Reproduce the complete baseline on self-hosted services
 
+### Two-player playtest follow-up (2026-10-30)
+
+Status: IN_PROGRESS; dependencies, private log evidence and limitations in [progress](../../WINDOWS-PROGRESS.md#two-player-playtest-follow-up--in_progress-2026-10-30). Preserve saves and use copied profiles; verify the exact artifacts and configuration before reproducing.
+
+- [ ] Investigate post-interruption solo boss gauge/line; distinguish UI state from actual boss state and validate any fix after restart and join.
+- [ ] Reproduce host -> Blank -> guest with correct native character and slot role, cooperator count, bell/leave menu and normal return/rejoin; diagnose and fix the demonstrated wrong-role case.
+- [ ] Investigate suppressing only the guest enemy-drop notice while preserving item delivery; verify both behaviors.
+
+User confirmed the Gascoigne key and Echoes were received; no reward-loss conclusion from the log warning.
+
 ### Return-to-own-world native test plan (T1–T4)
 
 Status: T1 PASS for protected B17 crash replay ([evidence](../../handoff/R03-T1-POINT-RECOVERY.md)); T2 PASS ([evidence](../../handoff/R03-T2-SAVE-RELOAD.md)); T3 bounded PASS for pending settlement after arrival ([evidence](../../handoff/R03-T3-CHARACTER-CANCEL.md)); pre-arrival cancellation untested; T4 destination/flags PASS on the corrected composition ([evidence](../../handoff/R03-T4-SETTLEMENT-FIX.md)); synthetic-void death avoidance remains open; Echoes protection passes the prepared case ([evidence](../../handoff/R03-RECOVERY-ECHOES.md)). Run in order where practical, preserving the protected B17 crash evidence. These cases use copied profiles and existing authorized inputs, with HOME_RECOVERY enabled only for the copied guest and experimental admission OFF. Record the exact source, patch, DLL and probe hashes, effective configuration, commands, timestamps, positions, flag snapshots and outcomes. Verify original profile paths and hashes before and after; keep saves, credentials and raw logs private. A fixture or an earlier DLL's result is not a native PASS. See [B17 evidence](../../handoff/R03-B17-NATIVE-01.md) and [B19 fix](../../handoff/R03-B19-HOME-POINT.md).
