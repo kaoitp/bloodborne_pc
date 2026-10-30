@@ -66,6 +66,8 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ### Two-player playtest follow-up (2026-10-30)
 
+Read-only investigation complete for this checkpoint: [evidence, ranked leads and proposed discriminators](../../handoff/R03-PLAYTEST-LEADS.md). No implementation authorized in this request. Pending-role producer/cleanup and transient combat bits in durable progress are the leading targets; all acceptance boxes below remain open.
+
 Status: IN_PROGRESS; dependencies, private log evidence and limitations in [progress](../../WINDOWS-PROGRESS.md#two-player-playtest-follow-up--in_progress-2026-10-30). Preserve saves and use copied profiles; verify the exact artifacts and configuration before reproducing.
 
 - [ ] Investigate post-interruption solo boss gauge/line; distinguish UI state from actual boss state and validate any fix after restart and join.
