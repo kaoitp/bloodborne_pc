@@ -72,7 +72,7 @@ Status: IN_PROGRESS; dependencies, private log evidence and limitations in [prog
 
 - [ ] Investigate post-interruption solo boss gauge/line; distinguish UI state from actual boss state and validate any fix after restart and join.
 - [ ] Reproduce host -> Blank -> guest with correct native character and slot role, cooperator count, bell/leave menu and normal return/rejoin; diagnose and fix the demonstrated wrong-role case.
-- [ ] Investigate suppressing only the guest enemy-drop notice while preserving item delivery; verify both behaviors.
+- [ ] Investigate retiring ordinary-enemy automatic compensation and its notice: user confirmed on 2026-10-31 that guest sees/collects monster ground drops normally. Preserve ground pickup/persistence and boss rewards; do not disable the shared GUEST_ITEMS switch globally. Prove any single-enemy duplication separately; no code change yet.
 
 User confirmed the Gascoigne key and Echoes were received; no reward-loss conclusion from the log warning.
 
