@@ -66,6 +66,8 @@ Owner: Codex. Dependency: F01/R01. Status: VERIFIED for composition/native start
 
 ### Two-player playtest follow-up (2026-10-30)
 
+2026-10-31: use the [step-by-step PT00–PT09 execution plan](2026-10-31-r03-playtest-follow-up.md) as the authoritative detailed queue for these three issues. It includes per-task status/dependencies, case acceptance and a result ledger. Current next action PT01; code changes remain on hold, with a concrete proposal at PT05 before any later implementation.
+
 Read-only investigation complete for this checkpoint: [evidence, ranked leads and proposed discriminators](../../handoff/R03-PLAYTEST-LEADS.md). No implementation authorized in this request. Pending-role producer/cleanup and transient combat bits in durable progress are the leading targets; all acceptance boxes below remain open.
 
 Status: IN_PROGRESS; dependencies, private log evidence and limitations in [progress](../../WINDOWS-PROGRESS.md#two-player-playtest-follow-up--in_progress-2026-10-30). Preserve saves and use copied profiles; verify the exact artifacts and configuration before reproducing.

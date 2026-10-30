@@ -1,6 +1,6 @@
 # BBSC progress: new fork / seamless
 
-Updated: 2026-10-30 (Asia/Bangkok).
+Updated: 2026-10-31 (Asia/Bangkok).
 
 ## Latest handoff for the active implementer
 
@@ -36,6 +36,8 @@ Next implementer action: use native04 as the positive earning/reward/restart evi
 ## Current state
 
 ### Two-player playtest follow-up — IN_PROGRESS (2026-10-30)
+
+2026-10-31 execution plan: [PT00–PT09 queue, dependencies, acceptance matrix and evidence ledger](superpowers/plans/2026-10-31-r03-playtest-follow-up.md). PT00 investigation record DONE; PT01 input protection/attribution READY; PT02 role, PT03 boss/event and PT04 loot investigation PENDING; PT05 concrete proposal follows. Implementation/build/native candidate validation PT06–PT09 are HOLD under the user's no-code-change instruction. This request creates the plan only; no new gameplay evidence or acceptance closure.
 
 2026-10-31 clarification: user confirms guest sees and manually collects monster ground drops normally and considers automatic compensation unnecessary. Revised investigation target is retiring only ordinary-enemy automatic grants and their notice, preserving ground pickups and boss rewards; the shared GUEST_ITEMS switch gates those other systems too. Single-enemy duplicate delivery remains unproved. [Updated scope and acceptance](handoff/R03-PLAYTEST-LEADS.md#3-enemy-drop-notice). No code/settings changed; investigation-only constraint remains active.
 
