@@ -96,6 +96,46 @@ class StartTests(Folders):
         self.assertEqual(json.loads(path.read_text(encoding='utf-8')),
                          {'https://ss4.scej-network.jp:20443': 'http://1.2.3.4:20443'})
 
+    def test_private_server_uses_its_own_address_and_account(self):
+        settings = {'yt_private_server': True, 'yt_server_address': ' Hunter.Friends.TS.NET. ',
+                    'online_relay': True, 'supermedo_npid': 'public', 'supermedo_pass': 'public-password'}
+        lookup = mock.Mock(return_value='100.64.0.10')
+        ip = yharnam.server_ip(settings, lookup)
+        lookup.assert_called_once_with('hunter.friends.ts.net')
+        self.assertEqual(yharnam.ports(settings), (31314, 31315, 20443))
+        env = yharnam.environment(self.port, self.root, settings, ip, game_env={'BB_SHADNET_TOKEN': 'public-token'})
+        self.assertEqual(env['BB_SHADNET_SERVER'], '100.64.0.10:31314')
+        self.assertEqual(env['BB_SHADNET_WEBAPI'], 'http://100.64.0.10:31315')
+        self.assertNotIn('BB_SHADNET_TOKEN', env)
+        self.assertRegex(env['BB_SHADNET_NPID'], r'^p[0-9a-f]{14}$')
+        self.assertRegex(env['BB_SHADNET_PASSWORD'], r'^[0-9a-f]{32}$')
+        same_server = yharnam.environment(self.port, self.root, settings, '100.64.0.11', game_env={})
+        other_server = yharnam.environment(self.port, self.root, {**settings, 'yt_server_address': '100.64.0.12'},
+                                           '100.64.0.12', game_env={})
+        self.assertEqual(same_server['BB_SHADNET_PASSWORD'], env['BB_SHADNET_PASSWORD'])
+        self.assertNotEqual(other_server['BB_SHADNET_NPID'], env['BB_SHADNET_NPID'])
+
+    def test_invalid_private_server_does_not_fall_back_to_public(self):
+        lookup = mock.Mock()
+        for address in ('', 'https://100.64.0.10', '100.64.0.10:31314', '999.64.0.10', 'hunter.ts.net/foo'):
+            with self.subTest(address=address), self.assertRaises(ValueError):
+                yharnam.server_ip({'yt_private_server': True, 'yt_server_address': address}, lookup)
+        lookup.assert_not_called()
+
+    def test_the_console_log_keeps_server_keys_on_their_own_hosts(self):
+        host = 'hunter.friends.ts.net'
+        with yharnam.open_console_log(self.port, host) as log:
+            log.write(f'[Net] <Info> net_link.cpp:120 Hello: {yharnam.LEARNED_KEY_LINE}{KEY}\n')
+        self.assertTrue(yharnam.learn_from_log(self.port))
+        self.assertEqual(yharnam.link_key(self.port, host), KEY)
+        self.assertEqual(yharnam.link_key(self.port), '')
+        (yharnam.console_log(self.port).parent / 'shad_log.txt').write_text(
+            f"[Net] <Info> net_link.cpp:120 Hello: {yharnam.LEARNED_KEY_LINE}{'cd' * 32}\n", encoding='utf-8')
+        with yharnam.open_console_log(self.port, yharnam.SERVER):
+            pass
+        self.assertFalse(yharnam.learn_from_log(self.port))
+        self.assertEqual(yharnam.link_key(self.port), '')
+
     def test_the_first_use_key_is_kept_once_from_the_games_own_line(self):
         line = f"[Net] <Info> net_link.cpp:120 Hello: {yharnam.LEARNED_KEY_LINE}{KEY}"
         self.assertEqual(yharnam.learned_key(line), KEY)

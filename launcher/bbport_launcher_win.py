@@ -472,7 +472,7 @@ APP_DEFAULTS = {'ui_language': '', 'game_dir': str(PORT_DIR.parent / 'CUSA03173'
                 'test_mode': 'performance', 'test_scenario': 'hunters-view', 'test_compare': 'preset',
                 'test_repeats': '1', 'test_minutes': '10', 'test_saves': {}}  # the last check of eboot.bin (bbport_help), kept while the file is unchanged
 APP_DEFAULTS.update(bbport_seamless.DEFAULTS)  # Seamless co-op's difficulty and options
-APP_DEFAULTS.update(bbport_yharnam.DEFAULTS)  # the Seamless co-op page's host rules (BBSC 1.0.0)
+APP_DEFAULTS.update(bbport_yharnam.DEFAULTS)  # the Seamless co-op page (BBSC 1.0.0)
 
 UPSCALERS = [('dlss', ('DLSS (NVIDIA GeForce RTX)',)),
              ('fsr4', ('FSR 4 (best quality)', 'FSR 4 (лучшее качество)')),
@@ -3699,7 +3699,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if len(choices) == 1 and only[choices[0]]:
                 self.index_only(widgets, only[choices[0]], 'online_pool')
 
-    def build_party(self, f, npid_var, password_var):
+    def build_party(self, f, npid_var, password_var, active=lambda: True):
         """Party (play with friends): a party code from SuperMedo Server (parties.go there). While in a party,
         the hunter's signs and bells find only the party's hunters (the server gives them the party's summon
         password), on SuperMedo Server and in Seamless co-op: a password of their own in the game's network
@@ -3792,6 +3792,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 code_row.grid_remove()
 
         def act(call, body=None, quiet=False):
+            if not active():
+                return
             name, password = npid_var.get().strip(), password_var.get()
             if not name or not password:
                 if not quiet:
@@ -3838,16 +3840,13 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.root.after(15000, poll)
 
     # ---- Seamless co-op (BBSC: Yharnam Together 1.0.0, bbport_yharnam.py) --------------------------------------
-    # A page of its own under Online play, apart from the normal online game: the window's PLAY, the Online page and
-    # the normal game's log, saves and sign-in are not touched by it. Its Play starts BBSC's game on SuperMedo's
-    # seamless server with the SuperMedo account; the party made here is the game's co-op team there.
+    # Its own page, engine and saves under Online play.
 
     def build_seamless(self):
         ttk, px = self.ttk, self.px
         f = self.scrolled_page('seamless', _('Seamless co-op'),
-                               _("BBSC: Yharnam Together on SuperMedo's seamless server: up to 5 hunters stay "
+                               _("BBSC: Yharnam Together: up to 5 hunters stay "
                                  'together through deaths, lamps and areas.'))
-        npid_var, password_var = self.var('supermedo_npid', 'app'), self.var('supermedo_pass', 'app')
         top = ttk.Frame(f)
         self.seamless_button = ttk.Button(top, text=_('Play Seamless co-op'), style='Accent.TButton',
                                           command=self.play_seamless)
@@ -3860,33 +3859,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('This starts Seamless co-op, not the normal game: the PLAY button below starts the normal game '
                        'as always.'), top=8)
 
-        self.section(f, _('SuperMedo account'))
-        account = self.wrap_within(ttk.Label(f, text='', justify='left', anchor='w'), 560)
-        self.row(f, _('Account'), account, _('Seamless co-op signs in with your SuperMedo account, the one of the '
-                                             'Online page.'), key='supermedo_npid')
-        to_online = self.row(f, '', ttk.Button(f, text=_('Sign in on the Online page'),
-                                               command=lambda: self.show('online')))
-
-        def show_account(*_a):
-            name = npid_var.get().strip() if password_var.get() else ''
-            account.configure(text=_('Signed in as {}').format(name) if name else
-                              _('Not signed in: sign in or make a free account on the Online page.'))
-            to_online.grid_remove() if name else to_online.grid()
-        for var in (npid_var, password_var):
-            var.trace_add('write', show_account)
-        show_account()
-
-        # The Russia route here too (the same setting as the Online page's): the relay forwards the seamless server.
-        self.check(f, 'online_relay', 'app', _('Russia route (through a relay in Kazakhstan)',
-                                               'Маршрут для России (через ретранслятор в Казахстане)'),
-                   _('Only if your network in Russia cannot reach the SuperMedo server: the connection goes '
-                     'through a relay to the same server and players. Leave it off otherwise.',
-                     'Только если ваша сеть в России не может подключиться к серверу SuperMedo: соединение идёт '
-                     'через ретранслятор к тому же серверу и игрокам. В остальных случаях не включайте.'))
-
-        self.build_party(f, npid_var, password_var)
-        self.note(f, _('In Seamless co-op your party is your co-op team: start Seamless co-op, and the hunters of your '
-                       'party find each other in the game. Everyone plays Seamless co-op from this page.'), top=8)
+        self.build_seamless_server(f)
 
         self.section(f, _('Host rules'))
         self.note(f, _("The team leader's rules count for the whole team. Changes count from the next start."), top=0)
@@ -3943,8 +3916,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.note(f, _('Seamless co-op plays its own characters, kept apart from your normal saves (seamless\\user in '
                        'the launcher folder). The game folder of the Game files page is used as it is: nothing in it '
                        'is changed.'), top=6)
-        self.note(f, _("Server: {}. Everyone in the team needs this launcher's Seamless co-op ({}).").format(
-            bbport_yharnam.SERVER, bbport_yharnam.VERSION), top=6)
+        self.note(f, _("Everyone in the team needs this launcher's Seamless co-op ({}).").format(
+            bbport_yharnam.VERSION), top=6)
 
         # Its own desktop shortcut and Steam entry (Play Bloodborne.exe --seamless), beside the normal game's.
         self.section(f, _('Shortcuts'))
@@ -3966,6 +3939,58 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    '"Bloodborne Seamless co-op"; the normal game keeps its own shortcut and Steam entry.'),
                  key='button:seamless_shortcut')
 
+    def build_seamless_server(self, f):
+        ttk = self.ttk
+        self.section(f, _('Server'))
+        private = self.var('yt_private_server', 'app')
+        choices = ttk.Frame(f)
+        ttk.Radiobutton(choices, text=_('SuperMedo Server'), variable=private, value=False).pack(side='left')
+        ttk.Radiobutton(choices, text=_('Private server'), variable=private, value=True).pack(side='left', padx=12)
+        self.row(f, _('Play with'), choices, key='yt_private_server')
+        holder = ttk.Frame(f)
+        holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we')
+        own, public = ttk.Frame(holder), ttk.Frame(holder)
+        own.columnconfigure(1, weight=1)
+        public.columnconfigure(1, weight=1)
+        entry = ttk.Entry(own, textvariable=self.var('yt_server_address', 'app'), width=40)
+        self.row(own, _('Server address'), entry,
+                 _('Enter the BBSC server IPv4 address or hostname, such as its Tailscale address.'),
+                 key='yt_server_address')
+        self.note(own, _('Everyone enters the same server address. Create or join a team from the in-game Co-op Team '
+                         'menu (F2).'), top=8)
+
+        npid_var, password_var = self.var('supermedo_npid', 'app'), self.var('supermedo_pass', 'app')
+        account = self.wrap_within(ttk.Label(public, text='', justify='left', anchor='w'), 560)
+        self.row(public, _('SuperMedo account'), account, key='supermedo_npid')
+        to_online = self.row(public, '', ttk.Button(public, text=_('Sign in on the Online page'),
+                                                    command=lambda: self.show('online')))
+
+        def show_account(*_a):
+            name = npid_var.get().strip() if password_var.get() else ''
+            account.configure(text=_('Signed in as {}').format(name) if name else
+                              _('Not signed in: sign in or make a free account on the Online page.'))
+            to_online.grid_remove() if name else to_online.grid()
+        for var in (npid_var, password_var):
+            var.trace_add('write', show_account)
+        self.check(public, 'online_relay', 'app', _('Russia route (through a relay in Kazakhstan)',
+                                                    'Маршрут для России (через ретранслятор в Казахстане)'),
+                   _('Only if your network in Russia cannot reach the SuperMedo server: the connection goes '
+                     'through a relay to the same server and players. Leave it off otherwise.',
+                     'Только если ваша сеть в России не может подключиться к серверу SuperMedo: соединение идёт '
+                     'через ретранслятор к тому же серверу и игрокам. В остальных случаях не включайте.'))
+        self.build_party(public, npid_var, password_var, active=lambda: not private.get())
+        self.note(public, _('In Seamless co-op your party is your co-op team: start Seamless co-op, and the hunters '
+                            'of your party find each other in the game. Everyone plays Seamless co-op from this page.'),
+                  top=8)
+        show_account()
+
+        def show_server(*_a):
+            shown, hidden = (own, public) if private.get() else (public, own)
+            hidden.pack_forget()
+            shown.pack(fill='x')
+        private.trace_add('write', show_server)
+        show_server()
+
     def play_seamless(self):
         """Seamless co-op's Play: the game view, the co-op event files and the server's addresses are made in a
         helper thread (bbport_yharnam.prepare), then this port's own game starts with the seamless engine
@@ -3980,7 +4005,8 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                                                 'Игра уже запущена (из Steam, ярлыка или после перезапуска в игре): её '
                                                 'окно выведено на передний план.'))
             return
-        if not (self.var('supermedo_npid', 'app').get().strip() and self.var('supermedo_pass', 'app').get()):
+        if not seamless_signed_in({key: self.var(key, 'app').get()
+                                   for key in ('yt_private_server', 'supermedo_npid', 'supermedo_pass')}):
             self.messagebox.showinfo('Bloodborne', _('Not signed in: sign in or make a free account on the Online '
                                                      'page.'))
             self.show('online')
@@ -4002,50 +4028,27 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.seamless_said.configure(text=_('Preparing the game; it opens in its own window…',
                                             'Подготовка игры; она откроется в своём окне…'))
         self.set_log('')
-        self.append(f'BBSC: Yharnam Together {bbport_yharnam.VERSION} · {bbport_yharnam.SERVER}\n')
-        result = {}
-
         def work():
             try:
-                bbport_yharnam.learn_from_log(PORT_DIR)  # the last run's first-use key, before its log is rotated
-                game_dir = settings['game_dir']
-                if bbport_yharnam.needs_prepare(PORT_DIR, game_dir):
-                    root, note = bbport_yharnam.prepare(
-                        PORT_DIR, game_dir, lambda folder: (game_info(folder) or (None, None))[1],
-                        say=lambda line: self.output.put(line + '\n'))
-                else:
-                    root, note = bbport_yharnam.view_root(PORT_DIR), ''
-                    bbport_yharnam.copy_events(PORT_DIR, root)
-                ip = bbport_yharnam.server_ip(settings)  # the relay's with the Russia route on
-                bbport_yharnam.write_host_overrides(PORT_DIR, ip, bbport_yharnam.ports(settings)[2])
-                # The player's mods as the normal game has them (game_environment), with the party HUD over them.
-                view, config, hud_note = bbport_yharnam.mods_view(
-                    PORT_DIR, Path(root) / bbport_yharnam.TITLE, settings['mods_dir'] or str(DATA_DIR / 'mods'),
-                    DATA_DIR / 'mods.json', settings['mods_enabled'])
-                bbport_yharnam.rotate_logs(PORT_DIR)
-                result.update(root=root, note='\n'.join(filter(None, (note, hud_note))), ip=ip, mods=(view, config))
+                result = prepare_seamless_launch(settings, graphics, lambda line: self.output.put(line + '\n'))
             except (RuntimeError, OSError, ValueError) as error:
-                result['error'] = str(error)
-            self.ui_calls.put(lambda: self.seamless_start(settings, graphics, result))
+                result = str(error)
+            self.ui_calls.put(lambda: self.seamless_start(result))
         threading.Thread(target=work, daemon=True).start()
 
-    def seamless_start(self, settings, graphics, result):
+    def seamless_start(self, result):
         self.seamless_preparing = False
-        if 'error' in result:
+        if isinstance(result, str):
             self.seamless_button.state(['!disabled'])
             self.play_button.configure(state='normal')
             self.seamless_said.configure(text=_('Seamless co-op could not start.'))
             self.refresh_status()  # the window's PLAY as its own checks have it
-            self.append(result['error'] + '\n')
-            self.messagebox.showerror('Bloodborne', result['error'])
+            self.append(result + '\n')
+            self.messagebox.showerror('Bloodborne', result)
             return
-        if result['note']:
-            self.append(result['note'] + '\n')
-        # The normal game's start (every setting of this launcher) without the normal online game; the seamless
-        # engine, server, event files and saves over it (bbport_yharnam.environment).
-        env = bbport_yharnam.environment(PORT_DIR, result['root'], settings, result['ip'],
-                                         bbport_yharnam.link_key(PORT_DIR),
-                                         game_environment({**settings, 'online': False}, graphics), result['mods'])
+        host, env, notes = result
+        for note in notes:
+            self.append(note + '\n')
         self.pad_stop()  # the game reads the controller now
         try:
             self.process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=env,
@@ -4059,19 +4062,18 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.refresh_status()
             return
         self.job = GameJob(self.process)
-        threading.Thread(target=self.read_seamless_output, args=(self.process,), daemon=True).start()
+        threading.Thread(target=self.read_seamless_output, args=(self.process, host), daemon=True).start()
         self.stop_button.configure(state='normal')
         self.stop_button.pack(side='right', after=self.play_button)
         self.seamless_said.configure(text=_('The game is running.', 'Игра запущена.'))
         self.status.configure(text=_('Preparing the game; it opens in its own window…',
                                      'Подготовка игры; она откроется в своём окне…'), fg=GOLD)
 
-    def read_seamless_output(self, process):
+    def read_seamless_output(self, process, host):
         """Helper thread: Seamless co-op's output to the Log page and to seamless\\user\\log\\console.txt (not the
         normal game's last_run.log); its end to seamless_ended."""
-        log = bbport_yharnam.user_dir(PORT_DIR) / 'log' / 'console.txt'
         try:
-            out = open(log, 'w', encoding='utf-8', errors='replace')
+            out = bbport_yharnam.open_console_log(PORT_DIR, host)
         except OSError:
             out = None
         for raw in iter(process.stdout.readline, b''):
@@ -6987,8 +6989,33 @@ def play_without_window(settings):
 
 
 def seamless_signed_in(settings):
-    """Seamless co-op's sign-in: the SuperMedo account of the Online page (Launcher.play_seamless asks the same)."""
+    """Only the public server requires a sign-in in the launcher."""
+    if settings.get('yt_private_server'):
+        return True
     return bool(str(settings.get('supermedo_npid') or '').strip() and settings.get('supermedo_pass'))
+
+
+def prepare_seamless_launch(settings, graphics, say):
+    """Prepare the co-op view and the selected server for both launcher and shortcut starts."""
+    host = bbport_yharnam.server_host(settings)
+    ip = bbport_yharnam.server_ip(settings)
+    say(f'BBSC: Yharnam Together {bbport_yharnam.VERSION} · {host}')
+    bbport_yharnam.learn_from_log(PORT_DIR)
+    game_dir = settings['game_dir']
+    if bbport_yharnam.needs_prepare(PORT_DIR, game_dir):
+        root, note = bbport_yharnam.prepare(PORT_DIR, game_dir, lambda folder: (game_info(folder) or (None, None))[1],
+                                            say=say)
+    else:
+        root, note = bbport_yharnam.view_root(PORT_DIR), ''
+        bbport_yharnam.copy_events(PORT_DIR, root)
+    bbport_yharnam.write_host_overrides(PORT_DIR, ip, bbport_yharnam.ports(settings)[2])
+    view, config, hud_note = bbport_yharnam.mods_view(
+        PORT_DIR, Path(root) / bbport_yharnam.TITLE, settings['mods_dir'] or str(DATA_DIR / 'mods'),
+        DATA_DIR / 'mods.json', settings['mods_enabled'])
+    bbport_yharnam.rotate_logs(PORT_DIR)
+    env = bbport_yharnam.environment(PORT_DIR, root, settings, ip, bbport_yharnam.link_key(PORT_DIR, host),
+                                     game_environment({**settings, 'online': False}, graphics), (view, config))
+    return host, env, [message for message in (note, hud_note) if message]
 
 
 def play_seamless_without_window(settings):
@@ -7008,32 +7035,13 @@ def play_seamless_without_window(settings):
             print(line)
         except (OSError, ValueError):
             pass
-    say(f'BBSC: Yharnam Together {bbport_yharnam.VERSION} · {bbport_yharnam.SERVER}')
-    graphics = load_ini(settings)[0]
     try:
-        bbport_yharnam.learn_from_log(PORT_DIR)  # the last run's first-use key, before its log is rotated
-        game_dir = settings['game_dir']
-        if bbport_yharnam.needs_prepare(PORT_DIR, game_dir):
-            root, note = bbport_yharnam.prepare(PORT_DIR, game_dir, lambda folder: (game_info(folder) or (None, None))[1],
-                                                say=say)
-        else:
-            root, note = bbport_yharnam.view_root(PORT_DIR), ''
-            bbport_yharnam.copy_events(PORT_DIR, root)
-        ip = bbport_yharnam.server_ip(settings)  # the relay's with the Russia route on
-        bbport_yharnam.write_host_overrides(PORT_DIR, ip, bbport_yharnam.ports(settings)[2])
-        view, config, hud_note = bbport_yharnam.mods_view(
-            PORT_DIR, Path(root) / bbport_yharnam.TITLE, settings['mods_dir'] or str(DATA_DIR / 'mods'),
-            DATA_DIR / 'mods.json', settings['mods_enabled'])
-        bbport_yharnam.rotate_logs(PORT_DIR)
+        host, env, notes = prepare_seamless_launch(settings, load_ini(settings)[0], say)
     except (RuntimeError, OSError, ValueError) as error:
         say(str(error))
         return str(error) or _('Seamless co-op could not start.')
-    env = bbport_yharnam.environment(PORT_DIR, root, settings, ip, bbport_yharnam.link_key(PORT_DIR),
-                                     game_environment({**settings, 'online': False}, graphics), (view, config))
-    log = bbport_yharnam.user_dir(PORT_DIR) / 'log' / 'console.txt'
-    log.parent.mkdir(parents=True, exist_ok=True)
-    with open(log, 'w', encoding='utf-8', errors='replace', buffering=1) as out:
-        for line in filter(None, (note, hud_note)):
+    with bbport_yharnam.open_console_log(PORT_DIR, host) as out:
+        for line in notes:
             out.write(line + '\n')
         process = subprocess.Popen(run_command(), cwd=PORT_DIR, env=env, stdin=subprocess.DEVNULL,
                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT, creationflags=NO_WINDOW)

@@ -59,6 +59,17 @@ Online play (beta)
   (https://forum.bbport.de/t/help-support) or on our Discord server
   (https://discord.gg/WtYT4fXhEN).
 
+Seamless co-op
+- On the Seamless co-op page, choose SuperMedo Server or Private server. For a private server,
+  enter its IPv4 address or hostname (including a Tailscale address), then press Play Seamless
+  co-op. The launcher creates a reusable player ID for that server. Create or join a team
+  from the in-game Co-op Team menu (F2). Desktop and Steam shortcuts use the saved choice.
+- The private host needs BBSC: Yharnam Together 1.0.0 with BloodborneSeamlessCoop,
+  BloodborneBackend and MakeAccountsAtSignIn enabled. The host can start the server from
+  the upstream 1.0.0 BBport launcher or build the 1.0.0 Linux server. On the server, set
+  BackendAddress to an IPv4 address the players can reach. Players need access to UDP 31314
+  and TCP 31315 and 20443. Keep the server database and link_key.bin between restarts.
+
 Cheats
 - The "Cheats" page (expert view) has cheats (never die, enemies do not see or hear you,
   Rally never fades, control the targeted enemy) and gameplay tweaks (no Rally, camera further

@@ -1,0 +1,112 @@
+name: Release private server
+
+on:
+  push:
+    tags:
+      - 'private-server-v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: private-server-release
+  cancel-in-progress: false
+
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      image: ${{ steps.version.outputs.image }}
+      digest: ${{ steps.publish.outputs.digest }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Check release version
+        id: version
+        run: |
+          version=${GITHUB_REF_NAME#private-server-v}
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
+          grep -Fx "VERSION = '$version'" launcher/bbport_launcher_win.py
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bloodborne-private-server" >> "$GITHUB_OUTPUT"
+      - name: Build and test the host image
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          IMAGE: ${{ steps.version.outputs.image }}
+        run: |
+          docker build --platform linux/amd64 --build-arg "PORT_VERSION=$VERSION" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag "$IMAGE:$VERSION" packaging/private-server
+          sh packaging/private-server/smoke-test.sh "$IMAGE:$VERSION"
+      - name: Publish both image tags and verify the digest
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          IMAGE: ${{ steps.version.outputs.image }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:$VERSION"
+          docker tag "$IMAGE:$VERSION" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
+          registry_digest() {
+            docker buildx imagetools inspect "$1" | awk '$1 == "Digest:" && !digest { digest=$2 } END { print digest }'
+          }
+          version_digest=$(registry_digest "$IMAGE:$VERSION")
+          latest_digest=$(registry_digest "$IMAGE:latest")
+          [[ "$version_digest" =~ ^sha256:[0-9a-f]{64}$ && "$version_digest" == "$latest_digest" ]]
+          echo "digest=$version_digest" >> "$GITHUB_OUTPUT"
+
+  release:
+    needs: host
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      PORT_VERSION: ${{ needs.host.outputs.version }}
+      HOST_IMAGE: ${{ needs.host.outputs.image }}
+      HOST_DIGEST: ${{ needs.host.outputs.digest }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.14'
+      - name: Test and package the Windows launcher
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tests -p test_yharnam.py
+          python -m unittest discover -s tests -p test_launcher_seamless.py
+          python -m pip install 'pyinstaller==6.22.3' 'pillow==13.0.0'
+          ./packaging/private-server/build-launcher.ps1 -Version $env:PORT_VERSION
+      - name: Publish the GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $version = $env:PORT_VERSION
+          $out = "out/private-server-release/$version"
+          $zip = "$out/Bloodborne-$version-private-server-launcher.zip"
+          $notes = "$out/release-notes.md"
+          @"
+          Windows launcher for [SuperMedo $version](https://github.com/Supermedo/bloodborne_pc/releases/tag/windows-v$version).
+          Extract it into a copy of that installation after moving its existing launcher and ``_internal`` out of the way.
+
+          The **Seamless Co-op** page offers **SuperMedo Server** and **Private server**. Private mode takes the host's IP or hostname and creates a player ID automatically.
+
+          The Linux amd64 host image is ``$($env:HOST_IMAGE):$version``. The ``latest`` tag was published with the same digest, ``$env:HOST_DIGEST``.
+          See the [Docker and Compose setup](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/packaging/private-server/README.md).
+          The image builds from the [BBSC 1.0.0 Linux server source](https://github.com/CLSAMG22/BBSC/releases/tag/v1.0.0).
+          "@ | Set-Content -LiteralPath $notes -Encoding utf8
+          gh release create $env:GITHUB_REF_NAME $zip "$zip.sha256" 'packaging/private-server/compose.yaml' `
+            --verify-tag --title "Bloodborne PC $version — Private server" --notes-file $notes --latest

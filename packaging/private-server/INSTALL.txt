@@ -1,0 +1,13 @@
+Bloodborne PC private-server launcher
+
+Use a copy of the official SuperMedo Windows release with the same version as
+this ZIP. Close the launcher and game. Move Bloodborne.exe and _internal from
+the copy to a separate folder, then extract this ZIP beside Play Bloodborne.exe.
+
+Open Bloodborne.exe, go to Seamless co-op, select Private server, and enter
+your host's LAN or Tailscale IPv4 address. Press Play Seamless Co-op, then
+press F2 in the game to make or join a team. The launcher creates the private
+player ID automatically. Select SuperMedo Server to use the public service.
+
+Host image and setup guide:
+https://github.com/kaoitp/bloodborne_pc/tree/private-server/packaging/private-server

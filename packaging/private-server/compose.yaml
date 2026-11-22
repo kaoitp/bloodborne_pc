@@ -1,0 +1,16 @@
+services:
+  shadnet:
+    image: ghcr.io/kaoitp/bloodborne-private-server:${SERVER_TAG:-latest}
+    ports:
+      - "${HOST_IP:?Set HOST_IP to the server LAN or Tailscale IPv4}:31314:31314/udp"
+      - "${HOST_IP}:31315:31315/tcp"
+      - "${HOST_IP}:20443:20443/tcp"
+    environment:
+      SHADNET_BACKEND_ADDRESS: ${HOST_IP}
+    volumes:
+      - server-data:/data
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+volumes:
+  server-data:

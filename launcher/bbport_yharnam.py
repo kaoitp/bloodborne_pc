@@ -1,5 +1,5 @@
 """SuperMedo Seamless co-op: BBSC: Yharnam Together 1.0.0's co-op (github.com/CLSAMG22/BBSC, GPL-2.0) in this
-port's own game, started by this launcher on supermedo.com's seamless server.
+port's own game, started by this launcher on SuperMedo or a private BBSC server.
 
 From 1.0.0 BBSC is a port of its own (a fork of this one from 1.6) with co-op built into its engine. Here the game is
 this port's own: its seamless engine (bin\\bb-probe-seamless.exe: this port's engine built with BBSC's co-op and
@@ -13,16 +13,17 @@ scripts/fetch_yharnam.py) only its event tool and reference are used. Before a c
 - the co-op event files made from the player's own game by BBSC's tools\\party_boss_events.py, in
   coop-game\\CUSA03173-mods (this port's mods.py layers a game's "-mods" folder over it);
 - the game's own server pointed at the seamless server's backend (user\\host_overrides.custom.json);
-- the seamless server with the SuperMedo account and the host rules chosen on the Seamless co-op page.
+- the selected server's account and the host rules chosen on the Seamless co-op page.
 
-Only SuperMedo's server is used: its sign-in checks SuperMedo accounts, and the party made in this launcher is
-the game's co-op team there. Its characters stay in seamless\\user\\savedata: co-op changes the character it plays,
-and the normal saves must never see that.
+SuperMedo checks its own accounts and uses the launcher's parties. A private server uses a local player ID and
+the game's team screen. Co-op characters stay in seamless\\user\\savedata.
 """
+import ipaddress
 import json
 import os
 from pathlib import Path
 import re
+import secrets
 import shutil
 import socket
 import subprocess
@@ -43,8 +44,14 @@ RELAY_PORTS = (41314, 41315, 40443)
 
 
 def ports(settings):
-    """(link, WebAPI, backend) ports: the relay's with the Russia route on, else the seamless server's."""
-    return RELAY_PORTS if settings.get('online_relay') else (LINK_PORT, WEBAPI_PORT, BACKEND_PORT)
+    """(link, WebAPI, backend) ports for the selected server."""
+    return RELAY_PORTS if use_relay(settings) else (LINK_PORT, WEBAPI_PORT, BACKEND_PORT)
+
+
+def use_relay(settings):
+    return settings.get('online_relay') and not settings.get('yt_private_server')
+
+
 GAME_SERVER = 'https://ss4.scej-network.jp:20443'  # the game's own server, sent to the backend
 NO_WINDOW = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
 ENGINE = 'bb-probe-seamless.exe'
@@ -54,7 +61,8 @@ ENGINE = 'bb-probe-seamless.exe'
 ENEMIES = {'auto': None, 'off': 'off', 'bit': '1.5,1.25,1.5', 'on': '3,1.5,3', 'much': '5,2,5'}
 BOSS_TEMPOS = ('', 'aggressive', 'relentless')
 # This launcher's settings for it (APP_DEFAULTS): BBSC's own defaults.
-DEFAULTS = {'yt_enemies': 'off', 'yt_rot': False, 'yt_travel': False, 'yt_vote': False, 'yt_tempo': '',
+DEFAULTS = {'yt_private_server': False, 'yt_server_address': '',
+            'yt_enemies': 'off', 'yt_rot': False, 'yt_travel': False, 'yt_vote': False, 'yt_tempo': '',
             # Custom enemies (testers, 2026-11-06): the player's own multipliers, 1 to 10 each (the engine's range).
             'yt_custom_hp': '2', 'yt_custom_damage': '1.5', 'yt_custom_poise': '2',
             # Revival (testers, 2026-11-06): off is the engine's 'norevive' host rule, a fallen hunter dies for real.
@@ -78,6 +86,7 @@ def custom_enemies(settings):
 LEARNED_KEY_LINE = "Server link: the server's key, trusted on first use: "
 OTHER_KEY_LINE = 'Server link: the server says another key than the one pinned'
 REFUSED_LINE = 'Server link: the server refused this game: '
+SERVER_LOG_PREFIX = 'BBSC server: '
 
 VIEW_MARK = '.yharnam-view'  # BBSC's own mark: a view either launcher made is known as one
 # What the launcher makes in seamless\ for the player (BBSC's characters and logs, the co-op game view of links into
@@ -130,6 +139,16 @@ def save_state(port_dir, state):
     part.replace(path)
 
 
+def private_identity(port_dir, host):
+    """Keep a player ID and secret for this server, as BBSC does for a local host."""
+    state = load_state(port_dir)
+    identities = state.setdefault('server_ids', {})
+    if host not in identities:
+        identities[host] = ['p' + secrets.token_hex(7), secrets.token_hex(16)]
+        save_state(port_dir, state)
+    return identities[host]
+
+
 def valid_link_key(value):
     return isinstance(value, str) and re.fullmatch(r'[0-9a-f]{64}', value) is not None
 
@@ -160,19 +179,22 @@ def keep_link_key(port_dir, key, host=SERVER):
     return True
 
 
-def learn_from_log(port_dir, host=SERVER):
-    """The first-use key the last run's game output (user\\log\\console.txt; BBSC's own engine wrote
-    shad_log.txt) names, kept for `host` (keep_link_key): its later starts pin it. True when one was kept."""
+def learn_from_log(port_dir):
+    """Pin a first-use key to the server named in the console log. Older logs came from SuperMedo."""
     for name in ('console.txt', 'shad_log.txt'):
         try:
             text = (user_dir(port_dir) / 'log' / name).read_text(encoding='utf-8', errors='replace')
         except OSError:
             continue
-        for line in text.splitlines():
+        header, _, output = text.partition('\n')
+        host = header.removeprefix(SERVER_LOG_PREFIX) if header.startswith(SERVER_LOG_PREFIX) else ''
+        for line in (output if host else text).splitlines():
             if LEARNED_KEY_LINE in line:
                 key = learned_key(line)
                 if key:
-                    return keep_link_key(port_dir, key, host)
+                    return keep_link_key(port_dir, key, host or SERVER)
+        if host:  # shad_log.txt may belong to an earlier run on another server
+            break
     return False
 
 
@@ -561,12 +583,27 @@ def resolve(host=SERVER, lookup=socket.gethostbyname):
     try:
         return lookup(host)
     except OSError:
-        raise RuntimeError(f"Can't find the server {host}: check your internet connection.") from None
+        raise RuntimeError(f"Can't find the server {host}: check its address and your network connection.") from None
+
+
+def server_host(settings):
+    if not settings.get('yt_private_server'):
+        return SERVER
+    host = str(settings.get('yt_server_address') or '').strip().lower().removesuffix('.')
+    labels = host.split('.')
+    if re.fullmatch(r'[0-9.]+', host):
+        try:
+            return str(ipaddress.IPv4Address(host))
+        except ValueError:
+            pass
+    elif len(host) <= 253 and all(re.fullmatch(r'[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?', label) for label in labels):
+        return host
+    raise ValueError('Enter the private server IPv4 address or hostname without a port or URL.')
 
 
 def server_ip(settings, lookup=socket.gethostbyname):
-    """The address the game links to: the relay's with the Russia route on, else the server's (resolve)."""
-    return RELAY_IP if settings.get('online_relay') else resolve(lookup=lookup)
+    """Resolve the selected server once for all three services."""
+    return RELAY_IP if use_relay(settings) else resolve(server_host(settings), lookup)
 
 
 def write_host_overrides(port_dir, ip, port=BACKEND_PORT):
@@ -616,19 +653,24 @@ def environment(port_dir, root, settings, ip, key='', game_env=None, mods=None):
     graphics, controls, mods and patches, every setting of the launcher) with only these changes: the seamless
     engine (bin\\bb-probe-seamless.exe, this port's engine with BBSC's co-op), the co-op game view (its -mods folder
     brings the co-op events), the seamless characters' own saves (seamless\\user), and the
-    seamless server with the SuperMedo account. `game_env`: game_environment's result; `mods`: mods_view's
+    selected server with its account. `game_env`: game_environment's result; `mods`: mods_view's
     (folder, mods.json)."""
     env = {name: value for name, value in (os.environ if game_env is None else game_env).items()
            if name not in NORMAL_ONLINE and not name.startswith(NORMAL_ONLINE_PREFIXES)}
+    if settings.get('yt_private_server'):
+        npid, password = private_identity(port_dir, server_host(settings))
+    else:
+        npid = str(settings.get('supermedo_npid', '')).strip()
+        password = str(settings.get('supermedo_pass', ''))
+    link, webapi, _backend = ports(settings)
     env.update({
         'BB_PROBE': str(engine(port_dir)),
         'BB_GAME_DIR': str(Path(root) / TITLE),
         'BB_USER_DIR': str(user_dir(port_dir)),
         'BB_RELEASE_VERSION': VERSION,
         'BB_ONLINE': '1',
-        'BB_SHADNET_SERVER': f'{ip}:{ports(settings)[0]}', 'BB_SHADNET_WEBAPI': f'http://{ip}:{ports(settings)[1]}',
-        'BB_SHADNET_NPID': str(settings.get('supermedo_npid', '')).strip(),
-        'BB_SHADNET_PASSWORD': str(settings.get('supermedo_pass', '')),
+        'BB_SHADNET_SERVER': f'{ip}:{link}', 'BB_SHADNET_WEBAPI': f'http://{ip}:{webapi}',
+        'BB_SHADNET_NPID': npid, 'BB_SHADNET_PASSWORD': password,
         'SHADPS4_BLOODBORNE_SEAMLESS_COOP': '1', 'SHADPS4_BLOODBORNE_RE_TRACE': '0',
         # The co-op code's files (flag store, portraits, crash dumps) and this engine's own shader cache stay
         # with the seamless saves, never in the normal game's user or cache folder.
@@ -656,6 +698,18 @@ def environment(port_dir, root, settings, ip, key='', game_env=None, mods=None):
 
 def console_log(port_dir):
     return user_dir(port_dir) / 'log' / 'console.txt'
+
+
+def open_console_log(port_dir, host):
+    path = console_log(port_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    log = path.open('w', encoding='utf-8', errors='replace', buffering=1)
+    try:
+        log.write(SERVER_LOG_PREFIX + host + '\n')
+    except OSError:
+        log.close()
+        raise
+    return log
 
 
 def rotate_logs(port_dir):
