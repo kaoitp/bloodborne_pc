@@ -1,0 +1,59 @@
+name: Publish private server for Unraid Tailscale
+
+on:
+  push:
+    tags:
+      - 'private-server-tailscale-v*'
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: private-server-tailscale-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Resolve the existing release and base image
+        run: |
+          version=${GITHUB_REF_NAME#private-server-tailscale-v}
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
+          grep -Fx "VERSION = '$version'" launcher/bbport_launcher_win.py
+          release_tag=private-server-v$version
+          [[ $(gh release view "$release_tag" --json isDraft --jq '.isDraft') == false ]]
+          base=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bloodborne-private-server
+          digest=$(docker buildx imagetools inspect "$base:$version" | awk '$1 == "Digest:" && !digest { digest=$2 } END { print digest }')
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          echo "BASE_IMAGE=$base@$digest" >> "$GITHUB_ENV"
+          echo "IMAGE=$base-tailscale" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+      - name: Build and test with the official Unraid hook
+        run: |
+          docker build --platform linux/amd64 --build-arg "BASE_IMAGE=$BASE_IMAGE" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag "$IMAGE:$VERSION" packaging/private-server/unraid
+          if [[ ! -c /dev/net/tun ]]; then sudo modprobe tun; fi
+          python3 packaging/private-server/unraid/test-tailscale.py "$IMAGE:$VERSION"
+      - name: Publish both image tags and attach the Unraid template
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:$VERSION"
+          docker tag "$IMAGE:$VERSION" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
+          registry_digest() {
+            docker buildx imagetools inspect "$1" | awk '$1 == "Digest:" && !digest { digest=$2 } END { print digest }'
+          }
+          digest=$(registry_digest "$IMAGE:$VERSION")
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ && "$digest" == "$(registry_digest "$IMAGE:latest")" ]]
+          gh release upload "$RELEASE_TAG" \
+            packaging/private-server/unraid/my-bloodborne-private-server-tailscale.xml --clobber

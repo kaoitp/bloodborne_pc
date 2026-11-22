@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Container version="2">
+  <Name>Bloodborne-Private-Server-Tailscale</Name>
+  <Repository>ghcr.io/kaoitp/bloodborne-private-server-tailscale:latest</Repository>
+  <Registry>https://github.com/kaoitp/bloodborne_pc/pkgs/container/bloodborne-private-server-tailscale</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <TailscaleEnabled>true</TailscaleEnabled>
+  <TailscaleHostname>bloodborne-private-server</TailscaleHostname>
+  <TailscaleUserspaceNetworking>false</TailscaleUserspaceNetworking>
+  <TailscaleServe>no</TailscaleServe>
+  <TailscaleStateDir>/data/.tailscale_state</TailscaleStateDir>
+  <Support>https://github.com/kaoitp/bloodborne_pc/tree/private-server/packaging/private-server#unraid-tailscale-hook</Support>
+  <Project>https://github.com/kaoitp/bloodborne_pc/tree/private-server</Project>
+  <Overview>Bloodborne PC Seamless Co-op host on the container's Tailscale IPv4. Uses Unraid's Tailscale hook with kernel networking and automatic player IDs. No ports are published on the Unraid host. The data directory must be writable by UID and GID 10001.</Overview>
+  <TemplateURL>https://raw.githubusercontent.com/kaoitp/bloodborne_pc/private-server/packaging/private-server/unraid/my-bloodborne-private-server-tailscale.xml</TemplateURL>
+  <ExtraParams>--restart unless-stopped --stop-timeout 30</ExtraParams>
+  <Config Name="Server data" Target="/data" Default="/mnt/user/appdata/bloodborne-private-server" Mode="rw" Description="Database, worlds, configuration, link_key.bin and Tailscale state. Must be writable by UID and GID 10001. Stop the previous server before reusing this directory." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/bloodborne-private-server</Config>
+</Container>
