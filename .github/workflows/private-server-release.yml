@@ -131,5 +131,6 @@ jobs:
           See the [Docker and Compose setup](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/packaging/private-server/README.md).
           The image builds from the [BBSC 1.0.0 Linux server source](https://github.com/CLSAMG22/BBSC/releases/tag/v1.0.0).
           "@ | Set-Content -LiteralPath $notes -Encoding utf8
-          gh release upload $env:GITHUB_REF_NAME $zip "$zip.sha256" 'packaging/private-server/compose.yaml' --clobber
+          gh release upload $env:GITHUB_REF_NAME $zip "$zip.sha256" 'packaging/private-server/compose.yaml' `
+            'packaging/private-server/unraid/my-bloodborne-private-server.xml' --clobber
           gh release edit $env:GITHUB_REF_NAME --notes-file $notes --draft=false --latest

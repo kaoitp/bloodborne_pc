@@ -27,6 +27,21 @@ docker compose up -d --pull never
 
 Compose keeps the server database, worlds, and `link_key.bin` in `server-data`. Keep this data when upgrading or backing up. If using an Unraid appdata bind mount for `/data`, give UID and GID `10001` write access to that directory.
 
+## Unraid template
+
+The [Unraid XML template](unraid/my-bloodborne-private-server.xml) uses `bridge`, the `latest` image, and the same three ports on the Unraid host. Run these commands in the Unraid terminal to import it and prepare the default appdata directory.
+
+```sh
+mkdir -p /boot/config/plugins/dockerMan/templates-user
+curl -fL https://raw.githubusercontent.com/kaoitp/bloodborne_pc/private-server/packaging/private-server/unraid/my-bloodborne-private-server.xml \
+  -o /boot/config/plugins/dockerMan/templates-user/my-bloodborne-private-server.xml
+install -d -m 0750 -o 10001 -g 10001 /mnt/user/appdata/bloodborne-private-server
+```
+
+In Unraid, open **Docker → Add Container** and select **Bloodborne-Private-Server** under **Template**. Keep the default ports, then click **Apply**. To pin the release, set **Repository** to `ghcr.io/kaoitp/bloodborne-private-server:1.9.8.6`.
+
+Players connect to the Unraid LAN IPv4, or to the Unraid host's Tailscale IPv4 when using the [Tailscale plugin](https://docs.unraid.net/unraid-os/system-administration/secure-your-server/tailscale/). The game listens on the host's published ports. Keep those ports within your LAN or Tailnet and leave router port forwarding off. To check the host, open `http://<unraid-ip>:20443/status` from a player PC.
+
 ## Version and source
 
 The image tag follows the SuperMedo Windows version. The server checks the BBSC release reported by the Seamless engine, which is `1.0.0` in Windows 1.9.8.6. The [BBSC 1.0.0 Linux server source archive](https://github.com/CLSAMG22/BBSC/releases/download/v1.0.0/BBSC-Yharnam-Together-1.0.0-Server-Linux.zip) and the [pinned protobuf source](https://github.com/shadexternals/protobuf/tree/5917ee224a7e47383a78acc129628511fe210dff) are used by the [Dockerfile](Dockerfile). Build locally with `docker build -t bloodborne-private-server:1.9.8.6 .` from this directory.

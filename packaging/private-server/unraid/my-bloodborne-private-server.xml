@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Container version="2">
+  <Name>Bloodborne-Private-Server</Name>
+  <Repository>ghcr.io/kaoitp/bloodborne-private-server:latest</Repository>
+  <Registry>https://github.com/kaoitp/bloodborne_pc/pkgs/container/bloodborne-private-server</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/kaoitp/bloodborne_pc/tree/private-server/packaging/private-server#unraid-template</Support>
+  <Project>https://github.com/kaoitp/bloodborne_pc/tree/private-server</Project>
+  <Overview>Dedicated host for Bloodborne PC Seamless Co-op with automatic player IDs. Give players the Unraid LAN or host Tailscale IPv4 address. Use the matching Windows launcher release and keep the three default ports. Set up the appdata directory for UID 10001 and GID 10001 before starting.</Overview>
+  <TemplateURL>https://raw.githubusercontent.com/kaoitp/bloodborne_pc/private-server/packaging/private-server/unraid/my-bloodborne-private-server.xml</TemplateURL>
+  <ExtraParams>--restart unless-stopped --stop-timeout 30</ExtraParams>
+  <Config Name="Server data" Target="/data" Default="/mnt/user/appdata/bloodborne-private-server" Mode="rw" Description="Database, worlds, configuration, and link_key.bin. Keep this directory across updates. It must be writable by UID and GID 10001." Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/bloodborne-private-server</Config>
+  <Config Name="Seamless Co-op link" Target="31314" Default="31314" Mode="udp" Description="UDP relay for the Seamless Co-op game link. Keep the host port at 31314." Type="Port" Display="always" Required="true" Mask="false">31314</Config>
+  <Config Name="Web API" Target="31315" Default="31315" Mode="tcp" Description="TCP port used by the game Web API. Keep the host port at 31315." Type="Port" Display="always" Required="true" Mask="false">31315</Config>
+  <Config Name="Bloodborne backend" Target="20443" Default="20443" Mode="tcp" Description="TCP port used by the game backend. Keep the host port at 20443." Type="Port" Display="always" Required="true" Mask="false">20443</Config>
+  <Config Name="Backend advertised IPv4" Target="SHADNET_BACKEND_ADDRESS" Default="" Mode="" Description="Optional. Leave blank to use the IPv4 address the game connects to. Set to the Unraid LAN or host Tailscale IPv4 if you need to advertise a specific address." Type="Variable" Display="advanced" Required="false" Mask="false" />
+</Container>
