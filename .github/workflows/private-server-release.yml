@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     permissions:
-      contents: read
+      contents: write
       packages: write
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -29,10 +29,15 @@ jobs:
           persist-credentials: false
       - name: Check release version
         id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           version=${GITHUB_REF_NAME#private-server-v}
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]
           grep -Fx "VERSION = '$version'" launcher/bbport_launcher_win.py
+          if gh release view "$GITHUB_REF_NAME" --json isDraft --jq '.isDraft' > draft-state 2>/dev/null; then
+            grep -Fx true draft-state
+          fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/bloodborne-private-server" >> "$GITHUB_OUTPUT"
       - name: Build and test the host image
@@ -62,6 +67,23 @@ jobs:
           latest_digest=$(registry_digest "$IMAGE:latest")
           [[ "$version_digest" =~ ^sha256:[0-9a-f]{64}$ && "$version_digest" == "$latest_digest" ]]
           echo "digest=$version_digest" >> "$GITHUB_OUTPUT"
+      - name: Attach the Docker archive to the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          IMAGE: ${{ steps.version.outputs.image }}
+        run: |
+          set -o pipefail
+          archive="bloodborne-private-server-$VERSION-linux-amd64.tar.gz"
+          docker save "$IMAGE:$VERSION" "$IMAGE:latest" | gzip -1 > "$archive"
+          sha256sum "$archive" > "$archive.sha256"
+          if gh release view "$GITHUB_REF_NAME" --json isDraft --jq '.isDraft' > draft-state; then
+            grep -Fx true draft-state
+            gh release upload "$GITHUB_REF_NAME" "$archive" "$archive.sha256" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$archive" "$archive.sha256" --draft --verify-tag \
+              --title "Bloodborne PC $VERSION — Private server" --notes 'Preparing release assets.'
+          fi
 
   release:
     needs: host
@@ -83,6 +105,7 @@ jobs:
       - name: Test and package the Windows launcher
         shell: pwsh
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           python -m unittest discover -s tests -p test_yharnam.py
           python -m unittest discover -s tests -p test_launcher_seamless.py
           python -m pip install 'pyinstaller==6.22.3' 'pillow==13.0.0'
@@ -104,9 +127,9 @@ jobs:
 
           The **Seamless Co-op** page offers **SuperMedo Server** and **Private server**. Private mode takes the host's IP or hostname and creates a player ID automatically.
 
-          The Linux amd64 host image is ``$($env:HOST_IMAGE):$version``. The ``latest`` tag was published with the same digest, ``$env:HOST_DIGEST``.
+          The Linux amd64 host image is ``$($env:HOST_IMAGE):$version``. The ``latest`` tag was published with the same digest, ``$env:HOST_DIGEST``. The Docker archive in the release can be loaded without a registry login.
           See the [Docker and Compose setup](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/packaging/private-server/README.md).
           The image builds from the [BBSC 1.0.0 Linux server source](https://github.com/CLSAMG22/BBSC/releases/tag/v1.0.0).
           "@ | Set-Content -LiteralPath $notes -Encoding utf8
-          gh release create $env:GITHUB_REF_NAME $zip "$zip.sha256" 'packaging/private-server/compose.yaml' `
-            --verify-tag --title "Bloodborne PC $version — Private server" --notes-file $notes --latest
+          gh release upload $env:GITHUB_REF_NAME $zip "$zip.sha256" 'packaging/private-server/compose.yaml' --clobber
+          gh release edit $env:GITHUB_REF_NAME --notes-file $notes --draft=false --latest

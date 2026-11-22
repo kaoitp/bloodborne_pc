@@ -42,6 +42,7 @@ COPY --from=build /src/build/shadnet /usr/local/bin/shadnet
 COPY --from=build /src/worlds.cfg /src/scoreboards.cfg /opt/shadnet/
 COPY --from=build /src/LICENSES /usr/share/doc/shadnet/licenses/
 COPY --from=build /src/externals/protobuf/LICENSE /usr/share/doc/shadnet/licenses/protobuf.txt
+COPY --from=build /src/build/_deps/absl-src/LICENSE /usr/share/doc/shadnet/licenses/abseil.txt
 COPY --chmod=755 entrypoint.sh /usr/local/bin/shadnet-start
 
 ENV SHADNET_HOME=/data BB_RELEASE_VERSION=1.0.0

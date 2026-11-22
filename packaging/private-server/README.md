@@ -18,6 +18,13 @@ docker compose ps
 
 The `linux/amd64` image is `ghcr.io/kaoitp/bloodborne-private-server`. The Compose file publishes `31314/udp`, `31315/tcp`, and `20443/tcp` on `HOST_IP`. For Tailscale, connect the Docker host and each player to a Tailnet that permits these ports. Give the same `HOST_IP` to every player. Each player selects **Private server**, enters that address, and uses **F2** in the game to create or join the team.
 
+To install from the Docker image archive attached to the release, download it to the Docker host and run the following commands. This works without a registry login.
+
+```sh
+docker load -i bloodborne-private-server-1.9.8.6-linux-amd64.tar.gz
+docker compose up -d --pull never
+```
+
 Compose keeps the server database, worlds, and `link_key.bin` in `server-data`. Keep this data when upgrading or backing up. If using an Unraid appdata bind mount for `/data`, give UID and GID `10001` write access to that directory.
 
 ## Version and source
