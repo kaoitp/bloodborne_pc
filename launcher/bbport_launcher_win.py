@@ -3839,7 +3839,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             self.root.after(500, lambda: act('status'))
         self.root.after(15000, poll)
 
-    # ---- Seamless co-op (BBSC: Yharnam Together 1.0.0, bbport_yharnam.py) --------------------------------------
+    # ---- Seamless co-op (bbport_yharnam.py) -------------------------------------------------------------------
     # Its own page, engine and saves under Online play.
 
     def build_seamless(self):
@@ -3861,6 +3861,43 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
 
         self.build_seamless_server(f)
 
+        version = bbport_yharnam.release_version(PORT_DIR)
+        if version == bbport_yharnam.PREVIEW_VERSION:
+            self.note(f, _('Set team rules on the in-game Co-op Team screen (F2).'), top=6)
+        else:
+            self.build_seamless_host_rules(f)
+
+        self.section(f, _('Picture and characters'))
+        self.note(f, _("Seamless co-op is this port's own game with every setting of this launcher: picture, "
+                       'frame rate, controls, mods and patches.'), top=0)
+        self.note(f, _('Seamless co-op plays its own characters, kept apart from your normal saves (seamless\\user in '
+                       'the launcher folder). The game folder of the Game files page is used as it is: nothing in it '
+                       'is changed.'), top=6)
+        self.note(f, _("Everyone in the team needs this launcher's Seamless co-op ({}).").format(
+            version), top=6)
+
+        # Its own desktop shortcut and Steam entry (Play Bloodborne.exe --seamless), beside the normal game's.
+        self.section(f, _('Shortcuts'))
+        shortcuts = ttk.Frame(f)
+        button = ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'),
+                            command=self.seamless_shortcut)
+        button.pack(side='left')
+        # Named with the page in the search: the normal game's buttons keep their own titles first.
+        self.index_entry(button, _('Seamless co-op') + ': ' + _('Desktop shortcut', 'Ярлык на рабочем столе'),
+                         key='button:seamless_shortcut')
+        button = ttk.Button(shortcuts, text=_('Add to Steam'), command=lambda: self.add_to_steam(seamless=True))
+        button.pack(side='left', padx=(6, 0))
+        self.index_entry(button, _('Seamless co-op') + ': ' + _('Add to Steam'), key='button:seamless_steam')
+        if not bbport_yharnam.available(PORT_DIR):
+            for button in shortcuts.winfo_children():
+                button.state(['disabled'])
+        self.row(f, '', shortcuts,
+                 _('Both start Seamless co-op straight away with the settings saved in this launcher, as '
+                   '"Bloodborne Seamless co-op"; the normal game keeps its own shortcut and Steam entry.'),
+                 key='button:seamless_shortcut')
+
+    def build_seamless_host_rules(self, f):
+        ttk, px = self.ttk, self.px
         self.section(f, _('Host rules'))
         self.note(f, _("The team leader's rules count for the whole team. Changes count from the next start."), top=0)
         enemies = ttk.Frame(f)
@@ -3910,39 +3947,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         self.check(f, 'yt_revive', 'app', _('Revival: a fallen hunter goes down and teammates strike them back up'),
                    _('Off: a fallen hunter dies for real, as in the normal game.'))
 
-        self.section(f, _('Picture and characters'))
-        self.note(f, _("Seamless co-op is this port's own game with every setting of this launcher: picture, "
-                       'frame rate, controls, mods and patches.'), top=0)
-        self.note(f, _('Seamless co-op plays its own characters, kept apart from your normal saves (seamless\\user in '
-                       'the launcher folder). The game folder of the Game files page is used as it is: nothing in it '
-                       'is changed.'), top=6)
-        self.note(f, _("Everyone in the team needs this launcher's Seamless co-op ({}).").format(
-            bbport_yharnam.VERSION), top=6)
-
-        # Its own desktop shortcut and Steam entry (Play Bloodborne.exe --seamless), beside the normal game's.
-        self.section(f, _('Shortcuts'))
-        shortcuts = ttk.Frame(f)
-        button = ttk.Button(shortcuts, text=_('Desktop shortcut', 'Ярлык на рабочем столе'),
-                            command=self.seamless_shortcut)
-        button.pack(side='left')
-        # Named with the page in the search: the normal game's buttons keep their own titles first.
-        self.index_entry(button, _('Seamless co-op') + ': ' + _('Desktop shortcut', 'Ярлык на рабочем столе'),
-                         key='button:seamless_shortcut')
-        button = ttk.Button(shortcuts, text=_('Add to Steam'), command=lambda: self.add_to_steam(seamless=True))
-        button.pack(side='left', padx=(6, 0))
-        self.index_entry(button, _('Seamless co-op') + ': ' + _('Add to Steam'), key='button:seamless_steam')
-        if not bbport_yharnam.available(PORT_DIR):
-            for button in shortcuts.winfo_children():
-                button.state(['disabled'])
-        self.row(f, '', shortcuts,
-                 _('Both start Seamless co-op straight away with the settings saved in this launcher, as '
-                   '"Bloodborne Seamless co-op"; the normal game keeps its own shortcut and Steam entry.'),
-                 key='button:seamless_shortcut')
-
     def build_seamless_server(self, f):
         ttk = self.ttk
         self.section(f, _('Server'))
         private = self.var('yt_private_server', 'app')
+        if bbport_yharnam.release_version(PORT_DIR) == bbport_yharnam.PREVIEW_VERSION:
+            private.set(True)
+            self.note(f, _('BBSC 1.5.0 preview uses a matching private server.'), top=0)
+            self.build_private_seamless_settings(f)
+            return
         choices = ttk.Frame(f)
         ttk.Radiobutton(choices, text=_('SuperMedo Server'), variable=private, value=False).pack(side='left')
         ttk.Radiobutton(choices, text=_('Private server'), variable=private, value=True).pack(side='left', padx=12)
@@ -3952,12 +3965,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         own, public = ttk.Frame(holder), ttk.Frame(holder)
         own.columnconfigure(1, weight=1)
         public.columnconfigure(1, weight=1)
-        entry = ttk.Entry(own, textvariable=self.var('yt_server_address', 'app'), width=40)
-        self.row(own, _('Server address'), entry,
-                 _('Enter the BBSC server IPv4 address or hostname, such as its Tailscale address.'),
-                 key='yt_server_address')
-        self.note(own, _('Everyone enters the same server address. Create or join a team from the in-game Co-op Team '
-                         'menu (F2).'), top=8)
+        self.build_private_seamless_settings(own)
 
         npid_var, password_var = self.var('supermedo_npid', 'app'), self.var('supermedo_pass', 'app')
         account = self.wrap_within(ttk.Label(public, text='', justify='left', anchor='w'), 560)
@@ -3990,6 +3998,14 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             shown.pack(fill='x')
         private.trace_add('write', show_server)
         show_server()
+
+    def build_private_seamless_settings(self, parent):
+        entry = self.ttk.Entry(parent, textvariable=self.var('yt_server_address', 'app'), width=40)
+        self.row(parent, _('Server address'), entry,
+                 _('Enter the BBSC server IPv4 address or hostname, such as its Tailscale address.'),
+                 key='yt_server_address')
+        self.note(parent, _('Everyone enters the same server address. Create or join a team from the in-game Co-op Team '
+                            'menu (F2).'), top=8)
 
     def play_seamless(self):
         """Seamless co-op's Play: the game view, the co-op event files and the server's addresses are made in a
@@ -6990,16 +7006,20 @@ def play_without_window(settings):
 
 def seamless_signed_in(settings):
     """Only the public server requires a sign-in in the launcher."""
-    if settings.get('yt_private_server'):
+    if (settings.get('yt_private_server') or
+            bbport_yharnam.release_version(PORT_DIR) == bbport_yharnam.PREVIEW_VERSION):
         return True
     return bool(str(settings.get('supermedo_npid') or '').strip() and settings.get('supermedo_pass'))
 
 
 def prepare_seamless_launch(settings, graphics, say):
     """Prepare the co-op view and the selected server for both launcher and shortcut starts."""
+    version = bbport_yharnam.release_version(PORT_DIR)
+    if version == bbport_yharnam.PREVIEW_VERSION:
+        settings = {**settings, 'yt_private_server': True}
     host = bbport_yharnam.server_host(settings)
     ip = bbport_yharnam.server_ip(settings)
-    say(f'BBSC: Yharnam Together {bbport_yharnam.VERSION} · {host}')
+    say(f'BBSC: Yharnam Together {version} · {host}')
     bbport_yharnam.learn_from_log(PORT_DIR)
     game_dir = settings['game_dir']
     if bbport_yharnam.needs_prepare(PORT_DIR, game_dir):

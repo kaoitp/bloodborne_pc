@@ -32,6 +32,7 @@ import sys
 SERVER = 'seamless.supermedo.com'
 FOLDER_NAME = 'seamless'
 VERSION = '1.0.0'
+PREVIEW_VERSION = '1.5.0'
 GAME_VERSION = '01.09'
 TITLE = 'CUSA03173'
 # BBSC 1.0.0's fixed ports (bbport_coop.py): the link (UDP), the WebAPI and the game backend.
@@ -98,10 +99,24 @@ def folder(port_dir):
     return Path(port_dir) / FOLDER_NAME
 
 
+def release_version(port_dir):
+    """Read the edition installed with the engine. Existing packages without VERSION.txt use BBSC 1.0.0."""
+    try:
+        with (folder(port_dir) / 'VERSION.txt').open(encoding='utf-8-sig') as version:
+            if re.search(r'\bv1\.5\.0\b', version.readline()):
+                return PREVIEW_VERSION
+    except (OSError, UnicodeError):
+        pass
+    return VERSION
+
+
 def engine(port_dir):
     """This port's engine with BBSC's co-op (its own build, beside the normal bb-probe.exe, which it never
     changes)."""
-    return Path(port_dir) / 'bin' / ENGINE
+    directory = Path(port_dir) / 'bin'
+    if release_version(port_dir) == PREVIEW_VERSION:
+        directory /= 'bbsc-1.5.0'
+    return directory / ENGINE
 
 
 def event_tool(port_dir):
@@ -360,7 +375,8 @@ def view_root(port_dir):
     here = folder(port_dir) / 'coop-game'
     if not in_onedrive(port_dir) and junctions_work(here):
         return here
-    return Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'SuperMedo' / 'seamless-game'
+    fallback = 'seamless-game' if release_version(port_dir) == VERSION else 'seamless-game-1.5.0'
+    return Path(os.environ.get('LOCALAPPDATA', Path.home())) / 'SuperMedo' / fallback
 
 
 def update_folder(game):
@@ -396,13 +412,13 @@ def events_current(port_dir):
         return False
 
 
-def prepared_key(game_dir):
-    return json.dumps([str(Path(game_dir)), VERSION])
+def prepared_key(game_dir, version=VERSION):
+    return json.dumps([str(Path(game_dir)), version])
 
 
 def needs_prepare(port_dir, game_dir):
     root = view_root(port_dir)
-    return (load_state(port_dir).get('prepared') != prepared_key(game_dir)
+    return (load_state(port_dir).get('prepared') != prepared_key(game_dir, release_version(port_dir))
             or not (root / TITLE / 'eboot.bin').is_file() or not events_current(port_dir))
 
 
@@ -466,7 +482,7 @@ def prepare(port_dir, game_dir, version_of, say=print, call=subprocess.call):
         remove_view(mods)
     copy_events(port_dir, root)
     state = load_state(port_dir)
-    state['prepared'] = prepared_key(game_dir)
+    state['prepared'] = prepared_key(game_dir, release_version(port_dir))
     save_state(port_dir, state)
     return root, note
 
@@ -655,6 +671,9 @@ def environment(port_dir, root, settings, ip, key='', game_env=None, mods=None):
     brings the co-op events), the seamless characters' own saves (seamless\\user), and the
     selected server with its account. `game_env`: game_environment's result; `mods`: mods_view's
     (folder, mods.json)."""
+    version = release_version(port_dir)
+    if version == PREVIEW_VERSION and not settings.get('yt_private_server'):
+        raise ValueError('BBSC 1.5.0 preview requires a matching private server.')
     env = {name: value for name, value in (os.environ if game_env is None else game_env).items()
            if name not in NORMAL_ONLINE and not name.startswith(NORMAL_ONLINE_PREFIXES)}
     if settings.get('yt_private_server'):
@@ -667,7 +686,7 @@ def environment(port_dir, root, settings, ip, key='', game_env=None, mods=None):
         'BB_PROBE': str(engine(port_dir)),
         'BB_GAME_DIR': str(Path(root) / TITLE),
         'BB_USER_DIR': str(user_dir(port_dir)),
-        'BB_RELEASE_VERSION': VERSION,
+        'BB_RELEASE_VERSION': version,
         'BB_ONLINE': '1',
         'BB_SHADNET_SERVER': f'{ip}:{link}', 'BB_SHADNET_WEBAPI': f'http://{ip}:{webapi}',
         'BB_SHADNET_NPID': npid, 'BB_SHADNET_PASSWORD': password,
@@ -687,12 +706,13 @@ def environment(port_dir, root, settings, ip, key='', game_env=None, mods=None):
     env['BB_MODS_GAME_LAST'] = '1'
     if valid_link_key(key):
         env['BB_SHADNET_SERVER_KEY'] = key
-    if (rules := host_rules(settings)) != 'off':
-        env['SHADPS4_BLOODBORNE_HOST_RULES'] = rules
-    harder = (custom_enemies(settings) if settings.get('yt_enemies') == 'custom'
-              else ENEMIES.get(settings.get('yt_enemies')))
-    if harder and harder != 'off':
-        env['SHADPS4_BLOODBORNE_HARDER_ENEMIES'] = harder
+    if version == VERSION:
+        if (rules := host_rules(settings)) != 'off':
+            env['SHADPS4_BLOODBORNE_HOST_RULES'] = rules
+        harder = (custom_enemies(settings) if settings.get('yt_enemies') == 'custom'
+                  else ENEMIES.get(settings.get('yt_enemies')))
+        if harder and harder != 'off':
+            env['SHADPS4_BLOODBORNE_HARDER_ENEMIES'] = harder
     return env
 
 

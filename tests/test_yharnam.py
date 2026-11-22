@@ -43,6 +43,24 @@ class StartTests(Folders):
         (self.port / 'bin' / 'bb-probe-seamless.exe').unlink()
         self.assertFalse(yharnam.available(self.port))  # BBSC's own engine is never used
 
+    def test_preview_uses_its_own_engine_and_private_server(self):
+        (self.base / 'VERSION.txt').write_text('Yharnam Together v1.5.0 (Windows)\n', encoding='utf-8')
+        self.assertFalse(yharnam.available(self.port))  # the old engine is still present
+        preview = self.port / 'bin' / 'bbsc-1.5.0' / 'bb-probe-seamless.exe'
+        preview.parent.mkdir()
+        preview.write_bytes(b'preview')
+        self.assertTrue(yharnam.available(self.port))
+        with self.assertRaisesRegex(ValueError, 'matching private server'):
+            yharnam.environment(self.port, self.root, {}, '127.0.0.1', game_env={})
+        settings = {'yt_private_server': True, 'yt_server_address': '127.0.0.1', 'yt_rot': True,
+                    'yt_revive': False, 'yt_enemies': 'custom', 'supermedo_npid': 'public'}
+        env = yharnam.environment(self.port, self.root, settings, '127.0.0.1', game_env={})
+        self.assertEqual(env['BB_PROBE'], str(preview))
+        self.assertEqual(env['BB_RELEASE_VERSION'], '1.5.0')
+        self.assertRegex(env['BB_SHADNET_NPID'], r'^p[0-9a-f]{14}$')
+        self.assertNotIn('SHADPS4_BLOODBORNE_HOST_RULES', env)
+        self.assertNotIn('SHADPS4_BLOODBORNE_HARDER_ENEMIES', env)
+
     def test_the_environment_is_this_launchers_game_on_the_seamless_server(self):
         game_env = {'PATH': 'p', 'BB_RENDER_RES': '2560x1440', 'BB_UPSCALER': 'dlss', 'BB_MODS_ENABLED': '1',
                     'BB_MODS_DIR': 'my-mods', 'BB_PATCHES_DIR': 'my-patches', 'BB_GAME_DIR': 'my-game',

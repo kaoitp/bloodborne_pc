@@ -1,0 +1,27 @@
+Bloodborne PC 1.9.8.6 with BBSC 1.5.0 — private playtest
+
+1. Extract the ZIP to a new folder. Start Bloodborne.exe and select your own
+   Bloodborne 1.09 game folder. For the first co-op test, use a new character
+   and turn off mods, frame generation and unlocked frame rates.
+2. For Unraid over Tailscale, use a separate test container with
+   ghcr.io/kaoitp/yharnam-server-tailscale:v1.5.0-ts3 and its own /data folder.
+   For a trusted Tailnet-only test, set SIGN_IN=open so the launcher-created
+   player IDs can sign in. Use its Tailscale IP or hostname on every PC.
+3. On the Seamless co-op page enter that address and press Play Seamless Co-op.
+   Use the same preview ZIP on every PC. Press F2 in the game to create or join
+   a team and change its rules. The preview uses the BBSC 1.5.0 team rules.
+4. Start with two players. Try joining after the host starts, traveling between
+   areas, killing a boss, and leaving the team, then reload both characters.
+   For reports, save seamless\user\log\console.txt from the host and guest.
+
+Co-op saves for this copy live under seamless\user\savedata. Keep a backup
+if testing with a copy of an existing save. Keep the preview in its own folder
+throughout the test. The built-in BBport updater installs the official package.
+
+Sources
+  The main port and the Seamless engine base are SuperMedo Bloodborne PC 1.9.8.6.
+  https://github.com/Supermedo/bloodborne_pc/releases/tag/windows-v1.9.8.6
+  Co-op sources and event tools are from BBSC: Yharnam Together 1.5.0 (GPL).
+  https://github.com/Amanises-Yharnam-Together/BBSC-Yharnam-Together/tree/v1.5.0
+  The engine patch is inside this package at seamless\bbsc-1.5.0-bbport.patch.
+  The build recipe is in packaging/private-server/README.md on the playtest branch.

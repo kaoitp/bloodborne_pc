@@ -60,3 +60,33 @@ Give players the container's Tailscale IPv4. Its Tailnet access policy must perm
 ## Version and source
 
 The image tag follows the SuperMedo Windows version. The server checks the BBSC release reported by the Seamless engine, which is `1.0.0` in Windows 1.9.8.6. The [BBSC 1.0.0 Linux server source archive](https://github.com/CLSAMG22/BBSC/releases/download/v1.0.0/BBSC-Yharnam-Together-1.0.0-Server-Linux.zip) and the [pinned protobuf source](https://github.com/shadexternals/protobuf/tree/5917ee224a7e47383a78acc129628511fe210dff) are used by the [Dockerfile](Dockerfile). Build locally with `docker build -t bloodborne-private-server:1.9.8.6 .` from this directory.
+
+## BBSC 1.5.0 playtest
+
+The [playtest guide](BBSC-1.5.0-PREVIEW.txt) covers the portable Windows ZIP and its matching private host. The ZIP takes the normal game from SuperMedo 1.9.8.6 and builds a separate Seamless executable and DLL set under `bin/bbsc-1.5.0`. The co-op engine uses the 1.5.0 wire format, team settings and event tools. Run the playtest in a new folder with a separate server data directory.
+
+The [engine patch](../bbsc/bbsc-1.5.0-bbport.patch) applies to the published SuperMedo 1.9.8.6 Seamless source. The BBSC changes are from the Yharnam Together source at `0bb87c1b80ca2dfc01d75931cc3cb55873c057e2` and applied to the port's BBSC 1.0.0 integration. The preview uses upstream 1.5.0 team rules, including friendly fire and enemy multipliers. The legacy BBport revival toggle shares a field number with the upstream enemy HP multiplier and is available in the legacy package. The preview retains the BBport renderer and controller prompts.
+
+Build the preview from this repository root with Git, Python 3.14 with Tk, Pillow and PyInstaller, and the usual MSYS2 CLANG64 engine dependencies:
+
+```powershell
+python packaging/private-server/build_bbsc_preview.py prepare out/bbsc-preview/cache out/bbsc-preview/source
+```
+
+In MSYS2 CLANG64, run the engine's build script:
+
+```sh
+cd out/bbsc-preview/source
+BB_SEAMLESS_BUILD=../engine BB_SEAMLESS_REVISION=bbsc150-kaoitp bash build-seamless.sh
+```
+
+Back in PowerShell at the repository root, build the launcher and assemble the local ZIP:
+
+```powershell
+./packaging/private-server/build-launcher.ps1 -Version 1.9.8.6
+python packaging/private-server/build_bbsc_preview.py package out/bbsc-preview/cache `
+  out/bbsc-preview/engine/bb-probe-seamless.exe out/private-server-release/1.9.8.6/dist/Bloodborne `
+  out/playtest/Bloodborne-PC-1.9.8.6-BBSC-1.5.0-preview.zip
+```
+
+The packager checks the upstream SHA-256 hashes, the preview executable's startup and the assembled ZIP. It creates the ZIP and SHA-256 file locally. The private-server release workflow continues to build BBSC 1.0.0.
